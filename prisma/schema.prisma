@@ -1,0 +1,239 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+enum SituacaoCronograma {
+  PLANEJADO
+  EM_ANDAMENTO
+  CONCLUIDO
+  ATRASADO
+  SUSPENSO
+}
+
+enum EsferaAdministrativa {
+  FEDERAL
+  ESTADUAL
+  MUNICIPAL
+  PRIVADO
+  OUTRO
+}
+
+enum SetorAprovacao {
+  TECNICO
+  JURIDICO
+  OUTRO
+}
+
+model Proponente {
+  id        Int       @id @default(autoincrement())
+  nome      String
+  email     String    @unique
+  instituicao String?
+  projetos  Projeto[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Projeto {
+  id            Int           @id @default(autoincrement())
+  titulo        String
+  objetivos     String        @db.Text
+  justificativa String        @db.Text
+  abrangencia   String        @db.Text
+
+  proponenteId  Int
+  proponente    Proponente    @relation(fields: [proponenteId], references: [id], onDelete: Restrict)
+
+  planoTrabalho PlanoTrabalho?
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([proponenteId])
+}
+
+model PlanoTrabalho {
+  id          Int      @id @default(autoincrement())
+
+  // 1–1 com Projeto
+  projetoId   Int      @unique
+  projeto     Projeto  @relation(fields: [projetoId], references: [id], onDelete: Cascade)
+
+  // Campos típicos do plano (Anexo ao ACT)
+  objeto               String?   @db.Text       // título/descrição sucinta do objeto
+  diagnostico          String?   @db.Text
+  abrangenciaPlano     String?   @db.Text
+  justificativaPlano   String?   @db.Text
+
+  objetivoGeral        String    @db.Text
+  objetivosEspecificos Json?             
+
+  metodologia          String?   @db.Text
+  unidadeResponsavel   String?
+  gestorICT            String?
+  gestorParceiro       String?
+
+  acompanhamento       String?   @db.Text
+  resultadosEsperados  String?   @db.Text
+
+  vigenciaInicio       DateTime?
+  vigenciaFim          DateTime?
+
+  cronograma     CronogramaItem[]
+  equipe         EquipeItem[]
+  participantes  Participante[]
+  responsabilidades Responsabilidade[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CronogramaItem {
+  id               Int            @id @default(autoincrement())
+  planoTrabalhoId  Int
+  planoTrabalho    PlanoTrabalho  @relation(fields: [planoTrabalhoId], references: [id], onDelete: Cascade)
+
+  eixoMeta     String
+  acaoEtapa    String         @db.Text
+  indicador    String         @db.Text
+  responsavel  String
+  inicio       DateTime
+  termino      DateTime
+  situacao     SituacaoCronograma @default(PLANEJADO)
+
+  @@index([planoTrabalhoId])
+}
+
+model EquipeItem {
+  id               Int            @id @default(autoincrement())
+  planoTrabalhoId  Int
+  planoTrabalho    PlanoTrabalho  @relation(fields: [planoTrabalhoId], references: [id], onDelete: Cascade)
+
+  nome            String
+  titulacaoArea   String?
+  instituicao     String?
+  funcao          String?
+  cargaHorariaSemanal Int?
+
+  @@index([planoTrabalhoId])
+}
+
+model Participante {
+  id               Int            @id @default(autoincrement())
+  planoTrabalhoId  Int
+  planoTrabalho    PlanoTrabalho  @relation(fields: [planoTrabalhoId], references: [id], onDelete: Cascade)
+
+  orgaoEntidade  String
+  cnpj           String?
+  esfera         EsferaAdministrativa?
+  endereco       String?         @db.Text
+
+  autoridadeNome   String?
+  autoridadeCargo  String?
+  autoridadeDoc    String?       // CPF/RG
+  contato          String?       // e-mail/telefone
+
+  responsabilidades Responsabilidade[]
+
+  @@index([planoTrabalhoId])
+
+}
+
+model Responsabilidade {
+  id               Int            @id @default(autoincrement())
+  planoTrabalhoId  Int
+  planoTrabalho    PlanoTrabalho  @relation(fields: [planoTrabalhoId], references: [id], onDelete: Cascade)
+
+  // Responsabilidade pode estar associada a um participante específico (ou ser geral do plano)
+  participanteId   Int?
+  participante     Participante?  @relation(fields: [participanteId], references: [id])
+
+  descricao        String         @db.Text
+
+  @@index([planoTrabalhoId])
+  @@index([participanteId])
+}
+
+model User {
+  id            String   @id @default(cuid())
+  name          String?
+  email         String?  @unique
+  emailVerified DateTime?
+  image         String?
+
+  accounts      Account[]
+  sessions      Session[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+
+  refresh_token     String?  @db.Text
+  access_token      String?  @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?  @db.Text
+  session_state     String?
+
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// --- OTP por e-mail (código de 6 dígitos, hash + expiração) ---
+model OtpCode {
+  id        String   @id @default(cuid())
+  email     String
+  codeHash  String   // bcrypt hash do código
+  expiresAt DateTime
+  usedAt    DateTime?
+  sentAt    DateTime  @default(now())
+
+  // opcional: limitar tentativas
+  attempts  Int       @default(0)
+
+  @@index([email])
+  @@index([expiresAt])
+}
