@@ -2,7 +2,7 @@ import NextAuth, { type NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db";
 import { compare } from "bcryptjs";
 
 // helper: restringe domínio
@@ -17,7 +17,6 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      // Dica: deixe a verificação de domínio no callback
     }),
 
     // Login por CÓDIGO (OTP) via Credentials: { email, code }
@@ -81,19 +80,30 @@ export const authOptions: NextAuthOptions = {
 
   callbacks: {
     async signIn({ account, profile, user }) {
-      // Restringe TUDO a @ufr.edu.br
-      const email = profile?.email ?? user?.email;
-      if (!isUfr(email)) return false;
 
-      // garante Proponente no 1o login via Google também
-      if (email) {
-        const exists = await prisma.proponente.findFirst({ where: { email } });
-        if (!exists) {
-          await prisma.proponente.create({
-            data: { nome: email.split("@")[0], email },
-          });
-        }
-      }
+      console.log("signin", 'account: ', account, 'profile: ', profile, 'user: ', user);
+
+      const email = profile?.email ?? user?.email;
+
+      if (!email)
+        return false;
+
+      // Restringe a @ufr.edu.br
+      if (!isUfr(email)) 
+        return false;
+
+      await prisma.proponente.upsert({
+        where: { email }, 
+        update: {
+          userId: user.id,
+        },
+        create: {
+          email,
+          nome: email.split("@")[0],
+          userId: user.id,
+        },
+      });
+
       return true;
     },
 
@@ -110,13 +120,19 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
+
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith(`${baseUrl}/projetos/primeiro-acesso`)) return url;
+      return `${baseUrl}/projetos/`;
+    },    
   },
 
-  // páginas custom (opcional) para UI de OTP/erros
   pages: {
     // signIn: "/entrar",
     // verifyRequest: "/verificar-email",
     // error: "/erro-auth",
+    newUser: "/projetos/primeiro-acesso", 
+    signIn: "/login",
   },
 };
 

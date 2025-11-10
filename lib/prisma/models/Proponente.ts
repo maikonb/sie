@@ -39,6 +39,7 @@ export type ProponenteMinAggregateOutputType = {
   nome: string | null
   email: string | null
   instituicao: string | null
+  userId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -48,6 +49,7 @@ export type ProponenteMaxAggregateOutputType = {
   nome: string | null
   email: string | null
   instituicao: string | null
+  userId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -57,6 +59,7 @@ export type ProponenteCountAggregateOutputType = {
   nome: number
   email: number
   instituicao: number
+  userId: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -76,6 +79,7 @@ export type ProponenteMinAggregateInputType = {
   nome?: true
   email?: true
   instituicao?: true
+  userId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -85,6 +89,7 @@ export type ProponenteMaxAggregateInputType = {
   nome?: true
   email?: true
   instituicao?: true
+  userId?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -94,6 +99,7 @@ export type ProponenteCountAggregateInputType = {
   nome?: true
   email?: true
   instituicao?: true
+  userId?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -190,6 +196,7 @@ export type ProponenteGroupByOutputType = {
   nome: string
   email: string
   instituicao: string | null
+  userId: string | null
   createdAt: Date
   updatedAt: Date
   _count: ProponenteCountAggregateOutputType | null
@@ -222,9 +229,11 @@ export type ProponenteWhereInput = {
   nome?: Prisma.StringFilter<"Proponente"> | string
   email?: Prisma.StringFilter<"Proponente"> | string
   instituicao?: Prisma.StringNullableFilter<"Proponente"> | string | null
+  userId?: Prisma.StringNullableFilter<"Proponente"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Proponente"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Proponente"> | Date | string
   projetos?: Prisma.ProjetoListRelationFilter
+  user?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
 }
 
 export type ProponenteOrderByWithRelationInput = {
@@ -232,14 +241,17 @@ export type ProponenteOrderByWithRelationInput = {
   nome?: Prisma.SortOrder
   email?: Prisma.SortOrder
   instituicao?: Prisma.SortOrderInput | Prisma.SortOrder
+  userId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   projetos?: Prisma.ProjetoOrderByRelationAggregateInput
+  user?: Prisma.UserOrderByWithRelationInput
 }
 
 export type ProponenteWhereUniqueInput = Prisma.AtLeast<{
   id?: number
   email?: string
+  userId?: string
   AND?: Prisma.ProponenteWhereInput | Prisma.ProponenteWhereInput[]
   OR?: Prisma.ProponenteWhereInput[]
   NOT?: Prisma.ProponenteWhereInput | Prisma.ProponenteWhereInput[]
@@ -248,13 +260,15 @@ export type ProponenteWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"Proponente"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Proponente"> | Date | string
   projetos?: Prisma.ProjetoListRelationFilter
-}, "id" | "email">
+  user?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
+}, "id" | "email" | "userId">
 
 export type ProponenteOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   nome?: Prisma.SortOrder
   email?: Prisma.SortOrder
   instituicao?: Prisma.SortOrderInput | Prisma.SortOrder
+  userId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.ProponenteCountOrderByAggregateInput
@@ -272,6 +286,7 @@ export type ProponenteScalarWhereWithAggregatesInput = {
   nome?: Prisma.StringWithAggregatesFilter<"Proponente"> | string
   email?: Prisma.StringWithAggregatesFilter<"Proponente"> | string
   instituicao?: Prisma.StringNullableWithAggregatesFilter<"Proponente"> | string | null
+  userId?: Prisma.StringNullableWithAggregatesFilter<"Proponente"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Proponente"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Proponente"> | Date | string
 }
@@ -283,6 +298,7 @@ export type ProponenteCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   projetos?: Prisma.ProjetoCreateNestedManyWithoutProponenteInput
+  user?: Prisma.UserCreateNestedOneWithoutProponenteInput
 }
 
 export type ProponenteUncheckedCreateInput = {
@@ -290,6 +306,7 @@ export type ProponenteUncheckedCreateInput = {
   nome: string
   email: string
   instituicao?: string | null
+  userId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   projetos?: Prisma.ProjetoUncheckedCreateNestedManyWithoutProponenteInput
@@ -302,6 +319,7 @@ export type ProponenteUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   projetos?: Prisma.ProjetoUpdateManyWithoutProponenteNestedInput
+  user?: Prisma.UserUpdateOneWithoutProponenteNestedInput
 }
 
 export type ProponenteUncheckedUpdateInput = {
@@ -309,6 +327,7 @@ export type ProponenteUncheckedUpdateInput = {
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   instituicao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   projetos?: Prisma.ProjetoUncheckedUpdateManyWithoutProponenteNestedInput
@@ -319,6 +338,7 @@ export type ProponenteCreateManyInput = {
   nome: string
   email: string
   instituicao?: string | null
+  userId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -336,6 +356,7 @@ export type ProponenteUncheckedUpdateManyInput = {
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   instituicao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -345,6 +366,7 @@ export type ProponenteCountOrderByAggregateInput = {
   nome?: Prisma.SortOrder
   email?: Prisma.SortOrder
   instituicao?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -358,6 +380,7 @@ export type ProponenteMaxOrderByAggregateInput = {
   nome?: Prisma.SortOrder
   email?: Prisma.SortOrder
   instituicao?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -367,6 +390,7 @@ export type ProponenteMinOrderByAggregateInput = {
   nome?: Prisma.SortOrder
   email?: Prisma.SortOrder
   instituicao?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -378,6 +402,11 @@ export type ProponenteSumOrderByAggregateInput = {
 export type ProponenteScalarRelationFilter = {
   is?: Prisma.ProponenteWhereInput
   isNot?: Prisma.ProponenteWhereInput
+}
+
+export type ProponenteNullableScalarRelationFilter = {
+  is?: Prisma.ProponenteWhereInput | null
+  isNot?: Prisma.ProponenteWhereInput | null
 }
 
 export type StringFieldUpdateOperationsInput = {
@@ -414,12 +443,45 @@ export type ProponenteUpdateOneRequiredWithoutProjetosNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.ProponenteUpdateToOneWithWhereWithoutProjetosInput, Prisma.ProponenteUpdateWithoutProjetosInput>, Prisma.ProponenteUncheckedUpdateWithoutProjetosInput>
 }
 
+export type ProponenteCreateNestedOneWithoutUserInput = {
+  create?: Prisma.XOR<Prisma.ProponenteCreateWithoutUserInput, Prisma.ProponenteUncheckedCreateWithoutUserInput>
+  connectOrCreate?: Prisma.ProponenteCreateOrConnectWithoutUserInput
+  connect?: Prisma.ProponenteWhereUniqueInput
+}
+
+export type ProponenteUncheckedCreateNestedOneWithoutUserInput = {
+  create?: Prisma.XOR<Prisma.ProponenteCreateWithoutUserInput, Prisma.ProponenteUncheckedCreateWithoutUserInput>
+  connectOrCreate?: Prisma.ProponenteCreateOrConnectWithoutUserInput
+  connect?: Prisma.ProponenteWhereUniqueInput
+}
+
+export type ProponenteUpdateOneWithoutUserNestedInput = {
+  create?: Prisma.XOR<Prisma.ProponenteCreateWithoutUserInput, Prisma.ProponenteUncheckedCreateWithoutUserInput>
+  connectOrCreate?: Prisma.ProponenteCreateOrConnectWithoutUserInput
+  upsert?: Prisma.ProponenteUpsertWithoutUserInput
+  disconnect?: Prisma.ProponenteWhereInput | boolean
+  delete?: Prisma.ProponenteWhereInput | boolean
+  connect?: Prisma.ProponenteWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ProponenteUpdateToOneWithWhereWithoutUserInput, Prisma.ProponenteUpdateWithoutUserInput>, Prisma.ProponenteUncheckedUpdateWithoutUserInput>
+}
+
+export type ProponenteUncheckedUpdateOneWithoutUserNestedInput = {
+  create?: Prisma.XOR<Prisma.ProponenteCreateWithoutUserInput, Prisma.ProponenteUncheckedCreateWithoutUserInput>
+  connectOrCreate?: Prisma.ProponenteCreateOrConnectWithoutUserInput
+  upsert?: Prisma.ProponenteUpsertWithoutUserInput
+  disconnect?: Prisma.ProponenteWhereInput | boolean
+  delete?: Prisma.ProponenteWhereInput | boolean
+  connect?: Prisma.ProponenteWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ProponenteUpdateToOneWithWhereWithoutUserInput, Prisma.ProponenteUpdateWithoutUserInput>, Prisma.ProponenteUncheckedUpdateWithoutUserInput>
+}
+
 export type ProponenteCreateWithoutProjetosInput = {
   nome: string
   email: string
   instituicao?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  user?: Prisma.UserCreateNestedOneWithoutProponenteInput
 }
 
 export type ProponenteUncheckedCreateWithoutProjetosInput = {
@@ -427,6 +489,7 @@ export type ProponenteUncheckedCreateWithoutProjetosInput = {
   nome: string
   email: string
   instituicao?: string | null
+  userId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -453,6 +516,7 @@ export type ProponenteUpdateWithoutProjetosInput = {
   instituicao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneWithoutProponenteNestedInput
 }
 
 export type ProponenteUncheckedUpdateWithoutProjetosInput = {
@@ -460,8 +524,63 @@ export type ProponenteUncheckedUpdateWithoutProjetosInput = {
   nome?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   instituicao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type ProponenteCreateWithoutUserInput = {
+  nome: string
+  email: string
+  instituicao?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  projetos?: Prisma.ProjetoCreateNestedManyWithoutProponenteInput
+}
+
+export type ProponenteUncheckedCreateWithoutUserInput = {
+  id?: number
+  nome: string
+  email: string
+  instituicao?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  projetos?: Prisma.ProjetoUncheckedCreateNestedManyWithoutProponenteInput
+}
+
+export type ProponenteCreateOrConnectWithoutUserInput = {
+  where: Prisma.ProponenteWhereUniqueInput
+  create: Prisma.XOR<Prisma.ProponenteCreateWithoutUserInput, Prisma.ProponenteUncheckedCreateWithoutUserInput>
+}
+
+export type ProponenteUpsertWithoutUserInput = {
+  update: Prisma.XOR<Prisma.ProponenteUpdateWithoutUserInput, Prisma.ProponenteUncheckedUpdateWithoutUserInput>
+  create: Prisma.XOR<Prisma.ProponenteCreateWithoutUserInput, Prisma.ProponenteUncheckedCreateWithoutUserInput>
+  where?: Prisma.ProponenteWhereInput
+}
+
+export type ProponenteUpdateToOneWithWhereWithoutUserInput = {
+  where?: Prisma.ProponenteWhereInput
+  data: Prisma.XOR<Prisma.ProponenteUpdateWithoutUserInput, Prisma.ProponenteUncheckedUpdateWithoutUserInput>
+}
+
+export type ProponenteUpdateWithoutUserInput = {
+  nome?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  instituicao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projetos?: Prisma.ProjetoUpdateManyWithoutProponenteNestedInput
+}
+
+export type ProponenteUncheckedUpdateWithoutUserInput = {
+  id?: Prisma.IntFieldUpdateOperationsInput | number
+  nome?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  instituicao?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  projetos?: Prisma.ProjetoUncheckedUpdateManyWithoutProponenteNestedInput
 }
 
 
@@ -500,9 +619,11 @@ export type ProponenteSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   nome?: boolean
   email?: boolean
   instituicao?: boolean
+  userId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   projetos?: boolean | Prisma.Proponente$projetosArgs<ExtArgs>
+  user?: boolean | Prisma.Proponente$userArgs<ExtArgs>
   _count?: boolean | Prisma.ProponenteCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["proponente"]>
 
@@ -511,8 +632,10 @@ export type ProponenteSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   nome?: boolean
   email?: boolean
   instituicao?: boolean
+  userId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  user?: boolean | Prisma.Proponente$userArgs<ExtArgs>
 }, ExtArgs["result"]["proponente"]>
 
 export type ProponenteSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -520,8 +643,10 @@ export type ProponenteSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   nome?: boolean
   email?: boolean
   instituicao?: boolean
+  userId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  user?: boolean | Prisma.Proponente$userArgs<ExtArgs>
 }, ExtArgs["result"]["proponente"]>
 
 export type ProponenteSelectScalar = {
@@ -529,28 +654,36 @@ export type ProponenteSelectScalar = {
   nome?: boolean
   email?: boolean
   instituicao?: boolean
+  userId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type ProponenteOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "nome" | "email" | "instituicao" | "createdAt" | "updatedAt", ExtArgs["result"]["proponente"]>
+export type ProponenteOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "nome" | "email" | "instituicao" | "userId" | "createdAt" | "updatedAt", ExtArgs["result"]["proponente"]>
 export type ProponenteInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   projetos?: boolean | Prisma.Proponente$projetosArgs<ExtArgs>
+  user?: boolean | Prisma.Proponente$userArgs<ExtArgs>
   _count?: boolean | Prisma.ProponenteCountOutputTypeDefaultArgs<ExtArgs>
 }
-export type ProponenteIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
-export type ProponenteIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
+export type ProponenteIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  user?: boolean | Prisma.Proponente$userArgs<ExtArgs>
+}
+export type ProponenteIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  user?: boolean | Prisma.Proponente$userArgs<ExtArgs>
+}
 
 export type $ProponentePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Proponente"
   objects: {
     projetos: Prisma.$ProjetoPayload<ExtArgs>[]
+    user: Prisma.$UserPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
     nome: string
     email: string
     instituicao: string | null
+    userId: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["proponente"]>
@@ -948,6 +1081,7 @@ readonly fields: ProponenteFieldRefs;
 export interface Prisma__ProponenteClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   projetos<T extends Prisma.Proponente$projetosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Proponente$projetosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProjetoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  user<T extends Prisma.Proponente$userArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Proponente$userArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -981,6 +1115,7 @@ export interface ProponenteFieldRefs {
   readonly nome: Prisma.FieldRef<"Proponente", 'String'>
   readonly email: Prisma.FieldRef<"Proponente", 'String'>
   readonly instituicao: Prisma.FieldRef<"Proponente", 'String'>
+  readonly userId: Prisma.FieldRef<"Proponente", 'String'>
   readonly createdAt: Prisma.FieldRef<"Proponente", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Proponente", 'DateTime'>
 }
@@ -1232,6 +1367,10 @@ export type ProponenteCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Exte
    */
   data: Prisma.ProponenteCreateManyInput | Prisma.ProponenteCreateManyInput[]
   skipDuplicates?: boolean
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ProponenteIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1302,6 +1441,10 @@ export type ProponenteUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Exte
    * Limit how many Proponentes to update.
    */
   limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ProponenteIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1392,6 +1535,25 @@ export type Proponente$projetosArgs<ExtArgs extends runtime.Types.Extensions.Int
   take?: number
   skip?: number
   distinct?: Prisma.ProjetoScalarFieldEnum | Prisma.ProjetoScalarFieldEnum[]
+}
+
+/**
+ * Proponente.user
+ */
+export type Proponente$userArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the User
+   */
+  select?: Prisma.UserSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the User
+   */
+  omit?: Prisma.UserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserInclude<ExtArgs> | null
+  where?: Prisma.UserWhereInput
 }
 
 /**

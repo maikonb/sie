@@ -84,6 +84,7 @@ export const ProponenteScalarFieldEnum = {
   nome: 'nome',
   email: 'email',
   instituicao: 'instituicao',
+  userId: 'userId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

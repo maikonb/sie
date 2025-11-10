@@ -1,3 +1,8 @@
+"use client";
+
+import { useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -19,20 +24,58 @@ import {
 } from "@/components/ui/input-otp"
 
 export function OTPForm({ ...props }: React.ComponentProps<typeof Card>) {
+
+  const params = useSearchParams();
+  const router = useRouter();
+  const email = params.get("email") ?? "";
+  const [code, setCode] = useState("");
+
+  const handleVerify = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!email) return alert("Email ausente.");
+    const res = await signIn("credentials", {
+      email,
+      code,
+      redirect: true,
+      callbackUrl: "/",
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((res as any)?.error) alert((res as any).error);
+  };
+
+  const handleResend = async () => {
+    if (!email) return;
+    const r = await fetch("/api/auth/otp/request", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    const j = await r.json();
+    if (!j?.ok) alert(j?.error ?? "Falha ao reenviar código");
+  };
+  
   return (
     <Card {...props}>
       <CardHeader className="text-center">
         <CardTitle className="text-xl">Entre com o código de verificação</CardTitle>
-        <CardDescription>Enviamos um código para seu e-mail.</CardDescription>
+        <CardDescription>
+          Enviamos um código para <b>{email || "seu e-mail"}</b>.
+        </CardDescription>        
       </CardHeader>
       <CardContent>
-        <form>
+        <form onSubmit={handleVerify}>
           <FieldGroup>
             <Field>
               <FieldLabel htmlFor="otp" className="sr-only">
                 Código de Verificação
               </FieldLabel>
-              <InputOTP maxLength={6} id="otp" required>
+              <InputOTP
+                maxLength={6}
+                id="otp"
+                required
+                value={code}
+                onChange={setCode}
+              >
                 <InputOTPGroup className="gap-2.5 *:data-[slot=input-otp-slot]:rounded-md *:data-[slot=input-otp-slot]:border">
                   <InputOTPSlot index={0} />
                   <InputOTPSlot index={1} />
@@ -48,7 +91,10 @@ export function OTPForm({ ...props }: React.ComponentProps<typeof Card>) {
             </Field>
             <Button type="submit">Verificar</Button>
             <FieldDescription className="text-center">
-              Não recebeu? <a href="#">Reenviar</a>
+              Não recebeu?{" "}
+              <button type="button" onClick={handleResend} className="underline">
+                Reenviar
+              </button>
             </FieldDescription>
           </FieldGroup>
         </form>
