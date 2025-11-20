@@ -132,7 +132,7 @@ export const authOptions: NextAuthOptions = {
     // verifyRequest: "/verificar-email",
     // error: "/erro-auth",
     newUser: "/projetos/primeiro-acesso", 
-    signIn: "/login",
+    signIn: "/auth/login",
   },
 };
 

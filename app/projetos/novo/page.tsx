@@ -19,7 +19,7 @@ async function createProjeto(formData: FormData) {
 
   if (!email) {
     // usuário não autenticado
-    redirect("/login");
+    redirect("/auth/login");
   }
 
   const titulo = String(formData.get("titulo") || "").trim();
@@ -60,7 +60,7 @@ async function createProjeto(formData: FormData) {
 export default async function NovaPaginaProjeto() {
   // opcional: checar sessão aqui para proteger a página
   const session = await getServerSession(authOptions);
-  if (!session?.user) redirect("/login");
+  if (!session?.user) redirect("/auth/login");
 
   return (
     <div className="p-4 bg-muted/50 aspect-video rounded-xl">

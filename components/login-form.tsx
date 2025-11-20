@@ -14,12 +14,9 @@ import {
 } from "@/components/ui/card"
 import {
   Field,
-  FieldDescription,
   FieldGroup,
-  FieldLabel,
   FieldSeparator,
 } from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
 import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from "./ui/input-group"
 
 export function LoginForm({
@@ -32,21 +29,20 @@ export function LoginForm({
   const email = localPart ? `${localPart}@ufr.edu.br` : "";
 
   const handleGoogle = () => {
-    // redireciona após login
     signIn("google", { callbackUrl: "/" });
   };
 
   const handleEmailSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!email.endsWith("@ufr.edu.br")) return;
-    const r = await fetch("/api/auth/otp/request", {
+    const response = await fetch("/api/auth/otp/request", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ email }),
     });
-    const j = await r.json();
-    if (j?.ok) router.push(`/otp?email=${encodeURIComponent(email)}`);
-    else alert(j?.error ?? "Falha ao enviar código");
+    const json = await response.json();
+    if (json?.ok) router.push(`/otp?email=${encodeURIComponent(email)}`);
+    else alert(json?.error ?? "Falha ao enviar código");
   };
 
   
