@@ -62,7 +62,21 @@ export const authOptions: NextAuthOptions = {
         // encontra ou cria o usuário
         let user = await prisma.user.findUnique({ where: { email } });
         if (!user) {
-          user = await prisma.user.create({ data: { email } });
+          user = await prisma.user.create({ 
+            data: { 
+              email,
+              emailVerified: new Date(), // verifica email no cadastro via OTP
+              firstAccess: true,
+            } 
+          });
+        } else {
+          // Se já existe, atualiza emailVerified se ainda não estiver
+          if (!user.emailVerified) {
+            user = await prisma.user.update({
+              where: { id: user.id },
+              data: { emailVerified: new Date() },
+            });
+          }
         }
 
         // garante  vinculado (1-1 por e-mail)
@@ -110,6 +124,7 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.uid = user.id; 
+        token.firstAccess = user.firstAccess;
       }
       return token;
     },
@@ -117,6 +132,7 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (session.user && token.uid) {
         session.user.id = token.uid; 
+        session.user.firstAccess = token.firstAccess as boolean;
       }
       return session;
     },

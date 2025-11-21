@@ -23,6 +23,8 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp"
 
+import { getSession } from "next-auth/react";
+
 export function OTPForm({ ...props }: React.ComponentProps<typeof Card>) {
 
   const params = useSearchParams();
@@ -33,14 +35,25 @@ export function OTPForm({ ...props }: React.ComponentProps<typeof Card>) {
   const handleVerify = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!email) return alert("Email ausente.");
+    
     const res = await signIn("credentials", {
       email,
       code,
-      redirect: true,
-      callbackUrl: "/",
+      redirect: false,
     });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (res?.error) alert(res.error);
+
+    if (res?.error) {
+      alert(res.error);
+      return;
+    }
+
+    // Check session for firstAccess
+    const session = await getSession();
+    if (session?.user?.firstAccess) {
+      router.push("/projetos/primeiro-acesso");
+    } else {
+      router.push("/projetos/");
+    }
   };
 
   const handleResend = async () => {
