@@ -198,7 +198,7 @@ export type UserWhereInput = {
   image?: Prisma.StringNullableFilter<"User"> | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
-  proponente?: Prisma.XOR<Prisma.ProponenteNullableScalarRelationFilter, Prisma.ProponenteWhereInput> | null
+  proponent?: Prisma.XOR<Prisma.ProponentNullableScalarRelationFilter, Prisma.ProponentWhereInput> | null
   accounts?: Prisma.AccountListRelationFilter
   sessions?: Prisma.SessionListRelationFilter
 }
@@ -211,7 +211,7 @@ export type UserOrderByWithRelationInput = {
   image?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  proponente?: Prisma.ProponenteOrderByWithRelationInput
+  proponent?: Prisma.ProponentOrderByWithRelationInput
   accounts?: Prisma.AccountOrderByRelationAggregateInput
   sessions?: Prisma.SessionOrderByRelationAggregateInput
 }
@@ -227,7 +227,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   image?: Prisma.StringNullableFilter<"User"> | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
-  proponente?: Prisma.XOR<Prisma.ProponenteNullableScalarRelationFilter, Prisma.ProponenteWhereInput> | null
+  proponent?: Prisma.XOR<Prisma.ProponentNullableScalarRelationFilter, Prisma.ProponentWhereInput> | null
   accounts?: Prisma.AccountListRelationFilter
   sessions?: Prisma.SessionListRelationFilter
 }, "id" | "email">
@@ -266,7 +266,7 @@ export type UserCreateInput = {
   image?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  proponente?: Prisma.ProponenteCreateNestedOneWithoutUserInput
+  proponent?: Prisma.ProponentCreateNestedOneWithoutUserInput
   accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
 }
@@ -279,7 +279,7 @@ export type UserUncheckedCreateInput = {
   image?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  proponente?: Prisma.ProponenteUncheckedCreateNestedOneWithoutUserInput
+  proponent?: Prisma.ProponentUncheckedCreateNestedOneWithoutUserInput
   accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
 }
@@ -292,7 +292,7 @@ export type UserUpdateInput = {
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  proponente?: Prisma.ProponenteUpdateOneWithoutUserNestedInput
+  proponent?: Prisma.ProponentUpdateOneWithoutUserNestedInput
   accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
 }
@@ -305,7 +305,7 @@ export type UserUncheckedUpdateInput = {
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  proponente?: Prisma.ProponenteUncheckedUpdateOneWithoutUserNestedInput
+  proponent?: Prisma.ProponentUncheckedUpdateOneWithoutUserNestedInput
   accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
 }
@@ -380,20 +380,20 @@ export type UserScalarRelationFilter = {
   isNot?: Prisma.UserWhereInput
 }
 
-export type UserCreateNestedOneWithoutProponenteInput = {
-  create?: Prisma.XOR<Prisma.UserCreateWithoutProponenteInput, Prisma.UserUncheckedCreateWithoutProponenteInput>
-  connectOrCreate?: Prisma.UserCreateOrConnectWithoutProponenteInput
+export type UserCreateNestedOneWithoutProponentInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutProponentInput, Prisma.UserUncheckedCreateWithoutProponentInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutProponentInput
   connect?: Prisma.UserWhereUniqueInput
 }
 
-export type UserUpdateOneWithoutProponenteNestedInput = {
-  create?: Prisma.XOR<Prisma.UserCreateWithoutProponenteInput, Prisma.UserUncheckedCreateWithoutProponenteInput>
-  connectOrCreate?: Prisma.UserCreateOrConnectWithoutProponenteInput
-  upsert?: Prisma.UserUpsertWithoutProponenteInput
+export type UserUpdateOneWithoutProponentNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutProponentInput, Prisma.UserUncheckedCreateWithoutProponentInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutProponentInput
+  upsert?: Prisma.UserUpsertWithoutProponentInput
   disconnect?: Prisma.UserWhereInput | boolean
   delete?: Prisma.UserWhereInput | boolean
   connect?: Prisma.UserWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutProponenteInput, Prisma.UserUpdateWithoutProponenteInput>, Prisma.UserUncheckedUpdateWithoutProponenteInput>
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutProponentInput, Prisma.UserUpdateWithoutProponentInput>, Prisma.UserUncheckedUpdateWithoutProponentInput>
 }
 
 export type UserCreateNestedOneWithoutAccountsInput = {
@@ -424,7 +424,7 @@ export type UserUpdateOneRequiredWithoutSessionsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutSessionsInput, Prisma.UserUpdateWithoutSessionsInput>, Prisma.UserUncheckedUpdateWithoutSessionsInput>
 }
 
-export type UserCreateWithoutProponenteInput = {
+export type UserCreateWithoutProponentInput = {
   id?: string
   name?: string | null
   email?: string | null
@@ -436,7 +436,7 @@ export type UserCreateWithoutProponenteInput = {
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
 }
 
-export type UserUncheckedCreateWithoutProponenteInput = {
+export type UserUncheckedCreateWithoutProponentInput = {
   id?: string
   name?: string | null
   email?: string | null
@@ -448,23 +448,23 @@ export type UserUncheckedCreateWithoutProponenteInput = {
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
 }
 
-export type UserCreateOrConnectWithoutProponenteInput = {
+export type UserCreateOrConnectWithoutProponentInput = {
   where: Prisma.UserWhereUniqueInput
-  create: Prisma.XOR<Prisma.UserCreateWithoutProponenteInput, Prisma.UserUncheckedCreateWithoutProponenteInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutProponentInput, Prisma.UserUncheckedCreateWithoutProponentInput>
 }
 
-export type UserUpsertWithoutProponenteInput = {
-  update: Prisma.XOR<Prisma.UserUpdateWithoutProponenteInput, Prisma.UserUncheckedUpdateWithoutProponenteInput>
-  create: Prisma.XOR<Prisma.UserCreateWithoutProponenteInput, Prisma.UserUncheckedCreateWithoutProponenteInput>
+export type UserUpsertWithoutProponentInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutProponentInput, Prisma.UserUncheckedUpdateWithoutProponentInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutProponentInput, Prisma.UserUncheckedCreateWithoutProponentInput>
   where?: Prisma.UserWhereInput
 }
 
-export type UserUpdateToOneWithWhereWithoutProponenteInput = {
+export type UserUpdateToOneWithWhereWithoutProponentInput = {
   where?: Prisma.UserWhereInput
-  data: Prisma.XOR<Prisma.UserUpdateWithoutProponenteInput, Prisma.UserUncheckedUpdateWithoutProponenteInput>
+  data: Prisma.XOR<Prisma.UserUpdateWithoutProponentInput, Prisma.UserUncheckedUpdateWithoutProponentInput>
 }
 
-export type UserUpdateWithoutProponenteInput = {
+export type UserUpdateWithoutProponentInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -476,7 +476,7 @@ export type UserUpdateWithoutProponenteInput = {
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
 }
 
-export type UserUncheckedUpdateWithoutProponenteInput = {
+export type UserUncheckedUpdateWithoutProponentInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -496,7 +496,7 @@ export type UserCreateWithoutAccountsInput = {
   image?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  proponente?: Prisma.ProponenteCreateNestedOneWithoutUserInput
+  proponent?: Prisma.ProponentCreateNestedOneWithoutUserInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
 }
 
@@ -508,7 +508,7 @@ export type UserUncheckedCreateWithoutAccountsInput = {
   image?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  proponente?: Prisma.ProponenteUncheckedCreateNestedOneWithoutUserInput
+  proponent?: Prisma.ProponentUncheckedCreateNestedOneWithoutUserInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
 }
 
@@ -536,7 +536,7 @@ export type UserUpdateWithoutAccountsInput = {
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  proponente?: Prisma.ProponenteUpdateOneWithoutUserNestedInput
+  proponent?: Prisma.ProponentUpdateOneWithoutUserNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
 }
 
@@ -548,7 +548,7 @@ export type UserUncheckedUpdateWithoutAccountsInput = {
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  proponente?: Prisma.ProponenteUncheckedUpdateOneWithoutUserNestedInput
+  proponent?: Prisma.ProponentUncheckedUpdateOneWithoutUserNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
 }
 
@@ -560,7 +560,7 @@ export type UserCreateWithoutSessionsInput = {
   image?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  proponente?: Prisma.ProponenteCreateNestedOneWithoutUserInput
+  proponent?: Prisma.ProponentCreateNestedOneWithoutUserInput
   accounts?: Prisma.AccountCreateNestedManyWithoutUserInput
 }
 
@@ -572,7 +572,7 @@ export type UserUncheckedCreateWithoutSessionsInput = {
   image?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  proponente?: Prisma.ProponenteUncheckedCreateNestedOneWithoutUserInput
+  proponent?: Prisma.ProponentUncheckedCreateNestedOneWithoutUserInput
   accounts?: Prisma.AccountUncheckedCreateNestedManyWithoutUserInput
 }
 
@@ -600,7 +600,7 @@ export type UserUpdateWithoutSessionsInput = {
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  proponente?: Prisma.ProponenteUpdateOneWithoutUserNestedInput
+  proponent?: Prisma.ProponentUpdateOneWithoutUserNestedInput
   accounts?: Prisma.AccountUpdateManyWithoutUserNestedInput
 }
 
@@ -612,7 +612,7 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
   image?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  proponente?: Prisma.ProponenteUncheckedUpdateOneWithoutUserNestedInput
+  proponent?: Prisma.ProponentUncheckedUpdateOneWithoutUserNestedInput
   accounts?: Prisma.AccountUncheckedUpdateManyWithoutUserNestedInput
 }
 
@@ -664,7 +664,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   image?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  proponente?: boolean | Prisma.User$proponenteArgs<ExtArgs>
+  proponent?: boolean | Prisma.User$proponentArgs<ExtArgs>
   accounts?: boolean | Prisma.User$accountsArgs<ExtArgs>
   sessions?: boolean | Prisma.User$sessionsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
@@ -702,7 +702,7 @@ export type UserSelectScalar = {
 
 export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "email" | "emailVerified" | "image" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  proponente?: boolean | Prisma.User$proponenteArgs<ExtArgs>
+  proponent?: boolean | Prisma.User$proponentArgs<ExtArgs>
   accounts?: boolean | Prisma.User$accountsArgs<ExtArgs>
   sessions?: boolean | Prisma.User$sessionsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
@@ -713,7 +713,7 @@ export type UserIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
 export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "User"
   objects: {
-    proponente: Prisma.$ProponentePayload<ExtArgs> | null
+    proponent: Prisma.$ProponentPayload<ExtArgs> | null
     accounts: Prisma.$AccountPayload<ExtArgs>[]
     sessions: Prisma.$SessionPayload<ExtArgs>[]
   }
@@ -1119,7 +1119,7 @@ readonly fields: UserFieldRefs;
  */
 export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  proponente<T extends Prisma.User$proponenteArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$proponenteArgs<ExtArgs>>): Prisma.Prisma__ProponenteClient<runtime.Types.Result.GetResult<Prisma.$ProponentePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  proponent<T extends Prisma.User$proponentArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$proponentArgs<ExtArgs>>): Prisma.Prisma__ProponentClient<runtime.Types.Result.GetResult<Prisma.$ProponentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   accounts<T extends Prisma.User$accountsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$accountsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AccountPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   sessions<T extends Prisma.User$sessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$sessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
@@ -1546,22 +1546,22 @@ export type UserDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Internal
 }
 
 /**
- * User.proponente
+ * User.proponent
  */
-export type User$proponenteArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type User$proponentArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
-   * Select specific fields to fetch from the Proponente
+   * Select specific fields to fetch from the Proponent
    */
-  select?: Prisma.ProponenteSelect<ExtArgs> | null
+  select?: Prisma.ProponentSelect<ExtArgs> | null
   /**
-   * Omit specific fields from the Proponente
+   * Omit specific fields from the Proponent
    */
-  omit?: Prisma.ProponenteOmit<ExtArgs> | null
+  omit?: Prisma.ProponentOmit<ExtArgs> | null
   /**
    * Choose, which related nodes to fetch as well
    */
-  include?: Prisma.ProponenteInclude<ExtArgs> | null
-  where?: Prisma.ProponenteWhereInput
+  include?: Prisma.ProponentInclude<ExtArgs> | null
+  where?: Prisma.ProponentWhereInput
 }
 
 /**

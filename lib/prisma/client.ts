@@ -29,8 +29,8 @@ export * from "./enums"
  * @example
  * ```
  * const prisma = new PrismaClient()
- * // Fetch zero or more Proponentes
- * const proponentes = await prisma.proponente.findMany()
+ * // Fetch zero or more Proponents
+ * const proponents = await prisma.proponent.findMany()
  * ```
  * 
  * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client).
@@ -45,40 +45,40 @@ path.join(__dirname, "libquery_engine-debian-openssl-3.0.x.so.node")
 path.join(process.cwd(), "lib/prisma/libquery_engine-debian-openssl-3.0.x.so.node")
 
 /**
- * Model Proponente
+ * Model Proponent
  * 
  */
-export type Proponente = Prisma.ProponenteModel
+export type Proponent = Prisma.ProponentModel
 /**
- * Model Projeto
+ * Model Project
  * 
  */
-export type Projeto = Prisma.ProjetoModel
+export type Project = Prisma.ProjectModel
 /**
- * Model PlanoTrabalho
+ * Model WorkPlan
  * 
  */
-export type PlanoTrabalho = Prisma.PlanoTrabalhoModel
+export type WorkPlan = Prisma.WorkPlanModel
 /**
- * Model CronogramaItem
+ * Model ScheduleItem
  * 
  */
-export type CronogramaItem = Prisma.CronogramaItemModel
+export type ScheduleItem = Prisma.ScheduleItemModel
 /**
- * Model EquipeItem
+ * Model TeamMember
  * 
  */
-export type EquipeItem = Prisma.EquipeItemModel
+export type TeamMember = Prisma.TeamMemberModel
 /**
- * Model Participante
+ * Model Participant
  * 
  */
-export type Participante = Prisma.ParticipanteModel
+export type Participant = Prisma.ParticipantModel
 /**
- * Model Responsabilidade
+ * Model Responsibility
  * 
  */
-export type Responsabilidade = Prisma.ResponsabilidadeModel
+export type Responsibility = Prisma.ResponsibilityModel
 /**
  * Model User
  * 

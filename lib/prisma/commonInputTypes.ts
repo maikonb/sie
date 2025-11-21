@@ -213,21 +213,21 @@ export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedDateTimeNullableFilter<$PrismaModel>
 }
 
-export type EnumSituacaoCronogramaFilter<$PrismaModel = never> = {
-  equals?: $Enums.SituacaoCronograma | Prisma.EnumSituacaoCronogramaFieldRefInput<$PrismaModel>
-  in?: $Enums.SituacaoCronograma[] | Prisma.ListEnumSituacaoCronogramaFieldRefInput<$PrismaModel>
-  notIn?: $Enums.SituacaoCronograma[] | Prisma.ListEnumSituacaoCronogramaFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumSituacaoCronogramaFilter<$PrismaModel> | $Enums.SituacaoCronograma
+export type EnumScheduleStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.ScheduleStatus | Prisma.EnumScheduleStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.ScheduleStatus[] | Prisma.ListEnumScheduleStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.ScheduleStatus[] | Prisma.ListEnumScheduleStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumScheduleStatusFilter<$PrismaModel> | $Enums.ScheduleStatus
 }
 
-export type EnumSituacaoCronogramaWithAggregatesFilter<$PrismaModel = never> = {
-  equals?: $Enums.SituacaoCronograma | Prisma.EnumSituacaoCronogramaFieldRefInput<$PrismaModel>
-  in?: $Enums.SituacaoCronograma[] | Prisma.ListEnumSituacaoCronogramaFieldRefInput<$PrismaModel>
-  notIn?: $Enums.SituacaoCronograma[] | Prisma.ListEnumSituacaoCronogramaFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumSituacaoCronogramaWithAggregatesFilter<$PrismaModel> | $Enums.SituacaoCronograma
+export type EnumScheduleStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.ScheduleStatus | Prisma.EnumScheduleStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.ScheduleStatus[] | Prisma.ListEnumScheduleStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.ScheduleStatus[] | Prisma.ListEnumScheduleStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumScheduleStatusWithAggregatesFilter<$PrismaModel> | $Enums.ScheduleStatus
   _count?: Prisma.NestedIntFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumSituacaoCronogramaFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumSituacaoCronogramaFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumScheduleStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumScheduleStatusFilter<$PrismaModel>
 }
 
 export type IntNullableFilter<$PrismaModel = never> = {
@@ -257,21 +257,21 @@ export type IntNullableWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedIntNullableFilter<$PrismaModel>
 }
 
-export type EnumEsferaAdministrativaNullableFilter<$PrismaModel = never> = {
-  equals?: $Enums.EsferaAdministrativa | Prisma.EnumEsferaAdministrativaFieldRefInput<$PrismaModel> | null
-  in?: $Enums.EsferaAdministrativa[] | Prisma.ListEnumEsferaAdministrativaFieldRefInput<$PrismaModel> | null
-  notIn?: $Enums.EsferaAdministrativa[] | Prisma.ListEnumEsferaAdministrativaFieldRefInput<$PrismaModel> | null
-  not?: Prisma.NestedEnumEsferaAdministrativaNullableFilter<$PrismaModel> | $Enums.EsferaAdministrativa | null
+export type EnumAdministrativeSphereNullableFilter<$PrismaModel = never> = {
+  equals?: $Enums.AdministrativeSphere | Prisma.EnumAdministrativeSphereFieldRefInput<$PrismaModel> | null
+  in?: $Enums.AdministrativeSphere[] | Prisma.ListEnumAdministrativeSphereFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.AdministrativeSphere[] | Prisma.ListEnumAdministrativeSphereFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumAdministrativeSphereNullableFilter<$PrismaModel> | $Enums.AdministrativeSphere | null
 }
 
-export type EnumEsferaAdministrativaNullableWithAggregatesFilter<$PrismaModel = never> = {
-  equals?: $Enums.EsferaAdministrativa | Prisma.EnumEsferaAdministrativaFieldRefInput<$PrismaModel> | null
-  in?: $Enums.EsferaAdministrativa[] | Prisma.ListEnumEsferaAdministrativaFieldRefInput<$PrismaModel> | null
-  notIn?: $Enums.EsferaAdministrativa[] | Prisma.ListEnumEsferaAdministrativaFieldRefInput<$PrismaModel> | null
-  not?: Prisma.NestedEnumEsferaAdministrativaNullableWithAggregatesFilter<$PrismaModel> | $Enums.EsferaAdministrativa | null
+export type EnumAdministrativeSphereNullableWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.AdministrativeSphere | Prisma.EnumAdministrativeSphereFieldRefInput<$PrismaModel> | null
+  in?: $Enums.AdministrativeSphere[] | Prisma.ListEnumAdministrativeSphereFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.AdministrativeSphere[] | Prisma.ListEnumAdministrativeSphereFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumAdministrativeSphereNullableWithAggregatesFilter<$PrismaModel> | $Enums.AdministrativeSphere | null
   _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumEsferaAdministrativaNullableFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumEsferaAdministrativaNullableFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumAdministrativeSphereNullableFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumAdministrativeSphereNullableFilter<$PrismaModel>
 }
 
 export type NestedIntFilter<$PrismaModel = never> = {
@@ -459,21 +459,21 @@ export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedDateTimeNullableFilter<$PrismaModel>
 }
 
-export type NestedEnumSituacaoCronogramaFilter<$PrismaModel = never> = {
-  equals?: $Enums.SituacaoCronograma | Prisma.EnumSituacaoCronogramaFieldRefInput<$PrismaModel>
-  in?: $Enums.SituacaoCronograma[] | Prisma.ListEnumSituacaoCronogramaFieldRefInput<$PrismaModel>
-  notIn?: $Enums.SituacaoCronograma[] | Prisma.ListEnumSituacaoCronogramaFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumSituacaoCronogramaFilter<$PrismaModel> | $Enums.SituacaoCronograma
+export type NestedEnumScheduleStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.ScheduleStatus | Prisma.EnumScheduleStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.ScheduleStatus[] | Prisma.ListEnumScheduleStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.ScheduleStatus[] | Prisma.ListEnumScheduleStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumScheduleStatusFilter<$PrismaModel> | $Enums.ScheduleStatus
 }
 
-export type NestedEnumSituacaoCronogramaWithAggregatesFilter<$PrismaModel = never> = {
-  equals?: $Enums.SituacaoCronograma | Prisma.EnumSituacaoCronogramaFieldRefInput<$PrismaModel>
-  in?: $Enums.SituacaoCronograma[] | Prisma.ListEnumSituacaoCronogramaFieldRefInput<$PrismaModel>
-  notIn?: $Enums.SituacaoCronograma[] | Prisma.ListEnumSituacaoCronogramaFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumSituacaoCronogramaWithAggregatesFilter<$PrismaModel> | $Enums.SituacaoCronograma
+export type NestedEnumScheduleStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.ScheduleStatus | Prisma.EnumScheduleStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.ScheduleStatus[] | Prisma.ListEnumScheduleStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.ScheduleStatus[] | Prisma.ListEnumScheduleStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumScheduleStatusWithAggregatesFilter<$PrismaModel> | $Enums.ScheduleStatus
   _count?: Prisma.NestedIntFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumSituacaoCronogramaFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumSituacaoCronogramaFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumScheduleStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumScheduleStatusFilter<$PrismaModel>
 }
 
 export type NestedIntNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -503,21 +503,21 @@ export type NestedFloatNullableFilter<$PrismaModel = never> = {
   not?: Prisma.NestedFloatNullableFilter<$PrismaModel> | number | null
 }
 
-export type NestedEnumEsferaAdministrativaNullableFilter<$PrismaModel = never> = {
-  equals?: $Enums.EsferaAdministrativa | Prisma.EnumEsferaAdministrativaFieldRefInput<$PrismaModel> | null
-  in?: $Enums.EsferaAdministrativa[] | Prisma.ListEnumEsferaAdministrativaFieldRefInput<$PrismaModel> | null
-  notIn?: $Enums.EsferaAdministrativa[] | Prisma.ListEnumEsferaAdministrativaFieldRefInput<$PrismaModel> | null
-  not?: Prisma.NestedEnumEsferaAdministrativaNullableFilter<$PrismaModel> | $Enums.EsferaAdministrativa | null
+export type NestedEnumAdministrativeSphereNullableFilter<$PrismaModel = never> = {
+  equals?: $Enums.AdministrativeSphere | Prisma.EnumAdministrativeSphereFieldRefInput<$PrismaModel> | null
+  in?: $Enums.AdministrativeSphere[] | Prisma.ListEnumAdministrativeSphereFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.AdministrativeSphere[] | Prisma.ListEnumAdministrativeSphereFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumAdministrativeSphereNullableFilter<$PrismaModel> | $Enums.AdministrativeSphere | null
 }
 
-export type NestedEnumEsferaAdministrativaNullableWithAggregatesFilter<$PrismaModel = never> = {
-  equals?: $Enums.EsferaAdministrativa | Prisma.EnumEsferaAdministrativaFieldRefInput<$PrismaModel> | null
-  in?: $Enums.EsferaAdministrativa[] | Prisma.ListEnumEsferaAdministrativaFieldRefInput<$PrismaModel> | null
-  notIn?: $Enums.EsferaAdministrativa[] | Prisma.ListEnumEsferaAdministrativaFieldRefInput<$PrismaModel> | null
-  not?: Prisma.NestedEnumEsferaAdministrativaNullableWithAggregatesFilter<$PrismaModel> | $Enums.EsferaAdministrativa | null
+export type NestedEnumAdministrativeSphereNullableWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.AdministrativeSphere | Prisma.EnumAdministrativeSphereFieldRefInput<$PrismaModel> | null
+  in?: $Enums.AdministrativeSphere[] | Prisma.ListEnumAdministrativeSphereFieldRefInput<$PrismaModel> | null
+  notIn?: $Enums.AdministrativeSphere[] | Prisma.ListEnumAdministrativeSphereFieldRefInput<$PrismaModel> | null
+  not?: Prisma.NestedEnumAdministrativeSphereNullableWithAggregatesFilter<$PrismaModel> | $Enums.AdministrativeSphere | null
   _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumEsferaAdministrativaNullableFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumEsferaAdministrativaNullableFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumAdministrativeSphereNullableFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumAdministrativeSphereNullableFilter<$PrismaModel>
 }
 
 

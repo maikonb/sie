@@ -40,18 +40,17 @@ export function OTPForm({ ...props }: React.ComponentProps<typeof Card>) {
       callbackUrl: "/",
     });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if ((res as any)?.error) alert((res as any).error);
+    if (res?.error) alert(res.error);
   };
 
   const handleResend = async () => {
     if (!email) return;
-    const r = await fetch("/api/auth/otp/request", {
+    const response = await fetch("/api/auth/otp/request", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ email }),
     });
-    const j = await r.json();
-    if (!j?.ok) alert(j?.error ?? "Falha ao reenviar código");
+    if (!response.ok) alert("Falha ao reenviar código");
   };
   
   return (

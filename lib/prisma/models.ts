@@ -8,13 +8,13 @@
  *
  * 🟢 You can import this file directly.
  */
-export type * from './models/Proponente'
-export type * from './models/Projeto'
-export type * from './models/PlanoTrabalho'
-export type * from './models/CronogramaItem'
-export type * from './models/EquipeItem'
-export type * from './models/Participante'
-export type * from './models/Responsabilidade'
+export type * from './models/Proponent'
+export type * from './models/Project'
+export type * from './models/WorkPlan'
+export type * from './models/ScheduleItem'
+export type * from './models/TeamMember'
+export type * from './models/Participant'
+export type * from './models/Responsibility'
 export type * from './models/User'
 export type * from './models/Account'
 export type * from './models/Session'

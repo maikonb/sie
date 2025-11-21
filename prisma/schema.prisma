@@ -15,34 +15,34 @@ datasource db {
 }
 
 
-enum SituacaoCronograma {
-  PLANEJADO
-  EM_ANDAMENTO
-  CONCLUIDO
-  ATRASADO
-  SUSPENSO
+enum ScheduleStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  DELAYED
+  SUSPENDED
 }
 
-enum EsferaAdministrativa {
+enum AdministrativeSphere {
   FEDERAL
-  ESTADUAL
+  STATE
   MUNICIPAL
-  PRIVADO
-  OUTRO
+  PRIVATE
+  OTHER
 }
 
-enum SetorAprovacao {
-  TECNICO
-  JURIDICO
-  OUTRO
+enum ApprovalSector {
+  TECHNICAL
+  LEGAL
+  OTHER
 }
 
-model Proponente {
+model Proponent {
   id        Int       @id @default(autoincrement())
-  nome      String
+  name      String
   email     String    @unique
-  instituicao String?
-  projetos  Projeto[]
+  institution String?
+  projects  Project[]
 
   userId   String?   @unique
   user     User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -51,124 +51,124 @@ model Proponente {
   updatedAt DateTime  @updatedAt
 }
 
-model Projeto {
+model Project {
   id            Int           @id @default(autoincrement())
-  titulo        String
-  objetivos     String        @db.Text
-  justificativa String        @db.Text
-  abrangencia   String        @db.Text
+  title         String
+  objectives    String        @db.Text
+  justification String        @db.Text
+  scope         String        @db.Text
 
-  proponenteId  Int
-  proponente    Proponente    @relation(fields: [proponenteId], references: [id], onDelete: Restrict)
+  proponentId   Int
+  proponent     Proponent     @relation(fields: [proponentId], references: [id], onDelete: Restrict)
 
-  planoTrabalho PlanoTrabalho?
+  workPlan      WorkPlan?
 
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
-  @@index([proponenteId])
+  @@index([proponentId])
 }
 
-model PlanoTrabalho {
+model WorkPlan {
   id          Int      @id @default(autoincrement())
 
-  // 1–1 com Projeto
-  projetoId   Int      @unique
-  projeto     Projeto  @relation(fields: [projetoId], references: [id], onDelete: Cascade)
+  // 1–1 with Project
+  projectId   Int      @unique
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
-  // Campos típicos do plano (Anexo ao ACT)
-  objeto               String?   @db.Text       // título/descrição sucinta do objeto
-  diagnostico          String?   @db.Text
-  abrangenciaPlano     String?   @db.Text
-  justificativaPlano   String?   @db.Text
+  // Typical plan fields
+  object               String?   @db.Text       // title/short description of the object
+  diagnosis            String?   @db.Text
+  planScope            String?   @db.Text
+  planJustification    String?   @db.Text
 
-  objetivoGeral        String    @db.Text
-  objetivosEspecificos Json?             
+  generalObjective     String    @db.Text
+  specificObjectives   Json?             
 
-  metodologia          String?   @db.Text
-  unidadeResponsavel   String?
-  gestorICT            String?
-  gestorParceiro       String?
+  methodology          String?   @db.Text
+  responsibleUnit      String?
+  ictManager           String?
+  partnerManager       String?
 
-  acompanhamento       String?   @db.Text
-  resultadosEsperados  String?   @db.Text
+  monitoring           String?   @db.Text
+  expectedResults      String?   @db.Text
 
-  vigenciaInicio       DateTime?
-  vigenciaFim          DateTime?
+  validityStart        DateTime?
+  validityEnd          DateTime?
 
-  cronograma     CronogramaItem[]
-  equipe         EquipeItem[]
-  participantes  Participante[]
-  responsabilidades Responsabilidade[]
+  schedule       ScheduleItem[]
+  team           TeamMember[]
+  participants   Participant[]
+  responsibilities Responsibility[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-model CronogramaItem {
+model ScheduleItem {
   id               Int            @id @default(autoincrement())
-  planoTrabalhoId  Int
-  planoTrabalho    PlanoTrabalho  @relation(fields: [planoTrabalhoId], references: [id], onDelete: Cascade)
+  workPlanId       Int
+  workPlan         WorkPlan       @relation(fields: [workPlanId], references: [id], onDelete: Cascade)
 
-  eixoMeta     String
-  acaoEtapa    String         @db.Text
-  indicador    String         @db.Text
-  responsavel  String
-  inicio       DateTime
-  termino      DateTime
-  situacao     SituacaoCronograma @default(PLANEJADO)
+  axisGoal         String
+  actionStep       String         @db.Text
+  indicator        String         @db.Text
+  responsible      String
+  startDate        DateTime
+  endDate          DateTime
+  status           ScheduleStatus @default(PLANNED)
 
-  @@index([planoTrabalhoId])
+  @@index([workPlanId])
 }
 
-model EquipeItem {
+model TeamMember {
   id               Int            @id @default(autoincrement())
-  planoTrabalhoId  Int
-  planoTrabalho    PlanoTrabalho  @relation(fields: [planoTrabalhoId], references: [id], onDelete: Cascade)
+  workPlanId       Int
+  workPlan         WorkPlan       @relation(fields: [workPlanId], references: [id], onDelete: Cascade)
 
-  nome            String
-  titulacaoArea   String?
-  instituicao     String?
-  funcao          String?
-  cargaHorariaSemanal Int?
+  name            String
+  titrationArea   String?
+  institution     String?
+  role            String?
+  weeklyHours     Int?
 
-  @@index([planoTrabalhoId])
+  @@index([workPlanId])
 }
 
-model Participante {
+model Participant {
   id               Int            @id @default(autoincrement())
-  planoTrabalhoId  Int
-  planoTrabalho    PlanoTrabalho  @relation(fields: [planoTrabalhoId], references: [id], onDelete: Cascade)
+  workPlanId       Int
+  workPlan         WorkPlan       @relation(fields: [workPlanId], references: [id], onDelete: Cascade)
 
-  orgaoEntidade  String
-  cnpj           String?
-  esfera         EsferaAdministrativa?
-  endereco       String?         @db.Text
+  entityOrg        String
+  cnpj             String?
+  sphere           AdministrativeSphere?
+  address          String?         @db.Text
 
-  autoridadeNome   String?
-  autoridadeCargo  String?
-  autoridadeDoc    String?       // CPF/RG
-  contato          String?       // e-mail/telefone
+  authorityName    String?
+  authorityRole    String?
+  authorityDoc     String?       // CPF/RG
+  contact          String?       // e-mail/phone
 
-  responsabilidades Responsabilidade[]
+  responsibilities Responsibility[]
 
-  @@index([planoTrabalhoId])
+  @@index([workPlanId])
 
 }
 
-model Responsabilidade {
+model Responsibility {
   id               Int            @id @default(autoincrement())
-  planoTrabalhoId  Int
-  planoTrabalho    PlanoTrabalho  @relation(fields: [planoTrabalhoId], references: [id], onDelete: Cascade)
+  workPlanId       Int
+  workPlan         WorkPlan       @relation(fields: [workPlanId], references: [id], onDelete: Cascade)
 
-  // Responsabilidade pode estar associada a um participante específico (ou ser geral do plano)
-  participanteId   Int?
-  participante     Participante?  @relation(fields: [participanteId], references: [id])
+  // Responsibility can be associated with a specific participant (or be general to the plan)
+  participantId    Int?
+  participant      Participant?   @relation(fields: [participantId], references: [id])
 
-  descricao        String         @db.Text
+  description      String         @db.Text
 
-  @@index([planoTrabalhoId])
-  @@index([participanteId])
+  @@index([workPlanId])
+  @@index([participantId])
 }
 
 model User {
@@ -178,7 +178,7 @@ model User {
   emailVerified DateTime?
   image         String?
 
-  proponente    Proponente?
+  proponent     Proponent?
 
   accounts      Account[]
   sessions      Session[]
@@ -227,16 +227,16 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// --- OTP por e-mail (código de 6 dígitos, hash + expiração) ---
+// --- OTP by email (6 digit code, hash + expiration) ---
 model OtpCode {
   id        String   @id @default(cuid())
   email     String
-  codeHash  String   // bcrypt hash do código
+  codeHash  String   // bcrypt hash of the code
   expiresAt DateTime
   usedAt    DateTime?
   sentAt    DateTime  @default(now())
 
-  // opcional: limitar tentativas
+  // optional: limit attempts
   attempts  Int       @default(0)
 
   @@index([email])

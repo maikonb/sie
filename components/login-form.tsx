@@ -42,7 +42,7 @@ export function LoginForm({
     });
     
     if (response?.ok) router.push(`/auth/otp?email=${encodeURIComponent(email)}`);
-    else alert(response?.error ?? "Falha ao enviar código");
+    else alert("Falha ao enviar código");
   };
 
   

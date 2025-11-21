@@ -1,0 +1,20 @@
+{
+  // Habilita verificação completa do TypeScript
+  "typescript.tsserver.experimental.enableProjectDiagnostics": true,
+
+  // Mostra todos os erros e warnings
+  "typescript.validate.enable": true,
+  "javascript.validate.enable": false,
+
+  // Reporta erros de arquivos fora do workspace
+  "typescript.reportStyleChecksAsWarnings": false,
+
+  // Mostrar todos os erros do projeto no Problems
+  "problems.decorations.enabled": true,
+
+  // Configura para não ignorar arquivos JS/TS
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/.git": true
+  }
+}

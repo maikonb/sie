@@ -65,11 +65,11 @@ export const authOptions: NextAuthOptions = {
           user = await prisma.user.create({ data: { email } });
         }
 
-        // garante Proponente vinculado (1-1 por e-mail)
-        const exists = await prisma.proponente.findFirst({ where: { email } });
+        // garante  vinculado (1-1 por e-mail)
+        const exists = await prisma.proponent.findFirst({ where: { email } });
         if (!exists) {
-          await prisma.proponente.create({
-            data: { nome: email.split("@")[0], email },
+          await prisma.proponent.create({
+            data: { name: email.split("@")[0], email },
           });
         }
 
@@ -92,14 +92,14 @@ export const authOptions: NextAuthOptions = {
       if (!isUfr(email)) 
         return false;
 
-      await prisma.proponente.upsert({
+      await prisma.proponent.upsert({
         where: { email }, 
         update: {
           userId: user.id,
         },
         create: {
           email,
-          nome: email.split("@")[0],
+          name: email.split("@")[0],
           userId: user.id,
         },
       });

@@ -7,9 +7,15 @@ export default async function middleware(req: NextRequest) {
 
   const { pathname } = req.nextUrl;
 
-  const publicPaths = ["/auth/login", "/auth/otp"];
-  if (publicPaths.some((path) => pathname.startsWith(path))) {
+  const authPaths = ["/auth/login", "/auth/otp"];
+  const isAuthPath = authPaths.some((path) => pathname.startsWith(path));
+  if (!token && isAuthPath) {
     return NextResponse.next();
+  }
+
+  if (token && isAuthPath) {
+    const dashboardUrl = new URL("/dashboard", req.url);
+    return NextResponse.redirect(dashboardUrl);
   }
 
   if (!token) {

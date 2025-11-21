@@ -49,13 +49,13 @@ export const AnyNull = runtime.objectEnumValues.instances.AnyNull
 
 
 export const ModelName = {
-  Proponente: 'Proponente',
-  Projeto: 'Projeto',
-  PlanoTrabalho: 'PlanoTrabalho',
-  CronogramaItem: 'CronogramaItem',
-  EquipeItem: 'EquipeItem',
-  Participante: 'Participante',
-  Responsabilidade: 'Responsabilidade',
+  Proponent: 'Proponent',
+  Project: 'Project',
+  WorkPlan: 'WorkPlan',
+  ScheduleItem: 'ScheduleItem',
+  TeamMember: 'TeamMember',
+  Participant: 'Participant',
+  Responsibility: 'Responsibility',
   User: 'User',
   Account: 'Account',
   Session: 'Session',
@@ -79,109 +79,109 @@ export const TransactionIsolationLevel = runtime.makeStrictEnum({
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
 
 
-export const ProponenteScalarFieldEnum = {
+export const ProponentScalarFieldEnum = {
   id: 'id',
-  nome: 'nome',
+  name: 'name',
   email: 'email',
-  instituicao: 'instituicao',
+  institution: 'institution',
   userId: 'userId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
-export type ProponenteScalarFieldEnum = (typeof ProponenteScalarFieldEnum)[keyof typeof ProponenteScalarFieldEnum]
+export type ProponentScalarFieldEnum = (typeof ProponentScalarFieldEnum)[keyof typeof ProponentScalarFieldEnum]
 
 
-export const ProjetoScalarFieldEnum = {
+export const ProjectScalarFieldEnum = {
   id: 'id',
-  titulo: 'titulo',
-  objetivos: 'objetivos',
-  justificativa: 'justificativa',
-  abrangencia: 'abrangencia',
-  proponenteId: 'proponenteId',
+  title: 'title',
+  objectives: 'objectives',
+  justification: 'justification',
+  scope: 'scope',
+  proponentId: 'proponentId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
-export type ProjetoScalarFieldEnum = (typeof ProjetoScalarFieldEnum)[keyof typeof ProjetoScalarFieldEnum]
+export type ProjectScalarFieldEnum = (typeof ProjectScalarFieldEnum)[keyof typeof ProjectScalarFieldEnum]
 
 
-export const PlanoTrabalhoScalarFieldEnum = {
+export const WorkPlanScalarFieldEnum = {
   id: 'id',
-  projetoId: 'projetoId',
-  objeto: 'objeto',
-  diagnostico: 'diagnostico',
-  abrangenciaPlano: 'abrangenciaPlano',
-  justificativaPlano: 'justificativaPlano',
-  objetivoGeral: 'objetivoGeral',
-  objetivosEspecificos: 'objetivosEspecificos',
-  metodologia: 'metodologia',
-  unidadeResponsavel: 'unidadeResponsavel',
-  gestorICT: 'gestorICT',
-  gestorParceiro: 'gestorParceiro',
-  acompanhamento: 'acompanhamento',
-  resultadosEsperados: 'resultadosEsperados',
-  vigenciaInicio: 'vigenciaInicio',
-  vigenciaFim: 'vigenciaFim',
+  projectId: 'projectId',
+  object: 'object',
+  diagnosis: 'diagnosis',
+  planScope: 'planScope',
+  planJustification: 'planJustification',
+  generalObjective: 'generalObjective',
+  specificObjectives: 'specificObjectives',
+  methodology: 'methodology',
+  responsibleUnit: 'responsibleUnit',
+  ictManager: 'ictManager',
+  partnerManager: 'partnerManager',
+  monitoring: 'monitoring',
+  expectedResults: 'expectedResults',
+  validityStart: 'validityStart',
+  validityEnd: 'validityEnd',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
-export type PlanoTrabalhoScalarFieldEnum = (typeof PlanoTrabalhoScalarFieldEnum)[keyof typeof PlanoTrabalhoScalarFieldEnum]
+export type WorkPlanScalarFieldEnum = (typeof WorkPlanScalarFieldEnum)[keyof typeof WorkPlanScalarFieldEnum]
 
 
-export const CronogramaItemScalarFieldEnum = {
+export const ScheduleItemScalarFieldEnum = {
   id: 'id',
-  planoTrabalhoId: 'planoTrabalhoId',
-  eixoMeta: 'eixoMeta',
-  acaoEtapa: 'acaoEtapa',
-  indicador: 'indicador',
-  responsavel: 'responsavel',
-  inicio: 'inicio',
-  termino: 'termino',
-  situacao: 'situacao'
+  workPlanId: 'workPlanId',
+  axisGoal: 'axisGoal',
+  actionStep: 'actionStep',
+  indicator: 'indicator',
+  responsible: 'responsible',
+  startDate: 'startDate',
+  endDate: 'endDate',
+  status: 'status'
 } as const
 
-export type CronogramaItemScalarFieldEnum = (typeof CronogramaItemScalarFieldEnum)[keyof typeof CronogramaItemScalarFieldEnum]
+export type ScheduleItemScalarFieldEnum = (typeof ScheduleItemScalarFieldEnum)[keyof typeof ScheduleItemScalarFieldEnum]
 
 
-export const EquipeItemScalarFieldEnum = {
+export const TeamMemberScalarFieldEnum = {
   id: 'id',
-  planoTrabalhoId: 'planoTrabalhoId',
-  nome: 'nome',
-  titulacaoArea: 'titulacaoArea',
-  instituicao: 'instituicao',
-  funcao: 'funcao',
-  cargaHorariaSemanal: 'cargaHorariaSemanal'
+  workPlanId: 'workPlanId',
+  name: 'name',
+  titrationArea: 'titrationArea',
+  institution: 'institution',
+  role: 'role',
+  weeklyHours: 'weeklyHours'
 } as const
 
-export type EquipeItemScalarFieldEnum = (typeof EquipeItemScalarFieldEnum)[keyof typeof EquipeItemScalarFieldEnum]
+export type TeamMemberScalarFieldEnum = (typeof TeamMemberScalarFieldEnum)[keyof typeof TeamMemberScalarFieldEnum]
 
 
-export const ParticipanteScalarFieldEnum = {
+export const ParticipantScalarFieldEnum = {
   id: 'id',
-  planoTrabalhoId: 'planoTrabalhoId',
-  orgaoEntidade: 'orgaoEntidade',
+  workPlanId: 'workPlanId',
+  entityOrg: 'entityOrg',
   cnpj: 'cnpj',
-  esfera: 'esfera',
-  endereco: 'endereco',
-  autoridadeNome: 'autoridadeNome',
-  autoridadeCargo: 'autoridadeCargo',
-  autoridadeDoc: 'autoridadeDoc',
-  contato: 'contato'
+  sphere: 'sphere',
+  address: 'address',
+  authorityName: 'authorityName',
+  authorityRole: 'authorityRole',
+  authorityDoc: 'authorityDoc',
+  contact: 'contact'
 } as const
 
-export type ParticipanteScalarFieldEnum = (typeof ParticipanteScalarFieldEnum)[keyof typeof ParticipanteScalarFieldEnum]
+export type ParticipantScalarFieldEnum = (typeof ParticipantScalarFieldEnum)[keyof typeof ParticipantScalarFieldEnum]
 
 
-export const ResponsabilidadeScalarFieldEnum = {
+export const ResponsibilityScalarFieldEnum = {
   id: 'id',
-  planoTrabalhoId: 'planoTrabalhoId',
-  participanteId: 'participanteId',
-  descricao: 'descricao'
+  workPlanId: 'workPlanId',
+  participantId: 'participantId',
+  description: 'description'
 } as const
 
-export type ResponsabilidadeScalarFieldEnum = (typeof ResponsabilidadeScalarFieldEnum)[keyof typeof ResponsabilidadeScalarFieldEnum]
+export type ResponsibilityScalarFieldEnum = (typeof ResponsibilityScalarFieldEnum)[keyof typeof ResponsibilityScalarFieldEnum]
 
 
 export const UserScalarFieldEnum = {

@@ -9,32 +9,32 @@
 * 🟢 You can import this file directly.
 */
 
-export const SituacaoCronograma = {
-  PLANEJADO: 'PLANEJADO',
-  EM_ANDAMENTO: 'EM_ANDAMENTO',
-  CONCLUIDO: 'CONCLUIDO',
-  ATRASADO: 'ATRASADO',
-  SUSPENSO: 'SUSPENSO'
+export const ScheduleStatus = {
+  PLANNED: 'PLANNED',
+  IN_PROGRESS: 'IN_PROGRESS',
+  COMPLETED: 'COMPLETED',
+  DELAYED: 'DELAYED',
+  SUSPENDED: 'SUSPENDED'
 } as const
 
-export type SituacaoCronograma = (typeof SituacaoCronograma)[keyof typeof SituacaoCronograma]
+export type ScheduleStatus = (typeof ScheduleStatus)[keyof typeof ScheduleStatus]
 
 
-export const EsferaAdministrativa = {
+export const AdministrativeSphere = {
   FEDERAL: 'FEDERAL',
-  ESTADUAL: 'ESTADUAL',
+  STATE: 'STATE',
   MUNICIPAL: 'MUNICIPAL',
-  PRIVADO: 'PRIVADO',
-  OUTRO: 'OUTRO'
+  PRIVATE: 'PRIVATE',
+  OTHER: 'OTHER'
 } as const
 
-export type EsferaAdministrativa = (typeof EsferaAdministrativa)[keyof typeof EsferaAdministrativa]
+export type AdministrativeSphere = (typeof AdministrativeSphere)[keyof typeof AdministrativeSphere]
 
 
-export const SetorAprovacao = {
-  TECNICO: 'TECNICO',
-  JURIDICO: 'JURIDICO',
-  OUTRO: 'OUTRO'
+export const ApprovalSector = {
+  TECHNICAL: 'TECHNICAL',
+  LEGAL: 'LEGAL',
+  OTHER: 'OTHER'
 } as const
 
-export type SetorAprovacao = (typeof SetorAprovacao)[keyof typeof SetorAprovacao]
+export type ApprovalSector = (typeof ApprovalSector)[keyof typeof ApprovalSector]

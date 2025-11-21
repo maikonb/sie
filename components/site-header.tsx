@@ -1,6 +1,7 @@
 "use client"
 
 import { SidebarIcon } from "lucide-react"
+import { signOut } from "next-auth/react"
 
 import { SearchForm } from "@/components/search-form"
 import {
@@ -17,6 +18,7 @@ import { useSidebar } from "@/components/ui/sidebar"
 
 export function SiteHeader() {
   const { toggleSidebar } = useSidebar()
+  const handleLogout = () => signOut({ redirect: true, callbackUrl: "/auth/login" });
 
   return (
     <header className="bg-background sticky top-0 z-50 flex w-full items-center border-b">
@@ -43,7 +45,14 @@ export function SiteHeader() {
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
-        {/* <SearchForm className="w-full sm:ml-auto sm:w-auto" /> */}
+        <Button
+          className="ml-auto"
+          variant="outline"
+          size="sm"
+          onClick={handleLogout}
+        >
+          Logout
+        </Button>
       </div>
     </header>
   )
