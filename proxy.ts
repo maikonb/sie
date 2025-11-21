@@ -23,6 +23,17 @@ export default async function middleware(req: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  const isFirstAccess = token.firstAccess as boolean;
+  const isFirstAccessPage = pathname === "/projetos/primeiro-acesso";
+
+  if (isFirstAccess && !isFirstAccessPage) {
+    return NextResponse.redirect(new URL("/projetos/primeiro-acesso", req.url));
+  }
+
+  if (!isFirstAccess && isFirstAccessPage) {
+    return NextResponse.redirect(new URL("/dashboard", req.url));
+  }
+
   return NextResponse.next();
 }
 
