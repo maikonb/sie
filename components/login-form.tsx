@@ -40,9 +40,9 @@ export function LoginForm({
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ email }),
     });
-    const json = await response.json();
-    if (json?.ok) router.push(`/otp?email=${encodeURIComponent(email)}`);
-    else alert(json?.error ?? "Falha ao enviar código");
+    
+    if (response?.ok) router.push(`/auth/otp?email=${encodeURIComponent(email)}`);
+    else alert(response?.error ?? "Falha ao enviar código");
   };
 
   

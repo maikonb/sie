@@ -23,7 +23,7 @@ const config: runtime.GetPrismaClientConfig = {
       "value": "prisma-client"
     },
     "output": {
-      "value": "/home/maikon/workspace/sie/lib/prisma",
+      "value": "/home/fundacao-mt/Documents/repositories/personal/works/sie/lib/prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -37,7 +37,7 @@ const config: runtime.GetPrismaClientConfig = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "/home/maikon/workspace/sie/prisma/schema.prisma",
+    "sourceFilePath": "/home/fundacao-mt/Documents/repositories/personal/works/sie/prisma/schema.prisma",
     "isCustomOutput": true
   },
   "relativePath": "../../prisma",

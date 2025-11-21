@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     host: process.env.SMTP_HOST!,
     port: Number(process.env.SMTP_PORT!),
     secure: false,
-    auth: {
+    auth: process.env.NODE_ENV !== "production" ? undefined : {
       user: process.env.SMTP_USER!,
       pass: process.env.SMTP_PASS!,
     },
