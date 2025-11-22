@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Controller, useForm } from "react-hook-form"
-import { toast } from "sonner"
+import { notify } from "@/lib/notifications"
 import * as z from "zod"
 
 import { Button } from "@/components/ui/button"
@@ -23,18 +23,24 @@ import {
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 
+import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
+
 const formSchema = z.object({
   username: z
     .string()
-    .min(3, "Username must be at least 3 characters.")
-    .max(10, "Username must be at most 10 characters.")
+    .min(3, "O nome deve ter pelo menos 3 caracteres.")
+    .max(100, "O nome deve ter no máximo 100 caracteres.")
     .regex(
-      /^[a-zA-Z0-9_]+$/,
-      "Username can only contain letters, numbers, and underscores."
+      /^[a-zA-ZÀ-ÿ\s]+$/,
+      "O nome deve conter apenas letras e espaços."
     ),
 })
 
 export default function FormRhfInput() {
+  const router = useRouter();
+  const { update } = useSession();
+  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -42,21 +48,31 @@ export default function FormRhfInput() {
     },
   })
 
-  function onSubmit(data: z.infer<typeof formSchema>) {
-    toast("You submitted the following values:", {
-      description: (
-        <pre className="bg-code text-code-foreground mt-2 w-[320px] overflow-x-auto rounded-md p-4">
-          <code>{JSON.stringify(data, null, 2)}</code>
-        </pre>
-      ),
-      position: "bottom-right",
-      classNames: {
-        content: "flex flex-col gap-2",
-      },
-      style: {
-        "--border-radius": "calc(var(--radius)  + 4px)",
-      } as React.CSSProperties,
-    })
+  async function onSubmit(data: z.infer<typeof formSchema>) {
+    try {
+      const response = await fetch("/api/user/first-access", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      const res = await response.json();
+      
+      if (!response.ok || res.error) {
+        notify.error(res.error || "USER-002");
+        return;
+      }
+      
+      notify.success("Dados salvos com sucesso!");
+      
+      // Force session update to reflect firstAccess: false
+      await update();
+      
+      router.push("/projetos");
+      // router.refresh();
+    } catch (error) {
+      console.error(error);
+      notify.error("SYS-001");
+    }
   }
 
   return (
@@ -83,7 +99,7 @@ export default function FormRhfInput() {
                     id="form-rhf-input-username"
                     aria-invalid={fieldState.invalid}
                     placeholder="Nome Completo"
-                    autoComplete="nome"
+                    autoComplete="name"
                   />
                   <FieldDescription>
                     Este nome será utilizado para preenchimento
@@ -101,7 +117,7 @@ export default function FormRhfInput() {
       <CardFooter>
         <Field orientation="horizontal">
           <Button type="submit" form="form-rhf-input">
-            Salvar
+            Salvar e Continuar
           </Button>
         </Field>
       </CardFooter>

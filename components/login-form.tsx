@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { cn } from "@/lib/utils"
+import { notify } from "@/lib/notifications"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -41,8 +42,12 @@ export function LoginForm({
       body: JSON.stringify({ email }),
     });
     
-    if (response?.ok) router.push(`/auth/otp?email=${encodeURIComponent(email)}`);
-    else alert("Falha ao enviar código");
+    if (response?.ok) {
+      router.push(`/auth/otp?email=${encodeURIComponent(email)}`);
+    } else {
+      const data = await response.json();
+      notify.error(data.error || "AUTH-006");
+    }
   };
 
   

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button"
+import { notify } from "@/lib/notifications"
 import {
   Card,
   CardContent,
@@ -34,7 +35,7 @@ export function OTPForm({ ...props }: React.ComponentProps<typeof Card>) {
 
   const handleVerify = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!email) return alert("Email ausente.");
+    if (!email) return notify.error("AUTH-005");
     
     const res = await signIn("credentials", {
       email,
@@ -43,7 +44,13 @@ export function OTPForm({ ...props }: React.ComponentProps<typeof Card>) {
     });
 
     if (res?.error) {
-      alert(res.error);
+      console.error(res.error);
+
+      if (res.error === "CredentialsSignin") {
+        notify.error("AUTH-003"); // Default to incorrect code if generic
+      } else {
+        notify.error(res.error); // Pass the code (or message) directly
+      }
       return;
     }
 
@@ -63,7 +70,8 @@ export function OTPForm({ ...props }: React.ComponentProps<typeof Card>) {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ email }),
     });
-    if (!response.ok) alert("Falha ao reenviar código");
+    if (!response.ok) notify.error("AUTH-006");
+    else notify.success("Código reenviado com sucesso!");
   };
   
   return (
