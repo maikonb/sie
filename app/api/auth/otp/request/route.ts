@@ -16,6 +16,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: APP_ERRORS.AUTH_INVALID_DOMAIN.code }, { status: 400 });
   }
 
+  // Rate Limiting: 1 request per 25 seconds
+  const lastOtp = await prisma.otpCode.findFirst({
+    where: {
+      email: clean,
+      sentAt: { gt: new Date(Date.now() - 25 * 1000) },
+    },
+  });
+
+  if (lastOtp) {
+    return NextResponse.json({ ok: false, error: APP_ERRORS.AUTH_TOO_MANY_REQUESTS.code }, { status: 429 });
+  }
+
   // gere um código de 6 dígitos
   const code = Math.floor(100000 + Math.random() * 900000).toString();
   const codeHash = await hash(code, 10);

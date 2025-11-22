@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button"
@@ -32,6 +32,17 @@ export function OTPForm({ ...props }: React.ComponentProps<typeof Card>) {
   const router = useRouter();
   const email = params.get("email") ?? "";
   const [code, setCode] = useState("");
+  const [timeLeft, setTimeLeft] = useState(25);
+
+  useEffect(() => {
+    if (timeLeft <= 0) return;
+
+    const intervalId = setInterval(() => {
+      setTimeLeft((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [timeLeft]);
 
   const handleVerify = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -64,14 +75,23 @@ export function OTPForm({ ...props }: React.ComponentProps<typeof Card>) {
   };
 
   const handleResend = async () => {
-    if (!email) return;
+    if (!email || timeLeft > 0) return;
+    
     const response = await fetch("/api/auth/otp/request", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ email }),
     });
-    if (!response.ok) notify.error("AUTH-006");
-    else notify.success("Código reenviado com sucesso!");
+
+    console.log(response)
+    
+    if (!response.ok) {
+      const res = await response.json();
+      notify.error(res.error || "AUTH-006");
+    } else {
+      notify.success("Código reenviado com sucesso!");
+      setTimeLeft(25);
+    }
   };
   
   return (
@@ -112,8 +132,13 @@ export function OTPForm({ ...props }: React.ComponentProps<typeof Card>) {
             <Button type="submit">Verificar</Button>
             <FieldDescription className="text-center">
               Não recebeu?{" "}
-              <button type="button" onClick={handleResend} className="underline">
-                Reenviar
+              <button 
+                type="button" 
+                onClick={handleResend} 
+                className="underline disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={timeLeft > 0}
+              >
+                {timeLeft > 0 ? `Reenviar em ${timeLeft}s` : "Reenviar"}
               </button>
             </FieldDescription>
           </FieldGroup>
