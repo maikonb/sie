@@ -1,10 +1,9 @@
 "use client"
-
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Controller, useForm } from "react-hook-form"
 import { notify } from "@/lib/notifications"
 import * as z from "zod"
-
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -22,9 +21,10 @@ import {
   FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Camera } from "lucide-react"
 
 const formSchema = z.object({
   username: z
@@ -35,11 +35,13 @@ const formSchema = z.object({
       /^[a-zA-ZÀ-ÿ\s]+$/,
       "O nome deve conter apenas letras e espaços."
     ),
+  image: z.any().optional(),
 })
 
 export default function FormRhfInput() {
   const router = useRouter();
   const { update } = useSession();
+  const [preview, setPreview] = useState<string | null>(null);
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -50,10 +52,15 @@ export default function FormRhfInput() {
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
     try {
+      const formData = new FormData();
+      formData.append("username", data.username);
+      if (data.image) {
+        formData.append("image", data.image);
+      }
+
       const response = await fetch("/api/user/first-access", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: formData,
       });
       const res = await response.json();
       
@@ -68,12 +75,23 @@ export default function FormRhfInput() {
       await update();
       
       router.push("/projetos");
-      // router.refresh();
     } catch (error) {
       console.error(error);
       notify.error("SYS-001");
     }
   }
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      form.setValue("image", file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   return (
     <Card className="w-full sm:max-w-md">
@@ -84,7 +102,28 @@ export default function FormRhfInput() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form id="form-rhf-input" onSubmit={form.handleSubmit(onSubmit)}>
+        <form id="form-rhf-input" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <div className="flex flex-col items-center justify-center space-y-4">
+             <div className="relative group cursor-pointer">
+                <Avatar className="h-24 w-24 border-2 border-border">
+                  <AvatarImage src={preview || ""} />
+                  <AvatarFallback className="bg-muted text-muted-foreground text-2xl">
+                    {form.watch("username")?.charAt(0)?.toUpperCase() || "?"}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+                  <Camera className="h-8 w-8 text-white" />
+                </div>
+                <Input
+                  type="file"
+                  accept="image/*"
+                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                  onChange={handleImageChange}
+                />
+             </div>
+             <p className="text-xs text-muted-foreground">Clique para alterar a foto</p>
+          </div>
+
           <FieldGroup>
             <Controller
               name="username"
@@ -116,7 +155,7 @@ export default function FormRhfInput() {
       </CardContent>
       <CardFooter>
         <Field orientation="horizontal">
-          <Button type="submit" form="form-rhf-input">
+          <Button type="submit" form="form-rhf-input" className="w-full">
             Salvar e Continuar
           </Button>
         </Field>

@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { storageService } from "@/lib/storage";
 
 import { APP_ERRORS } from "@/lib/errors";
 
@@ -13,11 +14,23 @@ export async function POST(req: Request) {
   }
 
   try {
-    const body = await req.json();
-    const { username } = body;
+    const formData = await req.formData();
+    const username = formData.get("username") as string;
+    const image = formData.get("image") as File | null;
 
     if (!username || typeof username !== "string") {
       return NextResponse.json({ error: APP_ERRORS.USER_INVALID_NAME.code }, { status: 400 });
+    }
+
+    let imageUrl: string | undefined;
+
+    if (image && image.size > 0) {
+      // Validate image type/size if needed
+      if (!image.type.startsWith("image/")) {
+         return NextResponse.json({ error: "Arquivo deve ser uma imagem." }, { status: 400 });
+      }
+      
+      imageUrl = await storageService.uploadFile(image, "profile-images");
     }
 
     // Update User
@@ -25,6 +38,7 @@ export async function POST(req: Request) {
       where: { email: session.user.email },
       data: {
         name: username,
+        image: imageUrl, // Update image if exists
         firstAccess: false,
       },
     });

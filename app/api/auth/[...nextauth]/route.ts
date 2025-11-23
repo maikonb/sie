@@ -156,6 +156,7 @@ export const authOptions: NextAuthOptions = {
         token.firstAccess = user.firstAccess;
         token.color = user.color;
         token.name = user.name;
+        token.picture = user.image;
       }
 
       if (trigger === "update" && token.uid) {
@@ -166,6 +167,7 @@ export const authOptions: NextAuthOptions = {
           token.firstAccess = freshUser.firstAccess;
           token.color = freshUser.color || undefined;
           token.name = freshUser.name || undefined;
+          token.picture = freshUser.image || undefined;
         }
       }
 
@@ -178,6 +180,7 @@ export const authOptions: NextAuthOptions = {
         session.user.firstAccess = token.firstAccess as boolean;
         session.user.color = token.color || undefined;
         session.user.name = token.name;
+        session.user.image = token.picture;
       }
       return session;
     },
