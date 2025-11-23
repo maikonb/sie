@@ -19,7 +19,7 @@ async function createProjeto(formData: FormData) {
 
   if (!email) {
     // usuário não autenticado
-    redirect("/login");
+    redirect("/auth/login");
   }
 
   const titulo = String(formData.get("titulo") || "").trim();
@@ -34,7 +34,7 @@ async function createProjeto(formData: FormData) {
   }
 
   // encontra o Proponente pelo e-mail (único)
-  const proponente = await prisma.proponente.findUnique({
+  const proponente = await prisma.proponent.findUnique({
     where: { email },
     select: { id: true },
   });
@@ -44,13 +44,13 @@ async function createProjeto(formData: FormData) {
     throw new Error("Proponente não encontrado para este usuário.");
   }
 
-  await prisma.projeto.create({
+  await prisma.project.create({
     data: {
-      titulo,
-      objetivos,
-      justificativa,
-      abrangencia,
-      proponente: { connect: { id: proponente.id } },
+      title: titulo,
+      objectives: objetivos,
+      justification: justificativa,
+      scope: abrangencia,
+      proponent: { connect: { id: proponente.id } },
     },
   });
 
@@ -60,7 +60,7 @@ async function createProjeto(formData: FormData) {
 export default async function NovaPaginaProjeto() {
   // opcional: checar sessão aqui para proteger a página
   const session = await getServerSession(authOptions);
-  if (!session?.user) redirect("/login");
+  if (!session?.user) redirect("/auth/login");
 
   return (
     <div className="p-4 bg-muted/50 aspect-video rounded-xl">

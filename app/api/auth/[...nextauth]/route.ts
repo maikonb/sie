@@ -4,6 +4,7 @@ import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "@/lib/db";
 import { compare } from "bcryptjs";
+import { APP_ERRORS } from "@/lib/errors";
 
 // helper: restringe domínio
 function isUfr(email?: string | null) {
@@ -30,7 +31,9 @@ export const authOptions: NextAuthOptions = {
         const email = creds?.email?.toLowerCase().trim();
         const code = creds?.code?.trim();
 
-        if (!email || !code || !isUfr(email)) return null;
+        if (!email || !code || !isUfr(email)) {
+          throw new Error(APP_ERRORS.AUTH_INVALID_DOMAIN.code);
+        }
 
         // busca OTP válido
         const otp = await prisma.otpCode.findFirst({
@@ -41,7 +44,9 @@ export const authOptions: NextAuthOptions = {
           },
           orderBy: { sentAt: "desc" }, // pega o último
         });
-        if (!otp) return null;
+        if (!otp) {
+          throw new Error(APP_ERRORS.AUTH_INVALID_CODE.code);
+        }
 
         const ok = await compare(code, otp.codeHash);
         if (!ok) {
@@ -50,7 +55,7 @@ export const authOptions: NextAuthOptions = {
             where: { id: otp.id },
             data: { attempts: { increment: 1 } },
           });
-          return null;
+          throw new Error(APP_ERRORS.AUTH_INCORRECT_CODE.code);
         }
 
         // marca como usado
@@ -62,18 +67,44 @@ export const authOptions: NextAuthOptions = {
         // encontra ou cria o usuário
         let user = await prisma.user.findUnique({ where: { email } });
         if (!user) {
-          user = await prisma.user.create({ data: { email } });
+          // Generate random color
+          const colors = ["bg-red-500", "bg-orange-500", "bg-amber-500", "bg-yellow-500", "bg-lime-500", "bg-green-500", "bg-emerald-500", "bg-teal-500", "bg-cyan-500", "bg-sky-500", "bg-blue-500", "bg-indigo-500", "bg-violet-500", "bg-purple-500", "bg-fuchsia-500", "bg-pink-500", "bg-rose-500"];
+          const randomColor = colors[Math.floor(Math.random() * colors.length)];
+
+          user = await prisma.user.create({ 
+            data: { 
+              email,
+              emailVerified: new Date(), // verifica email no cadastro via OTP
+              firstAccess: true,
+              color: randomColor,
+            } 
+          });
+        } else {
+          // Se já existe, atualiza emailVerified se ainda não estiver
+          if (!user.emailVerified) {
+            user = await prisma.user.update({
+              where: { id: user.id },
+              data: { emailVerified: new Date() },
+            });
+          }
         }
 
-        // garante Proponente vinculado (1-1 por e-mail)
-        const exists = await prisma.proponente.findFirst({ where: { email } });
+        // garante  vinculado (1-1 por e-mail)
+        const exists = await prisma.proponent.findFirst({ where: { email } });
         if (!exists) {
-          await prisma.proponente.create({
-            data: { nome: email.split("@")[0], email },
+          await prisma.proponent.create({
+            data: { name: email.split("@")[0], email },
           });
         }
 
-        return user; // sucesso => NextAuth cria JWT
+        return {
+          id: user.id,
+          name: user.name || undefined,
+          email: user.email,
+          image: user.image,
+          firstAccess: user.firstAccess,
+          color: user.color || undefined,
+        };
       },
     }),
   ],
@@ -92,14 +123,14 @@ export const authOptions: NextAuthOptions = {
       if (!isUfr(email)) 
         return false;
 
-      await prisma.proponente.upsert({
+      await prisma.proponent.upsert({
         where: { email }, 
         update: {
           userId: user.id,
         },
         create: {
           email,
-          nome: email.split("@")[0],
+          name: email.split("@")[0],
           userId: user.id,
         },
       });
@@ -107,16 +138,34 @@ export const authOptions: NextAuthOptions = {
       return true;
     },
 
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.uid = user.id; 
+        token.firstAccess = user.firstAccess;
+        token.color = user.color;
+        token.name = user.name;
       }
+
+      if (trigger === "update" && token.uid) {
+        const freshUser = await prisma.user.findUnique({
+          where: { id: token.uid },
+        });
+        if (freshUser) {
+          token.firstAccess = freshUser.firstAccess;
+          token.color = freshUser.color || undefined;
+          token.name = freshUser.name || undefined;
+        }
+      }
+
       return token;
     },
 
     async session({ session, token }) {
       if (session.user && token.uid) {
         session.user.id = token.uid; 
+        session.user.firstAccess = token.firstAccess as boolean;
+        session.user.color = token.color || undefined;
+        session.user.name = token.name;
       }
       return session;
     },
@@ -132,7 +181,7 @@ export const authOptions: NextAuthOptions = {
     // verifyRequest: "/verificar-email",
     // error: "/erro-auth",
     newUser: "/projetos/primeiro-acesso", 
-    signIn: "/login",
+    signIn: "/auth/login",
   },
 };
 

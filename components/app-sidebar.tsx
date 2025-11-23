@@ -4,7 +4,6 @@ import * as React from "react"
 import {
   BookOpen,
   Bot,
-  Command,
   Frame,
   LifeBuoy,
   Map,
@@ -30,13 +29,9 @@ import {
 
 import { Logo } from "./logo"
 import Link from "next/link"
+import { useSession } from "next-auth/react"
 
 const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
   navMain: [
     {
       title: "Playground",
@@ -156,6 +151,15 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { data: session, status } = useSession();
+  
+  const user = {
+    name: session?.user?.name || "Usuário",
+    email: session?.user?.email || "usuario@ufr.edu.br",
+    avatar: session?.user?.image || "",
+    color: session?.user?.color || "bg-sidebar-primary",
+  };
+
   return (
     <Sidebar
       className="top-(--header-height) h-[calc(100svh-var(--header-height))]!"
@@ -178,7 +182,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={user} isLoading={status === "loading"} />
       </SidebarFooter>
     </Sidebar>
   )

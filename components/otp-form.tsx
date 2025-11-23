@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button"
+import { notify } from "@/lib/notifications"
 import {
   Card,
   CardContent,
@@ -23,35 +24,74 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp"
 
+import { getSession } from "next-auth/react";
+
 export function OTPForm({ ...props }: React.ComponentProps<typeof Card>) {
 
   const params = useSearchParams();
   const router = useRouter();
   const email = params.get("email") ?? "";
   const [code, setCode] = useState("");
+  const [timeLeft, setTimeLeft] = useState(25);
+
+  useEffect(() => {
+    if (timeLeft <= 0) return;
+
+    const intervalId = setInterval(() => {
+      setTimeLeft((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [timeLeft]);
 
   const handleVerify = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!email) return alert("Email ausente.");
+    if (!email) return notify.error("AUTH-005");
+    
     const res = await signIn("credentials", {
       email,
       code,
-      redirect: true,
-      callbackUrl: "/",
+      redirect: false,
     });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if ((res as any)?.error) alert((res as any).error);
+
+    if (res?.error) {
+      console.error(res.error);
+
+      if (res.error === "CredentialsSignin") {
+        notify.error("AUTH-003"); // Default to incorrect code if generic
+      } else {
+        notify.error(res.error); // Pass the code (or message) directly
+      }
+      return;
+    }
+
+    // Check session for firstAccess
+    const session = await getSession();
+    if (session?.user?.firstAccess) {
+      router.push("/projetos/primeiro-acesso");
+    } else {
+      router.push("/projetos/");
+    }
   };
 
   const handleResend = async () => {
-    if (!email) return;
-    const r = await fetch("/api/auth/otp/request", {
+    if (!email || timeLeft > 0) return;
+    
+    const response = await fetch("/api/auth/otp/request", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ email }),
     });
-    const j = await r.json();
-    if (!j?.ok) alert(j?.error ?? "Falha ao reenviar código");
+
+    console.log(response)
+    
+    if (!response.ok) {
+      const res = await response.json();
+      notify.error(res.error || "AUTH-006");
+    } else {
+      notify.success("Código reenviado com sucesso!");
+      setTimeLeft(25);
+    }
   };
   
   return (
@@ -92,8 +132,13 @@ export function OTPForm({ ...props }: React.ComponentProps<typeof Card>) {
             <Button type="submit">Verificar</Button>
             <FieldDescription className="text-center">
               Não recebeu?{" "}
-              <button type="button" onClick={handleResend} className="underline">
-                Reenviar
+              <button 
+                type="button" 
+                onClick={handleResend} 
+                className="underline disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={timeLeft > 0}
+              >
+                {timeLeft > 0 ? `Reenviar em ${timeLeft}s` : "Reenviar"}
               </button>
             </FieldDescription>
           </FieldGroup>
