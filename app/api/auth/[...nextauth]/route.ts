@@ -6,10 +6,22 @@ import { prisma } from "@/lib/db";
 import { compare } from "bcryptjs";
 import { APP_ERRORS } from "@/lib/errors";
 
-// helper: restringe domínio
+const ALLOWED_DOMAINS = (
+  process.env.ALLOWED_EMAIL_DOMAINS?.toLowerCase().split(",").map(d => d.trim()) ?? []
+);
+
 function isUfr(email?: string | null) {
-  return !!email && email.toLowerCase().endsWith("@ufr.edu.br");
+  if (!email) return false;
+
+  const domain = email.substring(email.indexOf("@") + 1).toLowerCase();
+
+  if (ALLOWED_DOMAINS.length > 0) {
+    return ALLOWED_DOMAINS.includes(domain);
+  }
+
+  return domain === "ufr.edu.br";
 }
+
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
