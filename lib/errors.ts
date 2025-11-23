@@ -8,7 +8,8 @@ export const APP_ERRORS = {
   AUTH_UNAUTHORIZED: { code: "AUTH-007", message: "Não autorizado." },
   AUTH_TOO_MANY_REQUESTS: { code: "AUTH-008", message: "Muitas solicitações. Tente novamente em 25 segundos." },
   USER_INVALID_NAME: { code: "USER-001", message: "Nome inválido." },
-  USER_UPDATE_FAILED: { code: "USER-002", message: "Erro ao salvar dados." },
+  USER_INVALID_IMAGE: { code: "USER-002", message: "Imagem inválida." },
+  USER_UPDATE_FAILED: { code: "USER-003", message: "Erro ao salvar dados." },
   GENERIC_ERROR: { code: "SYS-001", message: "Ocorreu um erro inesperado." },
 } as const;
 

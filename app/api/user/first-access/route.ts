@@ -25,9 +25,8 @@ export async function POST(req: Request) {
     let imageUrl: string | undefined;
 
     if (image && image.size > 0) {
-      // Validate image type/size if needed
       if (!image.type.startsWith("image/")) {
-         return NextResponse.json({ error: "Arquivo deve ser uma imagem." }, { status: 400 });
+        return NextResponse.json({ error: APP_ERRORS.USER_INVALID_IMAGE.code }, { status: 400 });
       }
       
       imageUrl = await storageService.uploadFile(image, "profile-images");
@@ -38,7 +37,7 @@ export async function POST(req: Request) {
       where: { email: session.user.email },
       data: {
         name: username,
-        image: imageUrl, // Update image if exists
+        image: imageUrl,
         firstAccess: false,
       },
     });

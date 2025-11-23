@@ -42,6 +42,7 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@playwright/test": "^1.56.1",
     "@tailwindcss/postcss": "^4.1.17",
     "@types/node": "^20",
     "@types/nodemailer": "^7.0.3",
