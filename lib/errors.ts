@@ -10,6 +10,12 @@ export const APP_ERRORS = {
   USER_INVALID_NAME: { code: "USER-001", message: "Nome inválido." },
   USER_INVALID_IMAGE: { code: "USER-002", message: "Imagem inválida." },
   USER_UPDATE_FAILED: { code: "USER-003", message: "Erro ao salvar dados." },
+  USER_EMAIL_IN_USE: { code: "USER-004", message: "Este e-mail já está em uso." },
+  USER_SAME_EMAIL: { code: "USER-005", message: "O novo e-mail deve ser diferente do atual." },
+  USER_INVALID_EMAIL: { code: "USER-006", message: "E-mail inválido." },
+  UPLOAD_NO_FILE: { code: "UPL-001", message: "Nenhum arquivo enviado." },
+  UPLOAD_INVALID_TYPE: { code: "UPL-002", message: "Apenas imagens são permitidas." },
+  UPLOAD_FAILED: { code: "UPL-003", message: "Erro ao fazer upload do arquivo." },
   GENERIC_ERROR: { code: "SYS-001", message: "Ocorreu um erro inesperado." },
 } as const;
 

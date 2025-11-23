@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { hash } from "bcryptjs";
 import { APP_ERRORS } from "@/lib/errors";
-import { sendByTemplate, sendEmail } from "@/lib/email";
+import { sendOtpEmail } from "@/lib/email";
 
 function isUfr(email?: string | null) {
   return !!email && email.toLowerCase().endsWith("@ufr.edu.br");
@@ -37,16 +37,7 @@ export async function POST(req: Request) {
     data: { email: clean, codeHash, expiresAt },
   });
 
-  if (process.env.NODE_ENV !== "production") {
-    await sendEmail({
-      to: clean,
-      subject: `Seu código de acesso: ${code}`,
-      text: `Seu código é: ${code}`,
-      html: `<p>Seu código é: <b>${code}</b></p>`,
-    });
-  } else {
-    await sendByTemplate("OTP", { code }, clean);
-  }
+  sendOtpEmail(clean, code);
 
   return NextResponse.json({ ok: true });
 }

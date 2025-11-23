@@ -71,3 +71,16 @@ export async function sendByTemplate<K extends EmailTemplateKey>(
     html,
   });
 }
+
+export async function sendOtpEmail(to: string, code: string) {
+  if (process.env.NODE_ENV !== "production") {
+    await sendEmail({
+      to,
+      subject: `Seu código de acesso: ${code}`,
+      text: `Seu código é: ${code}`,
+      html: `<p>Seu código é: <b>${code}</b></p>`,
+    });
+  } else {
+    await sendByTemplate("OTP", { code }, to);
+  }
+}

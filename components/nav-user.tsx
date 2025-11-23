@@ -29,9 +29,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar"
+} from "@/components/providers/sidebar"
 
 import { Skeleton } from "@/components/ui/skeleton"
+import { useRouter } from "next/navigation"
 
 export function NavUser({
   user,
@@ -46,6 +47,8 @@ export function NavUser({
   isLoading?: boolean
 }) {
   const { isMobile } = useSidebar()
+  const router = useRouter()
+
   const userImageDefault = user.name.split(" ").map((n) => n[0]).join("").substring(0, 2).toUpperCase()
 
   return (
@@ -112,7 +115,7 @@ export function NavUser({
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push("/account")}>
                 <BadgeCheck />
                 Account
               </DropdownMenuItem>

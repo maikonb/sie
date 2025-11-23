@@ -25,7 +25,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
+} from "@/components/providers/sidebar"
 
 import { Logo } from "./logo"
 import Link from "next/link"
