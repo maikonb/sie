@@ -1,31 +1,13 @@
 "use client"
 
 import * as React from "react"
-import {
-  BookOpen,
-  Bot,
-  Frame,
-  LifeBuoy,
-  Map,
-  PieChart,
-  Send,
-  Settings2,
-  SquareTerminal,
-} from "lucide-react"
+import { BookOpen, Bot, Frame, LifeBuoy, Map, PieChart, Send, Settings2, SquareTerminal } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
 import { NavProjects } from "@/components/nav-projects"
 import { NavSecondary } from "@/components/nav-secondary"
 import { NavUser } from "@/components/nav-user"
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/providers/sidebar"
+import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/providers/sidebar"
 
 import { Logo } from "./logo"
 import Link from "next/link"
@@ -151,20 +133,17 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { data: session, status } = useSession();
-  
+  const { data: session, status } = useSession()
+
   const user = {
     name: session?.user?.name || "Usuário",
     email: session?.user?.email || "usuario@ufr.edu.br",
     avatar: session?.user?.image || "",
     color: session?.user?.color || "bg-sidebar-primary",
-  };
+  }
 
   return (
-    <Sidebar
-      className="top-(--header-height) h-[calc(100svh-var(--header-height))]!"
-      {...props}
-    >
+    <Sidebar className="top-(--header-height) h-[calc(100svh-var(--header-height))]!" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>

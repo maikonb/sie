@@ -17,11 +17,11 @@ export const APP_ERRORS = {
   UPLOAD_INVALID_TYPE: { code: "UPL-002", message: "Apenas imagens são permitidas." },
   UPLOAD_FAILED: { code: "UPL-003", message: "Erro ao fazer upload do arquivo." },
   GENERIC_ERROR: { code: "SYS-001", message: "Ocorreu um erro inesperado." },
-} as const;
+} as const
 
-export type AppErrorCode = keyof typeof APP_ERRORS;
+export type AppErrorCode = keyof typeof APP_ERRORS
 
 export function getAppError(code: string) {
-  const error = Object.values(APP_ERRORS).find((e) => e.code === code);
-  return error || { code, message: code };
+  const error = Object.values(APP_ERRORS).find((e) => e.code === code)
+  return error || { code, message: code }
 }

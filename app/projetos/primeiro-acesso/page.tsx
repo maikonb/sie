@@ -5,21 +5,8 @@ import { notify } from "@/lib/notifications"
 import * as z from "zod"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
@@ -31,18 +18,15 @@ const formSchema = z.object({
     .string()
     .min(3, "O nome deve ter pelo menos 3 caracteres.")
     .max(100, "O nome deve ter no máximo 100 caracteres.")
-    .regex(
-      /^[a-zA-ZÀ-ÿ\s]+$/,
-      "O nome deve conter apenas letras e espaços."
-    ),
+    .regex(/^[a-zA-ZÀ-ÿ\s]+$/, "O nome deve conter apenas letras e espaços."),
   image: z.any().optional(),
 })
 
 export default function FormRhfInput() {
-  const router = useRouter();
-  const { update } = useSession();
-  const [preview, setPreview] = useState<string | null>(null);
-  
+  const router = useRouter()
+  const { update } = useSession()
+  const [preview, setPreview] = useState<string | null>(null)
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -52,76 +36,67 @@ export default function FormRhfInput() {
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
     try {
-      const formData = new FormData();
-      formData.append("username", data.username);
+      const formData = new FormData()
+      formData.append("username", data.username)
       if (data.image) {
-        formData.append("image", data.image);
+        formData.append("image", data.image)
       }
 
       const response = await fetch("/api/user/first-access", {
         method: "POST",
         body: formData,
-      });
-      const res = await response.json();
-      
+      })
+      const res = await response.json()
+
       if (!response.ok || res.error) {
-        notify.error(res.error || "USER-002");
-        return;
+        notify.error(res.error || "USER-002")
+        return
       }
-      
-      notify.success("Dados salvos com sucesso!");
-      
+
+      notify.success("Dados salvos com sucesso!")
+
       // Force session update to reflect firstAccess: false
-      await update();
-      
-      router.push("/projetos");
+      await update()
+
+      router.push("/projetos")
     } catch (error) {
-      console.error(error);
-      notify.error("SYS-001");
+      console.error(error)
+      notify.error("SYS-001")
     }
   }
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const file = e.target.files?.[0]
     if (file) {
-      form.setValue("image", file);
-      const reader = new FileReader();
+      form.setValue("image", file)
+      const reader = new FileReader()
       reader.onloadend = () => {
-        setPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+        setPreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
     }
-  };
+  }
 
   return (
     <Card className="w-full sm:max-w-md">
       <CardHeader>
         <CardTitle>Configurações do Perfil</CardTitle>
-        <CardDescription>
-          Atualize seus dados para facilitar os demais cadastros.
-        </CardDescription>
+        <CardDescription>Atualize seus dados para facilitar os demais cadastros.</CardDescription>
       </CardHeader>
       <CardContent>
         <form id="form-rhf-input" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="flex flex-col items-center justify-center space-y-4">
-             <div className="relative group cursor-pointer">
-                <Avatar className="h-24 w-24 border-2 border-border">
-                  <AvatarImage src={preview || ""} />
-                  <AvatarFallback className="bg-muted text-muted-foreground text-2xl">
-                    {form.watch("username")?.charAt(0)?.toUpperCase() || "?"}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
-                  <Camera className="h-8 w-8 text-white" />
-                </div>
-                <Input
-                  type="file"
-                  accept="image/*"
-                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                  onChange={handleImageChange}
-                />
-             </div>
-             <p className="text-xs text-muted-foreground">Clique para alterar a foto</p>
+            <div className="relative group cursor-pointer">
+              <Avatar className="h-24 w-24 border-2 border-border">
+                <AvatarImage src={preview || ""} />
+                <AvatarFallback className="bg-muted text-muted-foreground text-2xl">{form.watch("username")?.charAt(0)?.toUpperCase() || "?"}</AvatarFallback>
+              </Avatar>
+              <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+                <Camera className="h-8 w-8 text-white" />
+              </div>
+              <Input type="file" accept="image/*" className="absolute inset-0 h-full w-full cursor-pointer opacity-0" onChange={handleImageChange} />
+            </div>
+            <p className="text-xs text-muted-foreground">Clique para alterar a foto</p>
           </div>
 
           <FieldGroup>
@@ -130,23 +105,10 @@ export default function FormRhfInput() {
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="form-rhf-input-username">
-                    Nome Completo do Proponente
-                  </FieldLabel>
-                  <Input
-                    {...field}
-                    id="form-rhf-input-username"
-                    aria-invalid={fieldState.invalid}
-                    placeholder="Nome Completo"
-                    autoComplete="name"
-                  />
-                  <FieldDescription>
-                    Este nome será utilizado para preenchimento
-                    de todas as documentações.
-                  </FieldDescription>
-                  {fieldState.invalid && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
+                  <FieldLabel htmlFor="form-rhf-input-username">Nome Completo do Proponente</FieldLabel>
+                  <Input {...field} id="form-rhf-input-username" aria-invalid={fieldState.invalid} placeholder="Nome Completo" autoComplete="name" />
+                  <FieldDescription>Este nome será utilizado para preenchimento de todas as documentações.</FieldDescription>
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )}
             />

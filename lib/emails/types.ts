@@ -1,12 +1,12 @@
-export type EmailTemplateKey = "OTP";
+export type EmailTemplateKey = "OTP"
 
 export interface EmailTemplateVars {
   OTP: {
-    code: string;
-  };
+    code: string
+  }
 }
 
 export interface EmailTemplate {
-  subject: string;
-  html: string;
+  subject: string
+  html: string
 }

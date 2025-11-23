@@ -1,4 +1,4 @@
-import { EmailTemplate } from "../types";
+import { EmailTemplate } from "../types"
 
 export const otpTemplate: EmailTemplate = {
   subject: "Seu código de acesso",
@@ -109,4 +109,4 @@ export const otpTemplate: EmailTemplate = {
 </body>
 </html>
   `,
-};
+}

@@ -1,74 +1,67 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { notify } from "@/lib/notifications";
-import { useSession } from "next-auth/react";
+import { useState } from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { notify } from "@/lib/notifications"
+import { useSession } from "next-auth/react"
 
 const profileFormSchema = z.object({
   name: z.string().min(2, {
     message: "Nome deve ter pelo menos 2 caracteres.",
   }),
   image: z.any().optional(),
-});
+})
 
-type ProfileFormValues = z.infer<typeof profileFormSchema>;
+type ProfileFormValues = z.infer<typeof profileFormSchema>
 
 export function ProfileForm({ user }: { user: any }) {
-  const { update } = useSession();
-  const [isLoading, setIsLoading] = useState(false);
-  const [preview, setPreview] = useState(user.avatar);
+  const { update } = useSession()
+  const [isLoading, setIsLoading] = useState(false)
+  const [preview, setPreview] = useState(user.avatar)
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
       name: user.name,
     },
-  });
+  })
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const file = e.target.files?.[0]
     if (file) {
-      const reader = new FileReader();
+      const reader = new FileReader()
       reader.onloadend = () => {
-        setPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+        setPreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
     }
-  };
+  }
 
   async function onSubmit(data: ProfileFormValues) {
-    setIsLoading(true);
+    setIsLoading(true)
     try {
-      let imageUrl = user.avatar;
+      let imageUrl = user.avatar
 
-      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement
       if (fileInput?.files?.[0]) {
-        const formData = new FormData();
-        formData.append("file", fileInput.files[0]);
-        
-        const uploadRes = await fetch("/api/upload", { // We need to implement this or use existing logic
+        const formData = new FormData()
+        formData.append("file", fileInput.files[0])
+
+        const uploadRes = await fetch("/api/upload", {
+          // We need to implement this or use existing logic
           method: "POST",
-          body: formData
-        });
-         
+          body: formData,
+        })
+
         if (uploadRes.ok) {
-          const uploadData = await uploadRes.json();
-          imageUrl = uploadData.url;
+          const uploadData = await uploadRes.json()
+          imageUrl = uploadData.url
         }
       }
 
@@ -79,19 +72,19 @@ export function ProfileForm({ user }: { user: any }) {
           name: data.name,
           image: imageUrl,
         }),
-      });
+      })
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Falha ao atualizar perfil");
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Falha ao atualizar perfil")
       }
 
-      await update({ name: data.name, image: imageUrl });
-      notify.success("Perfil atualizado com sucesso!");
+      await update({ name: data.name, image: imageUrl })
+      notify.success("Perfil atualizado com sucesso!")
     } catch (error: any) {
-      notify.error(error.message);
+      notify.error(error.message)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
   }
 
@@ -118,9 +111,7 @@ export function ProfileForm({ user }: { user: any }) {
               <FormControl>
                 <Input placeholder="Seu nome" {...field} />
               </FormControl>
-              <FormDescription>
-                Este é o nome que será exibido publicamente.
-              </FormDescription>
+              <FormDescription>Este é o nome que será exibido publicamente.</FormDescription>
               <FormMessage className="absolute -bottom-5 left-0 text-xs" />
             </FormItem>
           )}
@@ -130,5 +121,5 @@ export function ProfileForm({ user }: { user: any }) {
         </Button>
       </form>
     </Form>
-  );
+  )
 }

@@ -1,35 +1,35 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/db";
-import { NextResponse } from "next/server";
-import { storageService } from "@/lib/storage";
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
+import { prisma } from "@/lib/db"
+import { NextResponse } from "next/server"
+import { storageService } from "@/lib/storage"
 
-import { APP_ERRORS } from "@/lib/errors";
+import { APP_ERRORS } from "@/lib/errors"
 
 export async function POST(req: Request) {
-  const session = await getServerSession(authOptions);
+  const session = await getServerSession(authOptions)
 
   if (!session?.user?.email) {
-    return NextResponse.json({ error: APP_ERRORS.AUTH_UNAUTHORIZED.code }, { status: 401 });
+    return NextResponse.json({ error: APP_ERRORS.AUTH_UNAUTHORIZED.code }, { status: 401 })
   }
 
   try {
-    const formData = await req.formData();
-    const username = formData.get("username") as string;
-    const image = formData.get("image") as File | null;
+    const formData = await req.formData()
+    const username = formData.get("username") as string
+    const image = formData.get("image") as File | null
 
     if (!username || typeof username !== "string") {
-      return NextResponse.json({ error: APP_ERRORS.USER_INVALID_NAME.code }, { status: 400 });
+      return NextResponse.json({ error: APP_ERRORS.USER_INVALID_NAME.code }, { status: 400 })
     }
 
-    let imageUrl: string | undefined;
+    let imageUrl: string | undefined
 
     if (image && image.size > 0) {
       if (!image.type.startsWith("image/")) {
-        return NextResponse.json({ error: APP_ERRORS.USER_INVALID_IMAGE.code }, { status: 400 });
+        return NextResponse.json({ error: APP_ERRORS.USER_INVALID_IMAGE.code }, { status: 400 })
       }
-      
-      imageUrl = await storageService.uploadFile(image, "profile-images");
+
+      imageUrl = await storageService.uploadFile(image, "profile-images")
     }
 
     // Update User
@@ -40,7 +40,7 @@ export async function POST(req: Request) {
         image: imageUrl,
         firstAccess: false,
       },
-    });
+    })
 
     // Update Proponent (if exists)
     await prisma.proponent.update({
@@ -48,11 +48,11 @@ export async function POST(req: Request) {
       data: {
         name: username,
       },
-    });
+    })
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Error updating first access:", error);
-    return NextResponse.json({ error: APP_ERRORS.USER_UPDATE_FAILED.code }, { status: 500 });
+    console.error("Error updating first access:", error)
+    return NextResponse.json({ error: APP_ERRORS.USER_UPDATE_FAILED.code }, { status: 500 })
   }
 }
