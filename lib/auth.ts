@@ -184,7 +184,7 @@ export const authOptions: NextAuthOptions = {
     },
 
     async redirect({ url, baseUrl }) {
-      if (url.startsWith(`${baseUrl}/projetos/primeiro-acesso`)) return url
+      if (url.startsWith(`${baseUrl}/conta/primeiro-acesso`)) return url
       return `${baseUrl}/projetos/`
     },
   },
@@ -193,7 +193,7 @@ export const authOptions: NextAuthOptions = {
     // signIn: "/entrar",
     // verifyRequest: "/verificar-email",
     // error: "/erro-auth",
-    newUser: "/projetos/primeiro-acesso",
+    newUser: "/conta/primeiro-acesso",
     signIn: "/auth/login",
   },
 }
