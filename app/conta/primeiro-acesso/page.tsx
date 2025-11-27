@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Camera } from "lucide-react"
+import { ImageCropper } from "@/components/ui/image-cropper"
 
 const formSchema = z.object({
   username: z
@@ -26,6 +27,8 @@ export default function FormRhfInput() {
   const router = useRouter()
   const { update } = useSession()
   const [preview, setPreview] = useState<string | null>(null)
+  const [cropperOpen, setCropperOpen] = useState(false)
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null)
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -68,13 +71,23 @@ export default function FormRhfInput() {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      form.setValue("image", file)
       const reader = new FileReader()
       reader.onloadend = () => {
-        setPreview(reader.result as string)
+        setImageToCrop(reader.result as string)
+        setCropperOpen(true)
       }
       reader.readAsDataURL(file)
+      e.target.value = ""
     }
+  }
+
+  const handleCropComplete = (croppedBlob: Blob) => {
+    const croppedUrl = URL.createObjectURL(croppedBlob)
+    setPreview(croppedUrl)
+
+    // Create a File object from the Blob to match what the form expects
+    const file = new File([croppedBlob], "profile-pic.jpg", { type: "image/jpeg" })
+    form.setValue("image", file)
   }
 
   return (
@@ -98,6 +111,14 @@ export default function FormRhfInput() {
             </div>
             <p className="text-xs text-muted-foreground">Clique para alterar a foto</p>
           </div>
+
+          <ImageCropper
+            open={cropperOpen}
+            onOpenChange={setCropperOpen}
+            imageSrc={imageToCrop}
+            onCropComplete={handleCropComplete}
+            aspectRatio={1}
+          />
 
           <FieldGroup>
             <Controller

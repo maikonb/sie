@@ -10,6 +10,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { notify } from "@/lib/notifications"
 import { useSession } from "next-auth/react"
+import { ImageCropper } from "@/components/ui/image-cropper"
 
 const profileFormSchema = z.object({
   name: z.string().min(2, {
@@ -24,6 +25,9 @@ export function ProfileForm({ user }: { user: any }) {
   const { update } = useSession()
   const [isLoading, setIsLoading] = useState(false)
   const [preview, setPreview] = useState(user.avatar)
+  const [cropperOpen, setCropperOpen] = useState(false)
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null)
+  const [croppedFile, setCroppedFile] = useState<Blob | null>(null)
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -37,10 +41,19 @@ export function ProfileForm({ user }: { user: any }) {
     if (file) {
       const reader = new FileReader()
       reader.onloadend = () => {
-        setPreview(reader.result as string)
+        setImageToCrop(reader.result as string)
+        setCropperOpen(true)
       }
       reader.readAsDataURL(file)
+      // Reset input value so the same file can be selected again if needed
+      e.target.value = ""
     }
+  }
+
+  const handleCropComplete = (croppedBlob: Blob) => {
+    setCroppedFile(croppedBlob)
+    const croppedUrl = URL.createObjectURL(croppedBlob)
+    setPreview(croppedUrl)
   }
 
   async function onSubmit(data: ProfileFormValues) {
@@ -48,13 +61,13 @@ export function ProfileForm({ user }: { user: any }) {
     try {
       let imageUrl = user.avatar
 
-      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement
-      if (fileInput?.files?.[0]) {
+      if (croppedFile) {
         const formData = new FormData()
-        formData.append("file", fileInput.files[0])
+        // Create a file from the blob
+        const file = new File([croppedFile], "profile-pic.jpg", { type: "image/jpeg" })
+        formData.append("file", file)
 
         const uploadRes = await fetch("/api/upload", {
-          // We need to implement this or use existing logic
           method: "POST",
           body: formData,
         })
@@ -101,6 +114,14 @@ export function ProfileForm({ user }: { user: any }) {
             <Input id="picture" type="file" accept="image/*" onChange={handleImageChange} />
           </div>
         </div>
+
+        <ImageCropper
+          open={cropperOpen}
+          onOpenChange={setCropperOpen}
+          imageSrc={imageToCrop}
+          onCropComplete={handleCropComplete}
+          aspectRatio={1}
+        />
 
         <FormField
           control={form.control}

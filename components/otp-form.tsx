@@ -52,7 +52,7 @@ export function OTPForm({ ...props }: React.ComponentProps<typeof Card>) {
     // Check session for firstAccess
     const session = await getSession()
     if (session?.user?.firstAccess) {
-      router.push("/projetos/primeiro-acesso")
+      router.push("/conta/primeiro-acesso")
     } else {
       router.push("/projetos/")
     }
