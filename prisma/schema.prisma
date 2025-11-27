@@ -10,9 +10,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
-
 
 enum ScheduleStatus {
   PLANNED
@@ -37,69 +35,70 @@ enum ApprovalSector {
 }
 
 model Proponent {
-  id        Int       @id @default(autoincrement())
-  name      String
-  email     String    @unique
+  id          Int       @id @default(autoincrement())
+  name        String
+  email       String    @unique
   institution String?
-  projects  Project[]
+  projects    Project[]
 
-  userId   String?   @unique
-  user     User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String? @unique
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Project {
-  id            Int           @id @default(autoincrement())
+  id            Int     @id @default(autoincrement())
+  slug          String? @unique
   title         String
-  objectives    String        @db.Text
-  justification String        @db.Text
-  scope         String        @db.Text
+  objectives    String  @db.Text
+  justification String  @db.Text
+  scope         String  @db.Text
 
-  proponentId   Int
-  proponent     Proponent     @relation(fields: [proponentId], references: [id], onDelete: Restrict)
+  proponentId Int
+  proponent   Proponent @relation(fields: [proponentId], references: [id], onDelete: Restrict)
 
-  workPlan      WorkPlan?
+  workPlan WorkPlan?
 
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  partnerships  ProjectPartnership[]
+  partnerships ProjectPartnership[]
 
   @@index([proponentId])
 }
 
 model WorkPlan {
-  id          Int      @id @default(autoincrement())
+  id Int @id @default(autoincrement())
 
   // 1–1 with Project
-  projectId   Int      @unique
-  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId Int     @unique
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   // Typical plan fields
-  object               String?   @db.Text       // title/short description of the object
-  diagnosis            String?   @db.Text
-  planScope            String?   @db.Text
-  planJustification    String?   @db.Text
+  object            String? @db.Text // title/short description of the object
+  diagnosis         String? @db.Text
+  planScope         String? @db.Text
+  planJustification String? @db.Text
 
-  generalObjective     String    @db.Text
-  specificObjectives   Json?             
+  generalObjective   String @db.Text
+  specificObjectives Json?
 
-  methodology          String?   @db.Text
-  responsibleUnit      String?
-  ictManager           String?
-  partnerManager       String?
+  methodology     String? @db.Text
+  responsibleUnit String?
+  ictManager      String?
+  partnerManager  String?
 
-  monitoring           String?   @db.Text
-  expectedResults      String?   @db.Text
+  monitoring      String? @db.Text
+  expectedResults String? @db.Text
 
-  validityStart        DateTime?
-  validityEnd          DateTime?
+  validityStart DateTime?
+  validityEnd   DateTime?
 
-  schedule       ScheduleItem[]
-  team           TeamMember[]
-  participants   Participant[]
+  schedule         ScheduleItem[]
+  team             TeamMember[]
+  participants     Participant[]
   responsibilities Responsibility[]
 
   createdAt DateTime @default(now())
@@ -107,105 +106,104 @@ model WorkPlan {
 }
 
 model ScheduleItem {
-  id               Int            @id @default(autoincrement())
-  workPlanId       Int
-  workPlan         WorkPlan       @relation(fields: [workPlanId], references: [id], onDelete: Cascade)
+  id         Int      @id @default(autoincrement())
+  workPlanId Int
+  workPlan   WorkPlan @relation(fields: [workPlanId], references: [id], onDelete: Cascade)
 
-  axisGoal         String
-  actionStep       String         @db.Text
-  indicator        String         @db.Text
-  responsible      String
-  startDate        DateTime
-  endDate          DateTime
-  status           ScheduleStatus @default(PLANNED)
+  axisGoal    String
+  actionStep  String         @db.Text
+  indicator   String         @db.Text
+  responsible String
+  startDate   DateTime
+  endDate     DateTime
+  status      ScheduleStatus @default(PLANNED)
 
   @@index([workPlanId])
 }
 
 model TeamMember {
-  id               Int            @id @default(autoincrement())
-  workPlanId       Int
-  workPlan         WorkPlan       @relation(fields: [workPlanId], references: [id], onDelete: Cascade)
+  id         Int      @id @default(autoincrement())
+  workPlanId Int
+  workPlan   WorkPlan @relation(fields: [workPlanId], references: [id], onDelete: Cascade)
 
-  name            String
-  titrationArea   String?
-  institution     String?
-  role            String?
-  weeklyHours     Int?
+  name          String
+  titrationArea String?
+  institution   String?
+  role          String?
+  weeklyHours   Int?
 
   @@index([workPlanId])
 }
 
 model Participant {
-  id               Int            @id @default(autoincrement())
-  workPlanId       Int
-  workPlan         WorkPlan       @relation(fields: [workPlanId], references: [id], onDelete: Cascade)
+  id         Int      @id @default(autoincrement())
+  workPlanId Int
+  workPlan   WorkPlan @relation(fields: [workPlanId], references: [id], onDelete: Cascade)
 
-  entityOrg        String
-  cnpj             String?
-  sphere           AdministrativeSphere?
-  address          String?         @db.Text
+  entityOrg String
+  cnpj      String?
+  sphere    AdministrativeSphere?
+  address   String?               @db.Text
 
-  authorityName    String?
-  authorityRole    String?
-  authorityDoc     String?       // CPF/RG
-  contact          String?       // e-mail/phone
+  authorityName String?
+  authorityRole String?
+  authorityDoc  String? // CPF/RG
+  contact       String? // e-mail/phone
 
   responsibilities Responsibility[]
 
   @@index([workPlanId])
-
 }
 
 model Responsibility {
-  id               Int            @id @default(autoincrement())
-  workPlanId       Int
-  workPlan         WorkPlan       @relation(fields: [workPlanId], references: [id], onDelete: Cascade)
+  id         Int      @id @default(autoincrement())
+  workPlanId Int
+  workPlan   WorkPlan @relation(fields: [workPlanId], references: [id], onDelete: Cascade)
 
   // Responsibility can be associated with a specific participant (or be general to the plan)
-  participantId    Int?
-  participant      Participant?   @relation(fields: [participantId], references: [id])
+  participantId Int?
+  participant   Participant? @relation(fields: [participantId], references: [id])
 
-  description      String         @db.Text
+  description String @db.Text
 
   @@index([workPlanId])
   @@index([participantId])
 }
 
 model User {
-  id            String   @id @default(cuid())
+  id            String    @id @default(cuid())
   name          String?
-  email         String?  @unique
+  email         String?   @unique
   emailVerified DateTime?
   image         String?
   color         String?
-  firstAccess   Boolean  @default(true)
+  firstAccess   Boolean   @default(true)
 
-  proponent     Proponent?
+  proponent Proponent?
 
-  accounts      Account[]
-  sessions      Session[]
+  accounts Account[]
+  sessions Session[]
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Account {
-  id                String  @id @default(cuid())
+  id                String @id @default(cuid())
   userId            String
   type              String
   provider          String
   providerAccountId String
 
-  refresh_token     String?  @db.Text
-  access_token      String?  @db.Text
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String?  @db.Text
-  session_state     String?
+  refresh_token String? @db.Text
+  access_token  String? @db.Text
+  expires_at    Int?
+  token_type    String?
+  scope         String?
+  id_token      String? @db.Text
+  session_state String?
 
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@index([userId])
@@ -217,7 +215,7 @@ model Session {
   userId       String
   expires      DateTime
 
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -232,15 +230,15 @@ model VerificationToken {
 
 // --- OTP by email (6 digit code, hash + expiration) ---
 model OtpCode {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   email     String
-  codeHash  String   // bcrypt hash of the code
+  codeHash  String // bcrypt hash of the code
   expiresAt DateTime
   usedAt    DateTime?
   sentAt    DateTime  @default(now())
 
   // optional: limit attempts
-  attempts  Int       @default(0)
+  attempts Int @default(0)
 
   @@index([email])
   @@index([expiresAt])
@@ -258,15 +256,15 @@ enum PartnershipType {
 }
 
 model ProjectPartnership {
-  id        Int             @id @default(autoincrement())
+  id        Int     @id @default(autoincrement())
   projectId Int
-  project   Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
   type      PartnershipType
   isPrimary Boolean         @default(false)
-  
-  createdAt DateTime        @default(now())
-  updatedAt DateTime        @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([projectId])
 }

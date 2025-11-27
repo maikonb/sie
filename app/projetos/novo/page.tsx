@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db"
 import { PartnershipType } from "@prisma/client"
 
 import { ProjectForm } from "@/components/projects/project-form"
+import { generateUniqueSlug } from "@/lib/slug"
 
 // Server Action: cria o Projeto e redireciona
 async function createProjeto(formData: FormData) {
@@ -38,20 +39,23 @@ async function createProjeto(formData: FormData) {
     throw new Error("Proponente não encontrado para este usuário.")
   }
 
+  const slug = await generateUniqueSlug(titulo)
+
   await prisma.project.create({
     data: {
       title: titulo,
+      slug,
       objectives: objetivos,
       justification: justificativa,
       scope: abrangencia,
       proponent: { connect: { id: proponente.id } },
       partnerships: partnershipType
         ? {
-            create: {
-              type: partnershipType,
-              isPrimary: true,
-            },
-          }
+          create: {
+            type: partnershipType,
+            isPrimary: true,
+          },
+        }
         : undefined,
     },
   })

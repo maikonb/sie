@@ -37,7 +37,7 @@ export default function ProjectDetailsPage() {
   useEffect(() => {
     const fetchProject = async () => {
       try {
-        const response = await fetch(`/api/projects/${params.id}`)
+        const response = await fetch(`/api/projects/${params.slug}`)
         if (response.ok) {
           const data = await response.json()
           setProject(data)
@@ -52,10 +52,10 @@ export default function ProjectDetailsPage() {
       }
     }
 
-    if (params.id) {
+    if (params.slug) {
       fetchProject()
     }
-  }, [params.id, router])
+  }, [params.slug, router])
 
   if (loading) {
     return (
@@ -75,7 +75,7 @@ export default function ProjectDetailsPage() {
   if (!project) return null
 
   return (
-    <div className="p-8 space-y-8 max-w-5xl mx-auto">
+    <div className="p-8 space-y-8 max-w-7xl w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div className="space-y-2">

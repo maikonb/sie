@@ -12,6 +12,7 @@ import { ptBR } from "date-fns/locale"
 
 interface Project {
   id: number
+  slug?: string
   title: string
   updatedAt: string
   partnerships: { type: string }[]
@@ -78,7 +79,7 @@ export default function ProjectsPage() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {projects.map((project) => (
             <Card key={project.id} className="hover:bg-muted/50 transition-colors cursor-pointer">
-              <Link href={`/projetos/${project.id}`}>
+              <Link href={`/projetos/${project.slug || project.id}`}>
                 <CardHeader>
                   <div className="flex justify-between items-start gap-2">
                     <CardTitle className="line-clamp-2 text-lg">{project.title}</CardTitle>
