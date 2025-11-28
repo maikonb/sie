@@ -21,7 +21,10 @@ const profileFormSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>
 
+import { useRouter } from "next/navigation"
+
 export function ProfileForm({ user }: { user: any }) {
+  const router = useRouter()
   const { update } = useSession()
   const [isLoading, setIsLoading] = useState(false)
   const [preview, setPreview] = useState(user.avatar)
@@ -59,23 +62,34 @@ export function ProfileForm({ user }: { user: any }) {
   async function onSubmit(data: ProfileFormValues) {
     setIsLoading(true)
     try {
-      let imageUrl = user.avatar
+      let imageKey: string | undefined
 
       if (croppedFile) {
-        const formData = new FormData()
-        // Create a file from the blob
         const file = new File([croppedFile], "profile-pic.jpg", { type: "image/jpeg" })
-        formData.append("file", file)
 
-        const uploadRes = await fetch("/api/upload", {
+        // 1. Get pre-signed URL
+        const presignedRes = await fetch("/api/upload/presigned", {
           method: "POST",
-          body: formData,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            filename: file.name,
+            contentType: file.type,
+            folder: "profile-images",
+          }),
         })
 
-        if (uploadRes.ok) {
-          const uploadData = await uploadRes.json()
-          imageUrl = uploadData.url
-        }
+        if (!presignedRes.ok) throw new Error("Failed to get upload URL")
+        const { url, key } = await presignedRes.json()
+
+        // 2. Upload to S3
+        const uploadRes = await fetch(url, {
+          method: "PUT",
+          body: file,
+          headers: { "Content-Type": file.type },
+        })
+
+        if (!uploadRes.ok) throw new Error("Failed to upload image")
+        imageKey = key
       }
 
       const response = await fetch("/api/user/update", {
@@ -83,19 +97,28 @@ export function ProfileForm({ user }: { user: any }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: data.name,
-          image: imageUrl,
+          imageKey,
         }),
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || "Falha ao atualizar perfil")
+        throw new Error("Failed to update profile")
       }
 
-      await update({ name: data.name, image: imageUrl })
+      const updatedUser = await response.json()
+
+      // Update session with new image URL if we uploaded one, or keep existing
+      // The backend returns the updated user, which should have the new image URL
+      await update({
+        name: data.name,
+        image: updatedUser.user.image,
+      })
+
       notify.success("Perfil atualizado com sucesso!")
+      // router.refresh() // Optional, update() usually handles session
     } catch (error: any) {
-      notify.error(error.message)
+      notify.error("Erro ao atualizar perfil")
+      console.error(error)
     } finally {
       setIsLoading(false)
     }
@@ -115,13 +138,7 @@ export function ProfileForm({ user }: { user: any }) {
           </div>
         </div>
 
-        <ImageCropper
-          open={cropperOpen}
-          onOpenChange={setCropperOpen}
-          imageSrc={imageToCrop}
-          onCropComplete={handleCropComplete}
-          aspectRatio={1}
-        />
+        <ImageCropper open={cropperOpen} onOpenChange={setCropperOpen} imageSrc={imageToCrop} onCropComplete={handleCropComplete} aspectRatio={1} />
 
         <FormField
           control={form.control}

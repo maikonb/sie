@@ -25,6 +25,9 @@ interface Project {
     name: string
     email: string
     institution: string | null
+    imageFile?: {
+      url: string
+    } | null
   }
 }
 
@@ -141,9 +144,13 @@ export default function ProjectDetailsPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center gap-3">
-                    <div className="bg-primary/10 p-2 rounded-full">
-                      <User className="h-5 w-5 text-primary" />
-                    </div>
+                    {project.proponent.imageFile?.url ? (
+                      <img src={project.proponent.imageFile.url} alt={project.proponent.name} className="h-10 w-10 rounded-full object-cover" />
+                    ) : (
+                      <div className="bg-primary/10 p-2 rounded-full">
+                        <User className="h-5 w-5 text-primary" />
+                      </div>
+                    )}
                     <div>
                       <p className="font-medium">{project.proponent.name}</p>
                       <p className="text-xs text-muted-foreground">{project.proponent.email}</p>

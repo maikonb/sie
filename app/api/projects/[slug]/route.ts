@@ -21,7 +21,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
       project = await prisma.project.findUnique({
         where: { id: projectId },
         include: {
-          proponent: true,
+          proponent: {
+            include: {
+              imageFile: true,
+            },
+          },
           partnerships: {
             where: { isPrimary: true },
             select: { type: true },
@@ -35,7 +39,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
       project = await prisma.project.findUnique({
         where: { slug: slug },
         include: {
-          proponent: true,
+          proponent: {
+            include: {
+              imageFile: true,
+            },
+          },
           partnerships: {
             where: { isPrimary: true },
             select: { type: true },

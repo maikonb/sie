@@ -10,6 +10,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 enum ScheduleStatus {
@@ -43,6 +44,9 @@ model Proponent {
 
   userId String? @unique
   user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  imageId   String?
+  imageFile File?   @relation(fields: [imageId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -175,7 +179,8 @@ model User {
   name          String?
   email         String?   @unique
   emailVerified DateTime?
-  image         String?
+  imageId       String?   @unique
+  imageFile     File?     @relation(fields: [imageId], references: [id])
   color         String?
   firstAccess   Boolean   @default(true)
 
@@ -186,6 +191,21 @@ model User {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model File {
+  id          String   @id @default(cuid())
+  key         String
+  url         String
+  bucket      String
+  filename    String
+  contentType String
+  size        Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User?
+  proponents Proponent[]
 }
 
 model Account {

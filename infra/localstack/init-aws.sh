@@ -1,2 +1,2 @@
 #!/bin/bash
-awslocal s3 mb s3://meu-bucket
+awslocal s3 mb s3://sie-localhost-bucket

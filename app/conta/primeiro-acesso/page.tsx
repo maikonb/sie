@@ -13,6 +13,7 @@ import { useSession } from "next-auth/react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Camera } from "lucide-react"
 import { ImageCropper } from "@/components/ui/image-cropper"
+import { APP_ERRORS } from "@/lib/errors"
 
 const formSchema = z.object({
   username: z
@@ -39,20 +40,47 @@ export default function FormRhfInput() {
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
     try {
-      const formData = new FormData()
-      formData.append("username", data.username)
+      let imageKey: string | undefined
+
       if (data.image) {
-        formData.append("image", data.image)
+        // 1. Get pre-signed URL
+        const presignedRes = await fetch("/api/upload/presigned", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            filename: data.image.name,
+            contentType: data.image.type,
+            folder: "profile-images",
+          }),
+        })
+
+        if (!presignedRes.ok) throw new Error("Failed to get upload URL")
+        const { url, key } = await presignedRes.json()
+
+        // 2. Upload to S3
+        const uploadRes = await fetch(url, {
+          method: "PUT",
+          body: data.image,
+          headers: { "Content-Type": data.image.type },
+        })
+
+        if (!uploadRes.ok) throw new Error("Failed to upload image")
+        imageKey = key
       }
 
+      // 3. Submit form with imageKey
       const response = await fetch("/api/user/first-access", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: data.username,
+          imageKey,
+        }),
       })
       const res = await response.json()
 
       if (!response.ok || res.error) {
-        notify.error(res.error || "USER-002")
+        notify.error(res.error || APP_ERRORS.USER_INVALID_IMAGE.code)
         return
       }
 
@@ -64,7 +92,7 @@ export default function FormRhfInput() {
       router.push("/projetos")
     } catch (error) {
       console.error(error)
-      notify.error("SYS-001")
+      notify.error(APP_ERRORS.GENERIC_ERROR.code)
     }
   }
 
@@ -112,13 +140,7 @@ export default function FormRhfInput() {
             <p className="text-xs text-muted-foreground">Clique para alterar a foto</p>
           </div>
 
-          <ImageCropper
-            open={cropperOpen}
-            onOpenChange={setCropperOpen}
-            imageSrc={imageToCrop}
-            onCropComplete={handleCropComplete}
-            aspectRatio={1}
-          />
+          <ImageCropper open={cropperOpen} onOpenChange={setCropperOpen} imageSrc={imageToCrop} onCropComplete={handleCropComplete} aspectRatio={1} />
 
           <FieldGroup>
             <Controller

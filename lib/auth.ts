@@ -78,7 +78,10 @@ export const authOptions: NextAuthOptions = {
         })
 
         // encontra ou cria o usuário
-        let user = await prisma.user.findUnique({ where: { email } })
+        let user = await prisma.user.findUnique({
+          where: { email },
+          include: { imageFile: true },
+        })
         if (!user) {
           // Generate random color
           const colors = ["bg-red-500", "bg-orange-500", "bg-amber-500", "bg-yellow-500", "bg-lime-500", "bg-green-500", "bg-emerald-500", "bg-teal-500", "bg-cyan-500", "bg-sky-500", "bg-blue-500", "bg-indigo-500", "bg-violet-500", "bg-purple-500", "bg-fuchsia-500", "bg-pink-500", "bg-rose-500"]
@@ -91,6 +94,7 @@ export const authOptions: NextAuthOptions = {
               firstAccess: true,
               color: randomColor,
             },
+            include: { imageFile: true },
           })
         } else {
           // Se já existe, atualiza emailVerified se ainda não estiver
@@ -98,6 +102,7 @@ export const authOptions: NextAuthOptions = {
             user = await prisma.user.update({
               where: { id: user.id },
               data: { emailVerified: new Date() },
+              include: { imageFile: true },
             })
           }
         }
@@ -110,11 +115,16 @@ export const authOptions: NextAuthOptions = {
           })
         }
 
+        let imageUrl: string | null | undefined = null
+        if (user.imageFile) {
+          imageUrl = user.imageFile.url
+        }
+
         return {
           id: user.id,
           name: user.name || undefined,
           email: user.email,
-          image: user.image,
+          image: imageUrl,
           firstAccess: user.firstAccess,
           color: user.color || undefined,
         }
@@ -160,12 +170,18 @@ export const authOptions: NextAuthOptions = {
       if (trigger === "update" && token.uid) {
         const freshUser = await prisma.user.findUnique({
           where: { id: token.uid },
+          include: { imageFile: true },
         })
         if (freshUser) {
           token.firstAccess = freshUser.firstAccess
           token.color = freshUser.color || undefined
           token.name = freshUser.name || undefined
-          token.picture = freshUser.image || undefined
+
+          let imageUrl: string | null | undefined = null
+          if (freshUser.imageFile) {
+            imageUrl = freshUser.imageFile.url
+          }
+          token.picture = imageUrl
         }
       }
 

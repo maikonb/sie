@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { NextResponse } from "next/server"
-import { storageService } from "@/lib/storage"
+import { fileService } from "@/lib/file-service"
 
 import { APP_ERRORS } from "@/lib/errors"
 
@@ -14,39 +14,45 @@ export async function POST(req: Request) {
   }
 
   try {
-    const formData = await req.formData()
-    const username = formData.get("username") as string
-    const image = formData.get("image") as File | null
+    const json = await req.json()
+    const username = json.username
+    const imageKey = json.imageKey || json.imageId // Support both for backward compat or if frontend sends ID as key
 
     if (!username || typeof username !== "string") {
       return NextResponse.json({ error: APP_ERRORS.USER_INVALID_NAME.code }, { status: 400 })
     }
 
-    let imageUrl: string | undefined
+    let fileRecord
 
-    if (image && image.size > 0) {
-      if (!image.type.startsWith("image/")) {
-        return NextResponse.json({ error: APP_ERRORS.USER_INVALID_IMAGE.code }, { status: 400 })
+    if (imageKey) {
+      try {
+        fileRecord = await fileService.createFileFromS3(imageKey)
+      } catch (error) {
+        console.error("Failed to create file from S3:", error)
+        // Optionally fail or just ignore image
       }
-
-      imageUrl = await storageService.uploadFile(image, "profile-images")
     }
 
-    // Update User
+    // Update User and Proponent
     await prisma.user.update({
-      where: { email: session.user.email },
+      where: { id: session.user.id },
       data: {
         name: username,
-        image: imageUrl,
         firstAccess: false,
-      },
-    })
-
-    // Update Proponent (if exists)
-    await prisma.proponent.update({
-      where: { email: session.user.email },
-      data: {
-        name: username,
+        imageId: fileRecord?.id,
+        proponent: {
+          upsert: {
+            create: {
+              name: username,
+              email: session.user.email!,
+              imageId: fileRecord?.id,
+            },
+            update: {
+              name: username,
+              imageId: fileRecord?.id,
+            },
+          },
+        },
       },
     })
 

@@ -10,6 +10,7 @@ import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp"
 
 import { getSession } from "next-auth/react"
+import { APP_ERRORS } from "@/lib/errors"
 
 export function OTPForm({ ...props }: React.ComponentProps<typeof Card>) {
   const params = useSearchParams()
@@ -30,7 +31,7 @@ export function OTPForm({ ...props }: React.ComponentProps<typeof Card>) {
 
   const handleVerify = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    if (!email) return notify.error("AUTH-005")
+    if (!email) return notify.error(APP_ERRORS.AUTH_EMAIL_REQUIRED.code)
 
     const res = await signIn("credentials", {
       email,
@@ -42,7 +43,7 @@ export function OTPForm({ ...props }: React.ComponentProps<typeof Card>) {
       console.error(res.error)
 
       if (res.error === "CredentialsSignin") {
-        notify.error("AUTH-003") // Default to incorrect code if generic
+        notify.error(APP_ERRORS.AUTH_INCORRECT_CODE.code) // Default to incorrect code if generic
       } else {
         notify.error(res.error) // Pass the code (or message) directly
       }
@@ -71,7 +72,7 @@ export function OTPForm({ ...props }: React.ComponentProps<typeof Card>) {
 
     if (!response.ok) {
       const res = await response.json()
-      notify.error(res.error || "AUTH-006")
+      notify.error(res.error || APP_ERRORS.AUTH_SEND_FAILED.code)
     } else {
       notify.success("Código reenviado com sucesso!")
       setTimeLeft(25)

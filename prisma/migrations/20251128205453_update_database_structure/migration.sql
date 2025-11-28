@@ -1,6 +1,7 @@
 /*
   Warnings:
 
+  - You are about to drop the column `image` on the `User` table. All the data in the column will be lost.
   - You are about to drop the `CronogramaItem` table. If the table is not empty, all the data it contains will be lost.
   - You are about to drop the `EquipeItem` table. If the table is not empty, all the data it contains will be lost.
   - You are about to drop the `Participante` table. If the table is not empty, all the data it contains will be lost.
@@ -8,6 +9,7 @@
   - You are about to drop the `Projeto` table. If the table is not empty, all the data it contains will be lost.
   - You are about to drop the `Proponente` table. If the table is not empty, all the data it contains will be lost.
   - You are about to drop the `Responsabilidade` table. If the table is not empty, all the data it contains will be lost.
+  - A unique constraint covering the columns `[imageId]` on the table `User` will be added. If there are existing duplicate values, this will fail.
 
 */
 -- CreateEnum
@@ -18,6 +20,9 @@ CREATE TYPE "AdministrativeSphere" AS ENUM ('FEDERAL', 'STATE', 'MUNICIPAL', 'PR
 
 -- CreateEnum
 CREATE TYPE "ApprovalSector" AS ENUM ('TECHNICAL', 'LEGAL', 'OTHER');
+
+-- CreateEnum
+CREATE TYPE "PartnershipType" AS ENUM ('PDI_AGREEMENT', 'SERVICE_CONTRACT', 'APPDI_PRIVATE', 'APPDI_NO_FUNDING', 'COOP_AGREEMENT', 'NDA', 'TECH_TRANSFER', 'REVIEW_SCOPE');
 
 -- DropForeignKey
 ALTER TABLE "CronogramaItem" DROP CONSTRAINT "CronogramaItem_planoTrabalhoId_fkey";
@@ -42,6 +47,12 @@ ALTER TABLE "Responsabilidade" DROP CONSTRAINT "Responsabilidade_participanteId_
 
 -- DropForeignKey
 ALTER TABLE "Responsabilidade" DROP CONSTRAINT "Responsabilidade_planoTrabalhoId_fkey";
+
+-- AlterTable
+ALTER TABLE "User" DROP COLUMN "image",
+ADD COLUMN     "color" TEXT,
+ADD COLUMN     "firstAccess" BOOLEAN NOT NULL DEFAULT true,
+ADD COLUMN     "imageId" TEXT;
 
 -- DropTable
 DROP TABLE "CronogramaItem";
@@ -89,6 +100,7 @@ CREATE TABLE "Proponent" (
 -- CreateTable
 CREATE TABLE "Project" (
     "id" SERIAL NOT NULL,
+    "slug" TEXT,
     "title" TEXT NOT NULL,
     "objectives" TEXT NOT NULL,
     "justification" TEXT NOT NULL,
@@ -178,11 +190,41 @@ CREATE TABLE "Responsibility" (
     CONSTRAINT "Responsibility_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "File" (
+    "id" TEXT NOT NULL,
+    "key" TEXT NOT NULL,
+    "url" TEXT NOT NULL,
+    "bucket" TEXT NOT NULL,
+    "filename" TEXT NOT NULL,
+    "contentType" TEXT NOT NULL,
+    "size" INTEGER NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "File_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ProjectPartnership" (
+    "id" SERIAL NOT NULL,
+    "projectId" INTEGER NOT NULL,
+    "type" "PartnershipType" NOT NULL,
+    "isPrimary" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "ProjectPartnership_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "Proponent_email_key" ON "Proponent"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Proponent_userId_key" ON "Proponent"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Project_slug_key" ON "Project"("slug");
 
 -- CreateIndex
 CREATE INDEX "Project_proponentId_idx" ON "Project"("proponentId");
@@ -204,6 +246,12 @@ CREATE INDEX "Responsibility_workPlanId_idx" ON "Responsibility"("workPlanId");
 
 -- CreateIndex
 CREATE INDEX "Responsibility_participantId_idx" ON "Responsibility"("participantId");
+
+-- CreateIndex
+CREATE INDEX "ProjectPartnership_projectId_idx" ON "ProjectPartnership"("projectId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_imageId_key" ON "User"("imageId");
 
 -- AddForeignKey
 ALTER TABLE "Proponent" ADD CONSTRAINT "Proponent_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -228,3 +276,9 @@ ALTER TABLE "Responsibility" ADD CONSTRAINT "Responsibility_workPlanId_fkey" FOR
 
 -- AddForeignKey
 ALTER TABLE "Responsibility" ADD CONSTRAINT "Responsibility_participantId_fkey" FOREIGN KEY ("participantId") REFERENCES "Participant"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "User" ADD CONSTRAINT "User_imageId_fkey" FOREIGN KEY ("imageId") REFERENCES "File"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProjectPartnership" ADD CONSTRAINT "ProjectPartnership_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "Project"("id") ON DELETE CASCADE ON UPDATE CASCADE;
