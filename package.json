@@ -8,9 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "format": "prettier --write .",
-    "docker:up": "docker compose -f infra/docker-compose.yml up -d",
-    "docker:down": "docker compose -f infra/docker-compose.yml down",
-    "docker:it:localstack": "docker exec -it sie-localstack /bin/bash",
+    "docker:dev:up": "docker compose -f infra/docker-compose.yml --profile dev up -d",
+    "docker:prod:up": "docker compose -f infra/docker-compose.yml --profile prod up -d",
+    "docker:down": "docker compose -f infra/docker-compose.yml --profile dev --profile prod down",
+    "docker:it:minio": "docker exec -it sie-minio /bin/bash",
     "prisma:generate": "npx prisma generate",
     "prisma:migrate:dev": "npx prisma migrate dev"
   },

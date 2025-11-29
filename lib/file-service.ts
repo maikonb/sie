@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3"
+import { S3Client, PutObjectCommand, DeleteObjectCommand, HeadObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3"
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import prisma from "@/lib/db"
 import { v4 as uuidv4 } from "uuid"
@@ -14,10 +14,10 @@ class FileService {
 
     this.client = new S3Client({
       region: process.env.AWS_REGION || "us-east-1",
-      endpoint: process.env.AWS_ENDPOINT || (this.isDev ? "http://localhost:4566" : undefined),
+      endpoint: process.env.AWS_ENDPOINT || undefined,
       credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID || "test",
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "test",
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID || "",
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "",
       },
       forcePathStyle: this.isDev,
     })
@@ -40,21 +40,7 @@ class FileService {
 
     const signedUrl = await getSignedUrl(this.client, command, { expiresIn: 3600 })
 
-    let url = signedUrl
-    if (this.isDev) {
-      const devEndpoint = process.env.AWS_ENDPOINT || "http://localhost:4566"
-      const cleanEndpoint = devEndpoint.replace(/\/$/, "")
-
-      const prefixToRemove = `${cleanEndpoint}/${this.bucket}`
-
-      if (url.startsWith(prefixToRemove)) {
-        url = url.replace(prefixToRemove, "/uploads")
-      } else {
-        url = url.replace(/https?:\/\/[^/]+\/[^/]+/, "/uploads")
-      }
-    }
-
-    return { url, key, fileId }
+    return { url: signedUrl, key, fileId }
   }
 
   async createFileFromS3(key: string): Promise<any> {
@@ -117,13 +103,17 @@ class FileService {
     })
   }
 
+  async getFileStream(key: string) {
+    const command = new GetObjectCommand({
+      Bucket: this.bucket,
+      Key: key,
+    })
+
+    return await this.client.send(command)
+  }
+
   getPublicUrl(key: string) {
-    if (this.isDev) {
-      return `/uploads/${key}`
-    }
-    const endpoint = process.env.AWS_ENDPOINT || `https://s3.${process.env.AWS_REGION}.amazonaws.com`
-    const cleanEndpoint = endpoint.replace(/\/$/, "")
-    return `${cleanEndpoint}/${this.bucket}/${key}`
+    return `/api/files/${key}`
   }
 }
 

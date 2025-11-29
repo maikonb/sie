@@ -17,6 +17,11 @@ export async function PATCH(req: Request) {
       return unauthorizedResponse()
     }
 
+    const currentUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { imageId: true },
+    })
+
     const body = await req.json()
     // Allow imageKey or imageId (as key)
     const { name, imageKey, imageId } = updateProfileSchema
@@ -53,6 +58,10 @@ export async function PATCH(req: Request) {
         },
       },
     })
+
+    if (fileRecord && currentUser?.imageId && currentUser.imageId !== fileRecord.id) {
+      await fileService.deleteFile(currentUser.imageId)
+    }
 
     return NextResponse.json({ user: updatedUser })
   } catch (error) {
