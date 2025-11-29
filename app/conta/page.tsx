@@ -2,8 +2,8 @@
 
 import { useSession } from "next-auth/react"
 import { Separator } from "@/components/ui/separator"
-import { ProfileForm } from "@/components/account/profile-form"
-import { EmailForm } from "@/components/account/email-form"
+import { ProfileForm } from "@/components/forms/account/profile-form"
+import { EmailForm } from "@/components/forms/account/email-form"
 
 export default function Page({}) {
   const { data: session, status } = useSession()

@@ -8,7 +8,7 @@ import { notify } from "@/lib/notifications"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Field, FieldGroup, FieldSeparator } from "@/components/ui/field"
-import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from "./ui/input-group"
+import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from "../ui/input-group"
 import { APP_ERRORS } from "@/lib/errors"
 
 export function LoginForm({ className, ...props }: React.ComponentProps<"div">) {

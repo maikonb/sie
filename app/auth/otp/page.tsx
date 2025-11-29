@@ -1,6 +1,6 @@
 import { GalleryVerticalEnd } from "lucide-react"
 
-import { OTPForm } from "@/components/otp-form"
+import { OTPForm } from "@/components/forms/otp-form"
 
 export default function OTPPage() {
   return (
