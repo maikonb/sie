@@ -7,7 +7,7 @@ import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { UserAvatar } from "@/components/user-avatar"
 import { notify } from "@/lib/notifications"
 import { useSession } from "next-auth/react"
 import { ImageCropper } from "@/components/ui/image-cropper"
@@ -128,10 +128,7 @@ export function ProfileForm({ user }: { user: any }) {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <div className="flex items-center gap-4">
-          <Avatar className="h-24 w-24">
-            <AvatarImage src={preview} />
-            <AvatarFallback>{user.name?.substring(0, 2).toUpperCase()}</AvatarFallback>
-          </Avatar>
+          <UserAvatar size="xl" preview={preview} />
           <div className="flex flex-col gap-2">
             <FormLabel htmlFor="picture">Foto de Perfil</FormLabel>
             <Input id="picture" type="file" accept="image/*" onChange={handleImageChange} />

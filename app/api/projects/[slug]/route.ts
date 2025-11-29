@@ -24,6 +24,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
           proponent: {
             include: {
               imageFile: true,
+              user: {
+                select: {
+                  color: true,
+                },
+              }
             },
           },
           partnerships: {

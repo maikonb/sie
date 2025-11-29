@@ -10,7 +10,7 @@ import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/c
 import { Input } from "@/components/ui/input"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { UserAvatar } from "@/components/user-avatar"
 import { Camera } from "lucide-react"
 import { ImageCropper } from "@/components/ui/image-cropper"
 import { APP_ERRORS } from "@/lib/errors"
@@ -128,10 +128,7 @@ export default function FormRhfInput() {
         <form id="form-rhf-input" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="flex flex-col items-center justify-center space-y-4">
             <div className="relative group cursor-pointer">
-              <Avatar className="h-24 w-24 border-2 border-border">
-                <AvatarImage src={preview || ""} />
-                <AvatarFallback className="bg-muted text-muted-foreground text-2xl">{form.watch("username")?.charAt(0)?.toUpperCase() || "?"}</AvatarFallback>
-              </Avatar>
+              <UserAvatar size="xl" preview={preview} className="border-2 border-border" />
               <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
                 <Camera className="h-8 w-8 text-white" />
               </div>

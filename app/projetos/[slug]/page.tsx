@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
+import { UserAvatar } from "@/components/user-avatar"
 
 interface Project {
   id: number
@@ -28,6 +29,9 @@ interface Project {
     imageFile?: {
       url: string
     } | null
+    user: {
+      color: string
+    }
   }
 }
 
@@ -145,7 +149,11 @@ export default function ProjectDetailsPage() {
                 <CardContent className="space-y-4">
                   <div className="flex items-center gap-3">
                     {project.proponent.imageFile?.url ? (
-                      <img src={project.proponent.imageFile.url} alt={project.proponent.name} className="h-10 w-10 rounded-full object-cover" />
+                      <UserAvatar size="md" preview={{
+                        name: project.proponent.name,
+                        image: project.proponent.imageFile?.url,
+                        color: project.proponent.user?.color
+                      }} />
                     ) : (
                       <div className="bg-primary/10 p-2 rounded-full">
                         <User className="h-5 w-5 text-primary" />
