@@ -1,4 +1,4 @@
-import { type NextAuthOptions } from "next-auth"
+import { User, type NextAuthOptions } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 import Credentials from "next-auth/providers/credentials"
 import { PrismaAdapter } from "@next-auth/prisma-adapter"
@@ -30,6 +30,13 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      authorization: {
+        params: {
+          ...(ALLOWED_DOMAINS.length === 1
+          ? { hd: ALLOWED_DOMAINS[0] }
+          : {})
+        }
+      }
     }),
 
     // Login por CÓDIGO (OTP) via Credentials: { email, code }
@@ -127,7 +134,7 @@ export const authOptions: NextAuthOptions = {
           image: imageUrl,
           firstAccess: user.firstAccess,
           color: user.color || undefined,
-        }
+        } as User
       },
     }),
   ],
@@ -164,7 +171,7 @@ export const authOptions: NextAuthOptions = {
         token.firstAccess = user.firstAccess
         token.color = user.color
         token.name = user.name
-        token.picture = user.image
+        token.image = user.image
       }
 
       if (trigger === "update" && token.uid) {
@@ -181,7 +188,7 @@ export const authOptions: NextAuthOptions = {
           if (freshUser.imageFile) {
             imageUrl = freshUser.imageFile.url
           }
-          token.picture = imageUrl
+          token.image = imageUrl || undefined
         }
       }
 
@@ -194,7 +201,7 @@ export const authOptions: NextAuthOptions = {
         session.user.firstAccess = token.firstAccess as boolean
         session.user.color = token.color || undefined
         session.user.name = token.name
-        session.user.image = token.picture
+        session.user.image = token?.image
       }
       return session
     },

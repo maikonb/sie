@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { UserAvatar } from "@/components/user-avatar"
+import { Pencil } from "lucide-react"
 
 interface Project {
   id: number
@@ -113,6 +114,7 @@ export default function ProjectDetailsPage() {
         <TabsList>
           <TabsTrigger value="overview">Visão Geral</TabsTrigger>
           <TabsTrigger value="workplan">Plano de Trabalho</TabsTrigger>
+          <TabsTrigger value="legal">Instrumento Jurídico</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -149,11 +151,14 @@ export default function ProjectDetailsPage() {
                 <CardContent className="space-y-4">
                   <div className="flex items-center gap-3">
                     {project.proponent.imageFile?.url ? (
-                      <UserAvatar size="md" preview={{
-                        name: project.proponent.name,
-                        image: project.proponent.imageFile?.url,
-                        color: project.proponent.user?.color
-                      }} />
+                      <UserAvatar
+                        size="md"
+                        preview={{
+                          name: project.proponent.name,
+                          image: project.proponent.imageFile?.url,
+                          color: project.proponent.user?.color,
+                        }}
+                      />
                     ) : (
                       <div className="bg-primary/10 p-2 rounded-full">
                         <User className="h-5 w-5 text-primary" />
@@ -178,15 +183,69 @@ export default function ProjectDetailsPage() {
 
         <TabsContent value="workplan">
           <Card>
-            <CardHeader>
-              <CardTitle>Plano de Trabalho</CardTitle>
-              <CardDescription>Gerencie as metas, cronograma e equipe do projeto.</CardDescription>
-            </CardHeader>
-            <CardContent className="h-[300px] flex items-center justify-center border-2 border-dashed rounded-lg m-6">
-              <div className="text-center">
-                <p className="text-muted-foreground mb-4">Funcionalidade em desenvolvimento.</p>
-                <Button disabled>Criar Plano de Trabalho</Button>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <div className="space-y-1">
+                <CardTitle>Plano de Trabalho</CardTitle>
+                <CardDescription>Visualize as metas e cronograma.</CardDescription>
               </div>
+              <Button variant="outline" size="sm" asChild>
+                <Link href={`/projetos/${project.slug}/work-plan?returnTo=/projetos/${project.slug}`}>
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Editar
+                </Link>
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {project.workPlan ? (
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-semibold mb-1">Objetivo Geral</h3>
+                    <p className="text-sm text-muted-foreground">{project.workPlan.generalObjective || "Não definido"}</p>
+                  </div>
+                  {/* Add more read-only fields as needed */}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <p className="text-muted-foreground mb-4">Nenhum plano de trabalho definido.</p>
+                  <Button asChild>
+                    <Link href={`/projetos/${project.slug}/work-plan?returnTo=/projetos/${project.slug}`}>Criar Plano de Trabalho</Link>
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="legal">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <div className="space-y-1">
+                <CardTitle>Instrumento Jurídico</CardTitle>
+                <CardDescription>Status e documentos da parceria.</CardDescription>
+              </div>
+              <Button variant="outline" size="sm" asChild>
+                <Link href={`/projetos/${project.slug}/legal?returnTo=/projetos/${project.slug}`}>
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Gerenciar
+                </Link>
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {project.partnerships && project.partnerships.length > 0 ? (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold">Tipo de Parceria:</span>
+                    <Badge variant="secondary">{project.partnerships[0].type.replace(/_/g, " ")}</Badge>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <p className="text-muted-foreground mb-4">Nenhum instrumento jurídico definido.</p>
+                  <Button asChild>
+                    <Link href={`/projetos/${project.slug}/legal?returnTo=/projetos/${project.slug}`}>Definir Instrumento</Link>
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

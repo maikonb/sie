@@ -22,7 +22,6 @@ async function createProjeto(formData: FormData) {
   const objetivos = String(formData.get("objetivos") || "").trim()
   const justificativa = String(formData.get("justificativa") || "").trim()
   const abrangencia = String(formData.get("abrangencia") || "").trim()
-  const partnershipType = String(formData.get("partnershipType") || "") as PartnershipType
 
   // validações mínimas
   if (!titulo || !objetivos || !justificativa || !abrangencia) {
@@ -49,18 +48,10 @@ async function createProjeto(formData: FormData) {
       justification: justificativa,
       scope: abrangencia,
       proponent: { connect: { id: proponente.id } },
-      partnerships: partnershipType
-        ? {
-          create: {
-            type: partnershipType,
-            isPrimary: true,
-          },
-        }
-        : undefined,
     },
   })
 
-  redirect("/projetos/")
+  return { success: true, slug }
 }
 
 export default async function NovaPaginaProjeto() {
