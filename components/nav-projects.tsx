@@ -1,29 +1,9 @@
 "use client"
 
-import {
-  Folder,
-  MoreHorizontal,
-  Share,
-  Trash2,
-  type LucideIcon,
-} from "lucide-react"
+import { Folder, MoreHorizontal, Share, Trash2, type LucideIcon } from "lucide-react"
 
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuAction,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
-} from "@/components/ui/sidebar"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuAction, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/providers/sidebar"
 
 export function NavProjects({
   projects,
@@ -55,11 +35,7 @@ export function NavProjects({
                   <span className="sr-only">More</span>
                 </SidebarMenuAction>
               </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="w-48"
-                side={isMobile ? "bottom" : "right"}
-                align={isMobile ? "end" : "start"}
-              >
+              <DropdownMenuContent className="w-48" side={isMobile ? "bottom" : "right"} align={isMobile ? "end" : "start"}>
                 <DropdownMenuItem>
                   <Folder className="text-muted-foreground" />
                   <span>View Project</span>
@@ -77,7 +53,6 @@ export function NavProjects({
             </DropdownMenu>
           </SidebarMenuItem>
         ))}
-
       </SidebarMenu>
     </SidebarGroup>
   )

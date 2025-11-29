@@ -1,0 +1,19 @@
+node_modules
+.next
+dist
+out
+build
+coverage
+public
+.eslintcache
+
+# Git
+.git
+
+# Prisma
+prisma/migrations
+
+# Env files
+*.env
+.env*
+.env

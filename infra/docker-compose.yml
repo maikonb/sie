@@ -1,0 +1,39 @@
+version: "3.8"
+
+services:
+  mailhog:
+    image: mailhog/mailhog
+    container_name: sie-mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025" # SMTP
+      - "8025:8025" # Web UI
+
+  postgres:
+    image: postgres:16
+    container_name: sie-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: loja_cursos
+    ports:
+      - "2345:5432"
+    volumes:
+      - sie_postgres_data:/var/lib/postgresql/data
+
+  localstack:
+    image: localstack/localstack
+    container_name: sie-localstack
+    restart: unless-stopped
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3
+    volumes:
+      - ./localstack/init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh
+      - sie_localstack_data:/var/lib/localstack
+
+volumes:
+  sie_postgres_data:
+  sie_localstack_data:
