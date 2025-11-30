@@ -35,8 +35,19 @@ enum ApprovalSector {
   OTHER
 }
 
+enum LegalInstrumentType {
+  PDI_AGREEMENT
+  SERVICE_CONTRACT
+  APPDI_PRIVATE
+  APPDI_NO_FUNDING
+  COOP_AGREEMENT
+  NDA
+  TECH_TRANSFER
+  REVIEW_SCOPE
+}
+
 model Proponent {
-  id          Int       @id @default(autoincrement())
+  id          String    @id @default(uuid())
   institution String?
   projects    Project[]
 
@@ -51,14 +62,14 @@ model Proponent {
 }
 
 model Project {
-  id            Int     @id @default(autoincrement())
+  id            String  @id @default(uuid())
   slug          String? @unique
   title         String
   objectives    String  @db.Text
   justification String  @db.Text
   scope         String  @db.Text
 
-  proponentId Int
+  proponentId String
   proponent   Proponent @relation(fields: [proponentId], references: [id], onDelete: Restrict)
 
   workPlan WorkPlan?
@@ -66,16 +77,16 @@ model Project {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  partnerships ProjectPartnership[]
+  legalInstruments ProjectLegalInstrument[]
 
   @@index([proponentId])
 }
 
 model WorkPlan {
-  id Int @id @default(autoincrement())
+  id String @id @default(uuid())
 
   // 1–1 with Project
-  projectId Int     @unique
+  projectId String  @unique
   project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   // Typical plan fields
@@ -108,8 +119,8 @@ model WorkPlan {
 }
 
 model ScheduleItem {
-  id         Int      @id @default(autoincrement())
-  workPlanId Int
+  id         String   @id @default(uuid())
+  workPlanId String
   workPlan   WorkPlan @relation(fields: [workPlanId], references: [id], onDelete: Cascade)
 
   axisGoal    String
@@ -124,8 +135,8 @@ model ScheduleItem {
 }
 
 model TeamMember {
-  id         Int      @id @default(autoincrement())
-  workPlanId Int
+  id         String   @id @default(uuid())
+  workPlanId String
   workPlan   WorkPlan @relation(fields: [workPlanId], references: [id], onDelete: Cascade)
 
   name          String
@@ -138,8 +149,8 @@ model TeamMember {
 }
 
 model Participant {
-  id         Int      @id @default(autoincrement())
-  workPlanId Int
+  id         String   @id @default(uuid())
+  workPlanId String
   workPlan   WorkPlan @relation(fields: [workPlanId], references: [id], onDelete: Cascade)
 
   entityOrg String
@@ -158,12 +169,12 @@ model Participant {
 }
 
 model Responsibility {
-  id         Int      @id @default(autoincrement())
-  workPlanId Int
+  id         String   @id @default(uuid())
+  workPlanId String
   workPlan   WorkPlan @relation(fields: [workPlanId], references: [id], onDelete: Cascade)
 
   // Responsibility can be associated with a specific participant (or be general to the plan)
-  participantId Int?
+  participantId String?
   participant   Participant? @relation(fields: [participantId], references: [id])
 
   description String @db.Text
@@ -203,6 +214,8 @@ model File {
 
   user User?
   proponents Proponent[]
+  legalInstruments LegalInstrument[]
+  legalInstrumentInstances LegalInstrumentInstance[]
 }
 
 model Account {
@@ -242,27 +255,44 @@ model OtpCode {
   @@index([expiresAt])
 }
 
-enum PartnershipType {
-  PDI_AGREEMENT
-  SERVICE_CONTRACT
-  APPDI_PRIVATE
-  APPDI_NO_FUNDING
-  COOP_AGREEMENT
-  NDA
-  TECH_TRANSFER
-  REVIEW_SCOPE
+model LegalInstrument {
+  id                   String                     @id @default(uuid())
+  fieldsJson           Json
+  type                 LegalInstrumentType
+
+  fileId               String
+  file                 File                       @relation(fields: [fileId], references: [id])
+
+  projectLegalInstruments ProjectLegalInstrument[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
-model ProjectPartnership {
-  id        Int     @id @default(autoincrement())
-  projectId Int
-  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+model LegalInstrumentInstance {
+  id                   String                     @id @default(uuid())
+  fieldsJson           Json
+  type                 LegalInstrumentType
 
-  type      PartnershipType
-  isPrimary Boolean         @default(false)
+  fileId               String
+  file                 File                       @relation(fields: [fileId], references: [id])
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  projectRelation      ProjectLegalInstrument[]
 
-  @@index([projectId])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ProjectLegalInstrument {
+  id                        String                      @id @default(uuid())
+
+  projectId                 String                      @unique
+  project                   Project                     @relation(fields: [projectId], references: [id])
+  legalInstrumentId         String
+  legalInstrument           LegalInstrument             @relation(fields: [legalInstrumentId], references: [id])
+  legalInstrumentInstanceId String                      @unique
+  legalInstrumentInstance   LegalInstrumentInstance     @relation(fields: [legalInstrumentInstanceId], references: [id])
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

@@ -8,11 +8,11 @@ CREATE TYPE "AdministrativeSphere" AS ENUM ('FEDERAL', 'STATE', 'MUNICIPAL', 'PR
 CREATE TYPE "ApprovalSector" AS ENUM ('TECHNICAL', 'LEGAL', 'OTHER');
 
 -- CreateEnum
-CREATE TYPE "PartnershipType" AS ENUM ('PDI_AGREEMENT', 'SERVICE_CONTRACT', 'APPDI_PRIVATE', 'APPDI_NO_FUNDING', 'COOP_AGREEMENT', 'NDA', 'TECH_TRANSFER', 'REVIEW_SCOPE');
+CREATE TYPE "LegalInstrumentType" AS ENUM ('PDI_AGREEMENT', 'SERVICE_CONTRACT', 'APPDI_PRIVATE', 'APPDI_NO_FUNDING', 'COOP_AGREEMENT', 'NDA', 'TECH_TRANSFER', 'REVIEW_SCOPE');
 
 -- CreateTable
 CREATE TABLE "Proponent" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "institution" TEXT,
     "userId" TEXT,
     "imageId" TEXT,
@@ -24,13 +24,13 @@ CREATE TABLE "Proponent" (
 
 -- CreateTable
 CREATE TABLE "Project" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "slug" TEXT,
     "title" TEXT NOT NULL,
     "objectives" TEXT NOT NULL,
     "justification" TEXT NOT NULL,
     "scope" TEXT NOT NULL,
-    "proponentId" INTEGER NOT NULL,
+    "proponentId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -39,8 +39,8 @@ CREATE TABLE "Project" (
 
 -- CreateTable
 CREATE TABLE "WorkPlan" (
-    "id" SERIAL NOT NULL,
-    "projectId" INTEGER NOT NULL,
+    "id" TEXT NOT NULL,
+    "projectId" TEXT NOT NULL,
     "object" TEXT,
     "diagnosis" TEXT,
     "planScope" TEXT,
@@ -63,8 +63,8 @@ CREATE TABLE "WorkPlan" (
 
 -- CreateTable
 CREATE TABLE "ScheduleItem" (
-    "id" SERIAL NOT NULL,
-    "workPlanId" INTEGER NOT NULL,
+    "id" TEXT NOT NULL,
+    "workPlanId" TEXT NOT NULL,
     "axisGoal" TEXT NOT NULL,
     "actionStep" TEXT NOT NULL,
     "indicator" TEXT NOT NULL,
@@ -78,8 +78,8 @@ CREATE TABLE "ScheduleItem" (
 
 -- CreateTable
 CREATE TABLE "TeamMember" (
-    "id" SERIAL NOT NULL,
-    "workPlanId" INTEGER NOT NULL,
+    "id" TEXT NOT NULL,
+    "workPlanId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "titrationArea" TEXT,
     "institution" TEXT,
@@ -91,8 +91,8 @@ CREATE TABLE "TeamMember" (
 
 -- CreateTable
 CREATE TABLE "Participant" (
-    "id" SERIAL NOT NULL,
-    "workPlanId" INTEGER NOT NULL,
+    "id" TEXT NOT NULL,
+    "workPlanId" TEXT NOT NULL,
     "entityOrg" TEXT NOT NULL,
     "cnpj" TEXT,
     "sphere" "AdministrativeSphere",
@@ -107,9 +107,9 @@ CREATE TABLE "Participant" (
 
 -- CreateTable
 CREATE TABLE "Responsibility" (
-    "id" SERIAL NOT NULL,
-    "workPlanId" INTEGER NOT NULL,
-    "participantId" INTEGER,
+    "id" TEXT NOT NULL,
+    "workPlanId" TEXT NOT NULL,
+    "participantId" TEXT,
     "description" TEXT NOT NULL,
 
     CONSTRAINT "Responsibility_pkey" PRIMARY KEY ("id")
@@ -177,15 +177,39 @@ CREATE TABLE "OtpCode" (
 );
 
 -- CreateTable
-CREATE TABLE "ProjectPartnership" (
-    "id" SERIAL NOT NULL,
-    "projectId" INTEGER NOT NULL,
-    "type" "PartnershipType" NOT NULL,
-    "isPrimary" BOOLEAN NOT NULL DEFAULT false,
+CREATE TABLE "LegalInstrument" (
+    "id" TEXT NOT NULL,
+    "fieldsJson" JSONB NOT NULL,
+    "type" "LegalInstrumentType" NOT NULL,
+    "fileId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "ProjectPartnership_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "LegalInstrument_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "LegalInstrumentInstance" (
+    "id" TEXT NOT NULL,
+    "fieldsJson" JSONB NOT NULL,
+    "type" "LegalInstrumentType" NOT NULL,
+    "fileId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "LegalInstrumentInstance_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ProjectLegalInstrument" (
+    "id" TEXT NOT NULL,
+    "projectId" TEXT NOT NULL,
+    "legalInstrumentId" TEXT NOT NULL,
+    "legalInstrumentInstanceId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "ProjectLegalInstrument_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -234,7 +258,10 @@ CREATE INDEX "OtpCode_email_idx" ON "OtpCode"("email");
 CREATE INDEX "OtpCode_expiresAt_idx" ON "OtpCode"("expiresAt");
 
 -- CreateIndex
-CREATE INDEX "ProjectPartnership_projectId_idx" ON "ProjectPartnership"("projectId");
+CREATE UNIQUE INDEX "ProjectLegalInstrument_projectId_key" ON "ProjectLegalInstrument"("projectId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "ProjectLegalInstrument_legalInstrumentInstanceId_key" ON "ProjectLegalInstrument"("legalInstrumentInstanceId");
 
 -- AddForeignKey
 ALTER TABLE "Proponent" ADD CONSTRAINT "Proponent_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -270,4 +297,16 @@ ALTER TABLE "User" ADD CONSTRAINT "User_imageId_fkey" FOREIGN KEY ("imageId") RE
 ALTER TABLE "Account" ADD CONSTRAINT "Account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ProjectPartnership" ADD CONSTRAINT "ProjectPartnership_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "Project"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "LegalInstrument" ADD CONSTRAINT "LegalInstrument_fileId_fkey" FOREIGN KEY ("fileId") REFERENCES "File"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "LegalInstrumentInstance" ADD CONSTRAINT "LegalInstrumentInstance_fileId_fkey" FOREIGN KEY ("fileId") REFERENCES "File"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProjectLegalInstrument" ADD CONSTRAINT "ProjectLegalInstrument_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "Project"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProjectLegalInstrument" ADD CONSTRAINT "ProjectLegalInstrument_legalInstrumentId_fkey" FOREIGN KEY ("legalInstrumentId") REFERENCES "LegalInstrument"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProjectLegalInstrument" ADD CONSTRAINT "ProjectLegalInstrument_legalInstrumentInstanceId_fkey" FOREIGN KEY ("legalInstrumentInstanceId") REFERENCES "LegalInstrumentInstance"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
