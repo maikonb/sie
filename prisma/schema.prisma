@@ -37,8 +37,6 @@ enum ApprovalSector {
 
 model Proponent {
   id          Int       @id @default(autoincrement())
-  name        String
-  email       String    @unique
   institution String?
   projects    Project[]
 
@@ -186,8 +184,7 @@ model User {
 
   proponent Proponent?
 
-  accounts Account[]
-  sessions Session[]
+  accounts      Account[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -227,25 +224,6 @@ model Account {
 
   @@unique([provider, providerAccountId])
   @@index([userId])
-}
-
-model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-}
-
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
 }
 
 // --- OTP by email (6 digit code, hash + expiration) ---

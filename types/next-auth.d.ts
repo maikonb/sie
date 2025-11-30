@@ -25,5 +25,6 @@ declare module "next-auth/jwt" {
     firstAccess?: boolean
     color?: string
     name?: string
+    image?: string
   }
 }

@@ -29,9 +29,10 @@ async function createProjeto(formData: FormData) {
     throw new Error("Preencha todos os campos obrigatórios.")
   }
 
-  // encontra o Proponente pelo e-mail (único)
+  // encontra o Proponente pelo userId (que deve estar na sessão)
+  const userId = session.user.id as string
   const proponente = await prisma.proponent.findUnique({
-    where: { email },
+    where: { userId },
     select: { id: true },
   })
 

@@ -1,4 +1,4 @@
-import { type NextAuthOptions } from "next-auth"
+import { User, type NextAuthOptions } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 import Credentials from "next-auth/providers/credentials"
 import { PrismaAdapter } from "@next-auth/prisma-adapter"
@@ -107,11 +107,11 @@ export const authOptions: NextAuthOptions = {
           }
         }
 
-        // garante  vinculado (1-1 por e-mail)
-        const exists = await prisma.proponent.findFirst({ where: { email } })
+        // garante  vinculado (1-1 por userId)
+        const exists = await prisma.proponent.findUnique({ where: { userId: user.id } })
         if (!exists) {
           await prisma.proponent.create({
-            data: { name: email.split("@")[0], email },
+            data: { userId: user.id },
           })
         }
 
@@ -127,7 +127,7 @@ export const authOptions: NextAuthOptions = {
           image: imageUrl,
           firstAccess: user.firstAccess,
           color: user.color || undefined,
-        }
+        } as User
       },
     }),
   ],
@@ -144,13 +144,9 @@ export const authOptions: NextAuthOptions = {
       if (!isUfr(email)) return false
 
       await prisma.proponent.upsert({
-        where: { email },
-        update: {
-          userId: user.id,
-        },
+        where: { userId: user.id },
+        update: {},
         create: {
-          email,
-          name: email.split("@")[0],
           userId: user.id,
         },
       })
@@ -164,7 +160,7 @@ export const authOptions: NextAuthOptions = {
         token.firstAccess = user.firstAccess
         token.color = user.color
         token.name = user.name
-        token.picture = user.image
+        token.image = user.image
       }
 
       if (trigger === "update" && token.uid) {
@@ -181,7 +177,7 @@ export const authOptions: NextAuthOptions = {
           if (freshUser.imageFile) {
             imageUrl = freshUser.imageFile.url
           }
-          token.picture = imageUrl
+          token.image = imageUrl || undefined
         }
       }
 
@@ -194,7 +190,7 @@ export const authOptions: NextAuthOptions = {
         session.user.firstAccess = token.firstAccess as boolean
         session.user.color = token.color || undefined
         session.user.name = token.name
-        session.user.image = token.picture
+        session.user.image = token.image
       }
       return session
     },

@@ -12,12 +12,11 @@ export async function GET() {
     }
 
     const proponent = await prisma.proponent.findUnique({
-      where: { email: session.user.email },
+      where: { userId: session.user.id },
       select: { id: true },
     })
 
     if (!proponent) {
-      // User is authenticated but has no proponent profile yet
       return NextResponse.json([])
     }
 

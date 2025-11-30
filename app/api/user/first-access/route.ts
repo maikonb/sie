@@ -43,12 +43,9 @@ export async function POST(req: Request) {
         proponent: {
           upsert: {
             create: {
-              name: username,
-              email: session.user.email!,
               imageId: fileRecord?.id,
             },
             update: {
-              name: username,
               imageId: fileRecord?.id,
             },
           },

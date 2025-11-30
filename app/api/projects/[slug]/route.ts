@@ -62,7 +62,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
     }
 
     const proponent = await prisma.proponent.findUnique({
-      where: { email: session.user.email },
+      where: { userId: session.user.id },
       select: { id: true },
     })
 
