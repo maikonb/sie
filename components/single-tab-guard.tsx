@@ -1,9 +1,9 @@
 "use client"
 
-import { useSingleTab } from "./single-tab-provider"
-import { Button } from "../ui/button"
-import { Loading } from "../ui/loading"
-import { Logo } from "../logo"
+import { useSingleTab } from "./providers/single-tab-provider"
+import { Button } from "./ui/button"
+import { Loading } from "./ui/loading"
+import { Logo } from "./logo"
 
 export function SingleTabGuard({ children }: { children: React.ReactNode }) {
   const { isBlocked, isChecking, takeOver } = useSingleTab()

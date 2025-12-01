@@ -1,7 +1,5 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Calendar, FileText, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -11,52 +9,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { UserAvatar } from "@/components/user-avatar"
-import { Prisma } from "@prisma/client"
-import { projectService } from "@/services/project"
-
-const projectWithRelations = Prisma.validator<Prisma.ProjectDefaultArgs>()({
-  include: {
-    proponent: {
-      include: {
-        user: {
-          select: {
-            name: true,
-            email: true,
-            color: true,
-            imageFile: true,
-          },
-        },
-      },
-    },
-    legalInstruments: true,
-  },
-})
-
-type ProjectType = Prisma.ProjectGetPayload<typeof projectWithRelations> | null
+import { useProject } from "@/components/providers/project-context"
 
 export default function ProjectDetailsPage() {
-  const params = useParams()
-  const router = useRouter()
-  const [project, setProject] = useState<ProjectType>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const fetchProject = async () => {
-      try {
-        const data = await projectService.getBySlug(params.slug as string)
-        setProject(data)
-      } catch (error: any) {
-        console.error("Failed to fetch project:", error)
-        if (error.response?.status === 404) router.push("/404")
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    if (params.slug) {
-      fetchProject()
-    }
-  }, [params.slug, router])
+  const { project, loading } = useProject()
 
   if (loading) {
     return (
