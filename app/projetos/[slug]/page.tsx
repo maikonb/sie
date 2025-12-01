@@ -12,6 +12,7 @@ import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { UserAvatar } from "@/components/user-avatar"
 import { Prisma } from "@prisma/client"
+import { projectService } from "@/services/project"
 
 const projectWithRelations = Prisma.validator<Prisma.ProjectDefaultArgs>()({
   include: {
@@ -29,9 +30,9 @@ const projectWithRelations = Prisma.validator<Prisma.ProjectDefaultArgs>()({
     },
     legalInstruments: true,
   },
-});
+})
 
-type ProjectType = Prisma.ProjectGetPayload<typeof projectWithRelations> | null;
+type ProjectType = Prisma.ProjectGetPayload<typeof projectWithRelations> | null
 
 export default function ProjectDetailsPage() {
   const params = useParams()
@@ -42,16 +43,11 @@ export default function ProjectDetailsPage() {
   useEffect(() => {
     const fetchProject = async () => {
       try {
-        const response = await fetch(`/api/projects/${params.slug}`)
-        if (response.ok) {
-          const data = await response.json()
-          setProject(data)
-        } else {
-          // Handle error (e.g., redirect to 404 or list)
-          if (response.status === 404) router.push("/404")
-        }
-      } catch (error) {
+        const data = await projectService.getBySlug(params.slug as string)
+        setProject(data)
+      } catch (error: any) {
         console.error("Failed to fetch project:", error)
+        if (error.response?.status === 404) router.push("/404")
       } finally {
         setLoading(false)
       }
@@ -142,11 +138,14 @@ export default function ProjectDetailsPage() {
                 <CardContent className="space-y-4">
                   <div className="flex items-center gap-3">
                     {project.proponent.user?.imageFile?.url ? (
-                      <UserAvatar size="md" preview={{
-                        name: project.proponent.user?.name,
-                        image: project.proponent.user?.imageFile?.url,
-                        color: project.proponent.user?.color
-                      }} />
+                      <UserAvatar
+                        size="md"
+                        preview={{
+                          name: project.proponent.user?.name,
+                          image: project.proponent.user?.imageFile?.url,
+                          color: project.proponent.user?.color,
+                        }}
+                      />
                     ) : (
                       <div className="bg-primary/10 p-2 rounded-full">
                         <User className="h-5 w-5 text-primary" />

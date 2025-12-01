@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
+import { projectService } from "@/services/project"
 
 interface Project {
   id: number
@@ -25,11 +26,8 @@ export default function ProjectsPage() {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await fetch("/api/projects")
-        if (response.ok) {
-          const data = await response.json()
-          setProjects(data)
-        }
+        const data = await projectService.getAll()
+        setProjects(data)
       } catch (error) {
         console.error("Failed to fetch projects:", error)
       } finally {

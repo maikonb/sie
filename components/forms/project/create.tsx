@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { useState } from "react"
 import { Project } from "@prisma/client"
 import { Check, FileText, Scale, Clock } from "lucide-react"
+import { projectService } from "@/services/project"
 
 interface ProjectFormProps {
   initialProject?: Project | null
@@ -23,16 +24,8 @@ export function ProjectForm({ initialProject }: ProjectFormProps) {
   const handleCreateProject = async (formData: FormData) => {
     setStep("loading")
     try {
-      const response = await fetch("/api/projects", {
-        method: "POST",
-        body: formData,
-      })
+      const p = await projectService.create(formData)
 
-      if (!response.ok) {
-        throw new Error("Erro ao criar projeto")
-      }
-
-      const p = await response.json()
       setProject(p)
       setStep("choisen")
       router.replace(`/projetos/novo?slug=${p.slug}`)
@@ -58,7 +51,7 @@ export function ProjectForm({ initialProject }: ProjectFormProps) {
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-6 md:grid-cols-3">
-            <Link href="#" className="group">
+            <Link href={`/projetos/${project?.slug}/work-plan?next=legal-instrument`} className="group">
               <Card className="h-full hover:border-primary/50 hover:shadow-md transition-all duration-300 cursor-pointer border-muted">
                 <CardContent className="pt-8 pb-8 flex flex-col items-center gap-4 text-center">
                   <div className="p-4 rounded-2xl bg-primary/5 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors duration-300">
@@ -72,7 +65,7 @@ export function ProjectForm({ initialProject }: ProjectFormProps) {
               </Card>
             </Link>
 
-            <Link href="#" className="group">
+            <Link href={`/projetos/${project?.slug}/legal-instrument?next=work-plan`} className="group">
               <Card className="h-full hover:border-primary/50 hover:shadow-md transition-all duration-300 cursor-pointer border-muted">
                 <CardContent className="pt-8 pb-8 flex flex-col items-center gap-4 text-center">
                   <div className="p-4 rounded-2xl bg-primary/5 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors duration-300">

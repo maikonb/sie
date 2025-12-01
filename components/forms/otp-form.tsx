@@ -11,6 +11,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 
 import { getSession } from "next-auth/react"
 import { APP_ERRORS } from "@/lib/errors"
+import { authService } from "@/services/auth"
 
 export function OTPForm({ ...props }: React.ComponentProps<typeof Card>) {
   const params = useSearchParams()
@@ -62,20 +63,12 @@ export function OTPForm({ ...props }: React.ComponentProps<typeof Card>) {
   const handleResend = async () => {
     if (!email || timeLeft > 0) return
 
-    const response = await fetch("/api/auth/otp/request", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ email }),
-    })
-
-    console.log(response)
-
-    if (!response.ok) {
-      const res = await response.json()
-      notify.error(res.error || APP_ERRORS.AUTH_SEND_FAILED.code)
-    } else {
+    try {
+      await authService.requestOtp({ email })
       notify.success("Código reenviado com sucesso!")
       setTimeLeft(25)
+    } catch (error: any) {
+      notify.error(error.response?.data?.error || APP_ERRORS.AUTH_SEND_FAILED.code)
     }
   }
 

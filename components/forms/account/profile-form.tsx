@@ -11,6 +11,8 @@ import { UserAvatar } from "@/components/user-avatar"
 import { notify } from "@/lib/notifications"
 import { useSession } from "next-auth/react"
 import { ImageCropper } from "@/components/ui/image-cropper"
+import { userService } from "@/services/user"
+import { fileService } from "@/services/file"
 
 const profileFormSchema = z.object({
   name: z.string().min(2, {
@@ -48,7 +50,6 @@ export function ProfileForm({ user }: { user: any }) {
         setCropperOpen(true)
       }
       reader.readAsDataURL(file)
-      // Reset input value so the same file can be selected again if needed
       e.target.value = ""
     }
   }
@@ -68,54 +69,28 @@ export function ProfileForm({ user }: { user: any }) {
         const file = new File([croppedFile], "profile-pic.jpg", { type: "image/jpeg" })
 
         // 1. Get pre-signed URL
-        const presignedRes = await fetch("/api/upload/presigned", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            filename: file.name,
-            contentType: file.type,
-            folder: "profile-images",
-          }),
+        const { url, key } = await fileService.getPresignedUrl({
+          filename: file.name,
+          contentType: file.type,
+          folder: "profile-images",
         })
-
-        if (!presignedRes.ok) throw new Error("Failed to get upload URL")
-        const { url, key } = await presignedRes.json()
 
         // 2. Upload to S3
-        const uploadRes = await fetch(url, {
-          method: "PUT",
-          body: file,
-          headers: { "Content-Type": file.type },
-        })
-
-        if (!uploadRes.ok) throw new Error("Failed to upload image")
+        await fileService.uploadToS3(url, file)
         imageKey = key
       }
 
-      const response = await fetch("/api/user/update", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: data.name,
-          imageKey,
-        }),
+      const updatedUser = await userService.updateProfile({
+        name: data.name,
+        imageKey,
       })
 
-      if (!response.ok) {
-        throw new Error("Failed to update profile")
-      }
-
-      const updatedUser = await response.json()
-
-      // Update session with new image URL if we uploaded one, or keep existing
-      // The backend returns the updated user, which should have the new image URL
       await update({
         name: data.name,
         image: updatedUser.user.image,
       })
 
       notify.success("Perfil atualizado com sucesso!")
-      // router.refresh() // Optional, update() usually handles session
     } catch (error: any) {
       notify.error("Erro ao atualizar perfil")
       console.error(error)

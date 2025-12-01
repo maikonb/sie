@@ -11,6 +11,7 @@ import { Field, FieldGroup } from "@/components/ui/field"
 import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from "@/components/ui/input-group"
 import { notify } from "@/lib/notifications"
 import { signOut } from "next-auth/react"
+import { userService } from "@/services/user"
 
 const emailFormSchema = z.object({
   localPart: z
@@ -47,22 +48,13 @@ export function EmailForm({ currentEmail }: { currentEmail: string }) {
     const fullEmail = `${data.localPart}@ufr.edu.br`
 
     try {
-      const response = await fetch("/api/user/email/request-change", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ newEmail: fullEmail }),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || "Falha ao solicitar troca de e-mail")
-      }
+      await userService.requestEmailChange({ newEmail: fullEmail })
 
       setNewEmail(fullEmail)
       setStep("verify")
       notify.success("Código enviado para o novo e-mail!")
     } catch (error: any) {
-      notify.error(error.message)
+      notify.error(error.response?.data?.error || error.message)
     } finally {
       setIsLoading(false)
     }
@@ -71,24 +63,15 @@ export function EmailForm({ currentEmail }: { currentEmail: string }) {
   async function onVerifyChange(data: z.infer<typeof otpSchema>) {
     setIsLoading(true)
     try {
-      const response = await fetch("/api/user/email/verify-change", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          newEmail: newEmail,
-          code: data.code,
-        }),
+      await userService.verifyEmailChange({
+        newEmail: newEmail,
+        code: data.code,
       })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || "Falha ao verificar código")
-      }
 
       notify.success("E-mail atualizado com sucesso! Faça login novamente.")
       setTimeout(() => signOut({ callbackUrl: "/auth/login" }), 2000)
     } catch (error: any) {
-      notify.error(error.message)
+      notify.error(error.response?.data?.error || error.message)
     } finally {
       setIsLoading(false)
     }
