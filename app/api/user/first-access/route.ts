@@ -40,16 +40,7 @@ export async function POST(req: Request) {
         name: username,
         firstAccess: false,
         imageId: fileRecord?.id,
-        proponent: {
-          upsert: {
-            create: {
-              imageId: fileRecord?.id,
-            },
-            update: {
-              imageId: fileRecord?.id,
-            },
-          },
-        },
+        proponent: {},
       },
     })
 

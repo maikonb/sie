@@ -12,50 +12,24 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
     }
 
     const { slug } = await params
-    const projectId = parseInt(slug)
-
-    let project = null
-
-    // 1. Try finding by ID if it's a number (backward compatibility)
-    if (!isNaN(projectId)) {
-      project = await prisma.project.findUnique({
-        where: { id: projectId },
-        include: {
-          proponent: {
-            include: {
-              imageFile: true,
-              user: {
-                select: {
-                  color: true,
-                },
-              }
-            },
-          },
-          partnerships: {
-            where: { isPrimary: true },
-            select: { type: true },
+    let project = null;
+    
+    project = await prisma.project.findUnique({
+      where: { slug: slug },
+      include: {
+        proponent: {
+          include: {
+            user: {
+              select: {
+                color: true,
+                imageFile: true,
+              },
+            }
           },
         },
-      })
-    }
-
-    // 2. If not found by ID, try finding by slug
-    if (!project) {
-      project = await prisma.project.findUnique({
-        where: { slug: slug },
-        include: {
-          proponent: {
-            include: {
-              imageFile: true,
-            },
-          },
-          partnerships: {
-            where: { isPrimary: true },
-            select: { type: true },
-          },
-        },
-      })
-    }
+        legalInstruments: true
+      },
+    })
 
     if (!project) {
       return new NextResponse("Not Found", { status: 404 })

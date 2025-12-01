@@ -14,33 +14,14 @@ interface ProjectFormProps {
 }
 
 export function ProjectForm({ createAction }: ProjectFormProps) {
-  const [step, setStep] = useState<"wizard" | "form">("wizard")
   const [partnershipType, setPartnershipType] = useState<string>("")
-
-  const handleWizardComplete = (type: string) => {
-    setPartnershipType(type)
-    setStep("form")
-  }
-
-  const handleWizardCancel = () => {
-    setPartnershipType("")
-    setStep("form")
-  }
-
-  if (step === "wizard") {
-    return (
-      <div className="w-full max-w-4xl mx-auto">
-        <ProjectClassificationWizard onComplete={handleWizardComplete} onCancel={handleWizardCancel} />
-      </div>
-    )
-  }
 
   return (
     <div className="w-full max-w-3xl mx-auto">
       <Card>
         <CardHeader>
           <CardTitle>Novo Projeto</CardTitle>
-          <CardDescription>{partnershipType ? "Preencha os detalhes do projeto para o tipo de parceria selecionado." : "Preencha os dados do seu projeto (Plano de Trabalho ficará para depois)."}</CardDescription>
+          <CardDescription>Preencha os dados do seu projeto (Plano de Trabalho ficará para depois).</CardDescription>
         </CardHeader>
         <CardContent>
           <form action={createAction} className="space-y-6">

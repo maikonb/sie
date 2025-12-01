@@ -15,7 +15,6 @@ CREATE TABLE "Proponent" (
     "id" TEXT NOT NULL,
     "institution" TEXT,
     "userId" TEXT,
-    "imageId" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -265,9 +264,6 @@ CREATE UNIQUE INDEX "ProjectLegalInstrument_legalInstrumentInstanceId_key" ON "P
 
 -- AddForeignKey
 ALTER TABLE "Proponent" ADD CONSTRAINT "Proponent_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Proponent" ADD CONSTRAINT "Proponent_imageId_fkey" FOREIGN KEY ("imageId") REFERENCES "File"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Project" ADD CONSTRAINT "Project_proponentId_fkey" FOREIGN KEY ("proponentId") REFERENCES "Proponent"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

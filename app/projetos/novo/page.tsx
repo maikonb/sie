@@ -2,12 +2,10 @@ import { redirect } from "next/navigation"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/db"
-import { PartnershipType } from "@prisma/client"
 
 import { ProjectForm } from "@/components/projects/project-form"
 import { generateUniqueSlug } from "@/lib/slug"
 
-// Server Action: cria o Projeto e redireciona
 async function createProjeto(formData: FormData) {
   "use server"
 
@@ -22,7 +20,6 @@ async function createProjeto(formData: FormData) {
   const objetivos = String(formData.get("objetivos") || "").trim()
   const justificativa = String(formData.get("justificativa") || "").trim()
   const abrangencia = String(formData.get("abrangencia") || "").trim()
-  const partnershipType = String(formData.get("partnershipType") || "") as PartnershipType
 
   // validações mínimas
   if (!titulo || !objetivos || !justificativa || !abrangencia) {
@@ -50,14 +47,6 @@ async function createProjeto(formData: FormData) {
       justification: justificativa,
       scope: abrangencia,
       proponent: { connect: { id: proponente.id } },
-      partnerships: partnershipType
-        ? {
-          create: {
-            type: partnershipType,
-            isPrimary: true,
-          },
-        }
-        : undefined,
     },
   })
 

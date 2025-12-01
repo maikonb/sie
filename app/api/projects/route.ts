@@ -25,10 +25,7 @@ export async function GET() {
         proponentId: proponent.id,
       },
       include: {
-        partnerships: {
-          where: { isPrimary: true },
-          select: { type: true },
-        },
+        legalInstruments: true
       },
       orderBy: {
         updatedAt: "desc",

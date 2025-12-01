@@ -50,11 +50,6 @@ export async function PATCH(req: Request) {
       data: {
         name: name,
         imageId: fileRecord?.id,
-        proponent: {
-          update: {
-            imageId: fileRecord?.id,
-          },
-        },
       },
     })
 

@@ -129,7 +129,7 @@ export default function FormRhfInput() {
           <div className="flex flex-col items-center justify-center space-y-4">
             <div className="relative group cursor-pointer">
               <UserAvatar size="xl" preview={preview} className="border-2 border-border" />
-              <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+              <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
                 <Camera className="h-8 w-8 text-white" />
               </div>
               <Input type="file" accept="image/*" className="absolute inset-0 h-full w-full cursor-pointer opacity-0" onChange={handleImageChange} />

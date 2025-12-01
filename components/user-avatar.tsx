@@ -47,13 +47,10 @@ export function UserAvatar({ size = "sm", preview, className }: UserAvatarProps)
 
   const imageUrl = typeof preview === "string" ? preview : user?.image
 
-  const hasRoundedClass = className?.includes("rounded-")
-  const fallbackRoundedClass = hasRoundedClass ? "" : "rounded-full"
-
   return (
     <Avatar className={cn(sizeClasses[size], className)}>
       <AvatarImage src={imageUrl || ""} alt={user?.name || "User"} />
-      <AvatarFallback className={cn(user?.color || "bg-muted", "text-white", fallbackRoundedClass, className?.match(/rounded-[a-z0-9-]+/)?.[0])}>{userImageDefault}</AvatarFallback>
+      <AvatarFallback className={cn(user?.color || "bg-muted", "text-white", className?.match(/rounded-[a-z0-9-]+/)?.[0])}>{userImageDefault}</AvatarFallback>
     </Avatar>
   )
 }

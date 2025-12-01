@@ -54,9 +54,6 @@ model Proponent {
   userId String? @unique
   user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  imageId   String?
-  imageFile File?   @relation(fields: [imageId], references: [id])
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -213,7 +210,6 @@ model File {
   updatedAt   DateTime @updatedAt
 
   user User?
-  proponents Proponent[]
   legalInstruments LegalInstrument[]
   legalInstrumentInstances LegalInstrumentInstance[]
 }
