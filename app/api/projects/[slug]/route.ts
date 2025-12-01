@@ -21,6 +21,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
           include: {
             user: {
               select: {
+                name: true,
+                email: true,
                 color: true,
                 imageFile: true,
               },
