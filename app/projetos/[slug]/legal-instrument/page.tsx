@@ -2,8 +2,10 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ArrowLeft } from "lucide-react"
+import { useState } from "react"
+import { ArrowLeft, ChevronLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import ProjectClassificationStart from "@/components/projects/project-classification-start"
 import { ProjectClassificationWizard } from "@/components/projects/project-classification-wizard"
 import { useProject } from "@/components/providers/project-context"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -13,6 +15,8 @@ import { toast } from "sonner"
 export default function Page() {
   const router = useRouter()
   const { project, loading } = useProject()
+  const [mode, setMode] = useState<"start" | "wizard">("start")
+  const [initialState, setInitialState] = useState<any>(null)
 
   const handleComplete = async (res: any) => {
     if (!project) return
@@ -26,6 +30,26 @@ export default function Page() {
     }
   }
 
+  const handleStart = () => {
+    setInitialState(null)
+    setMode("wizard")
+  }
+
+  const handleResume = (savedState: any) => {
+    setInitialState(savedState)
+    setMode("wizard")
+  }
+
+  const handleWizardReset = () => {
+    localStorage.removeItem("legalInstrumentWizard")
+    setInitialState(null)
+    setMode("start")
+
+    const url = new URL(window.location.href)
+    url.searchParams.delete("state")
+    router.replace(url.pathname + url.search)
+  }
+
   const handleBack = () => {
     // Check if there is a previous history entry, otherwise fallback to project page
     if (window.history.length > 2) {
@@ -37,15 +61,15 @@ export default function Page() {
 
   if (loading) {
     return (
-      <div className="p-8 space-y-8">
+      <div className="container mx-auto py-12 px-4 space-y-8 max-w-5xl">
         <div className="flex items-center gap-4">
-          <Skeleton className="h-10 w-10 rounded-full" />
+          <Skeleton className="h-12 w-12 rounded-full" />
           <div className="space-y-2">
             <Skeleton className="h-8 w-[300px]" />
             <Skeleton className="h-4 w-[200px]" />
           </div>
         </div>
-        <Skeleton className="h-[400px] w-full" />
+        <Skeleton className="h-[500px] w-full rounded-xl" />
       </div>
     )
   }
@@ -53,16 +77,10 @@ export default function Page() {
   if (!project) return null
 
   return (
-    <div className="container mx-auto py-8 min-h-screen">
-      <div className="mb-8">
-        <Button variant="ghost" onClick={handleBack} className="-ml-4">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Voltar
-        </Button>
-      </div>
+    <div className="h-full bg-linear-to-b from-background to-muted/20">
+      <div className="container justify-center min-h-full mx-auto py-8 px-4 md:py-12 max-w-5xl flex flex-col">
 
-      <div className="flex items-center justify-center">
-        <ProjectClassificationWizard onComplete={handleComplete} />
+        <div className="flex-1 flex flex-col items-center justify-center">{mode === "start" ? <ProjectClassificationStart onStart={handleStart} onResume={handleResume} /> : <ProjectClassificationWizard initialState={initialState} onReset={handleWizardReset} onComplete={handleComplete} />}</div>
       </div>
     </div>
   )

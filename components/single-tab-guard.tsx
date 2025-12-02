@@ -2,19 +2,10 @@
 
 import { useSingleTab } from "./providers/single-tab-provider"
 import { Button } from "./ui/button"
-import { Loading } from "./ui/loading"
 import { Logo } from "./logo"
 
 export function SingleTabGuard({ children }: { children: React.ReactNode }) {
-  const { isBlocked, isChecking, takeOver } = useSingleTab()
-
-  if (isChecking) {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-        <Loading text="Verificando sessão..." />
-      </div>
-    )
-  }
+  const { isBlocked, takeOver } = useSingleTab()
 
   if (isBlocked) {
     return (

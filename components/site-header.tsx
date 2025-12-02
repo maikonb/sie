@@ -1,14 +1,19 @@
 "use client"
 
+import { Fragment } from 'react'
 import { SidebarIcon } from "lucide-react"
 
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { useSidebar } from "@/components/providers/sidebar"
+import { usePathname } from 'next/navigation'
+import { getBreadcrumbs } from '@/lib/breadcrumb'
 
 export function SiteHeader() {
   const { toggleSidebar } = useSidebar()
+  const pathname = usePathname()
+  const breadcrumbs = getBreadcrumbs(pathname)
 
   return (
     <header className="bg-background sticky top-0 z-50 flex w-full items-center border-b">
@@ -19,13 +24,21 @@ export function SiteHeader() {
         <Separator orientation="vertical" className="mr-2 h-4" />
         <Breadcrumb className="hidden sm:block">
           <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink href="#">Building Your Application</BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>Data Fetching</BreadcrumbPage>
-            </BreadcrumbItem>
+            {breadcrumbs.map((item, idx) => {
+              const isLast = idx === breadcrumbs.length - 1
+              return (
+                <Fragment key={item.href}>
+                  <BreadcrumbItem>
+                    {isLast ? (
+                      <BreadcrumbPage>{item.label}</BreadcrumbPage>
+                    ) : (
+                      <BreadcrumbLink href={item.href}>{item.label}</BreadcrumbLink>
+                    )}
+                  </BreadcrumbItem>
+                  {!isLast && <BreadcrumbSeparator />}
+                </Fragment>
+              )
+            })}
           </BreadcrumbList>
         </Breadcrumb>
       </div>
