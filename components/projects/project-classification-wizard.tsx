@@ -9,16 +9,17 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { CheckCircle2, HelpCircle, RotateCcw, ThumbsUp, ThumbsDown, ArrowRight } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { LegalInstrumentType } from "@prisma/client"
 
 const STATE_TO_PARTNERSHIP_TYPE: Record<string, string> = {
-  result_pdi_agreement: "PDI_AGREEMENT",
-  result_service_contract: "SERVICE_CONTRACT",
-  result_appdi_private: "APPDI_PRIVATE",
-  result_appdi_no_funding: "APPDI_NO_FUNDING",
-  result_coop_agreement: "COOP_AGREEMENT",
-  result_nda: "NDA",
-  result_tech_transfer: "TECH_TRANSFER",
-  result_review_scope: "REVIEW_SCOPE",
+  result_pdi_agreement: LegalInstrumentType.PDI_AGREEMENT,
+  result_service_contract: LegalInstrumentType.SERVICE_CONTRACT,
+  result_appdi_private: LegalInstrumentType.APPDI_PRIVATE,
+  result_appdi_no_funding: LegalInstrumentType.APPDI_NO_FUNDING,
+  result_coop_agreement: LegalInstrumentType.COOP_AGREEMENT,
+  result_nda: LegalInstrumentType.NDA,
+  result_tech_transfer: LegalInstrumentType.TECH_TRANSFER,
+  result_review_scope: LegalInstrumentType.REVIEW_SCOPE,
 }
 
 interface ProjectClassificationWizardProps {

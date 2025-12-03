@@ -3,17 +3,18 @@ import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { NextResponse } from "next/server"
 import { fileService } from "@/lib/file-service"
+import { handleApiError, unauthorizedResponse } from "@/lib/api-utils"
 
 import { APP_ERRORS } from "@/lib/errors"
 
 export async function POST(req: Request) {
-  const session = await getServerSession(authOptions)
-
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: APP_ERRORS.AUTH_UNAUTHORIZED.code }, { status: 401 })
-  }
-
   try {
+    const session = await getServerSession(authOptions)
+
+    if (!session?.user?.email) {
+      return unauthorizedResponse()
+    }
+
     const json = await req.json()
     const username = json.username
     const imageKey = json.imageKey || json.imageId // Support both for backward compat or if frontend sends ID as key
@@ -47,6 +48,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error("Error updating first access:", error)
-    return NextResponse.json({ error: APP_ERRORS.USER_UPDATE_FAILED.code }, { status: 500 })
+    return handleApiError(error)
   }
 }

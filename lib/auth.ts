@@ -11,6 +11,8 @@ const ALLOWED_DOMAINS =
     .split(",")
     .map((d) => d.trim()) ?? []
 
+const JWT_MAX_AGE = 24 * 60 * 60
+
 function isUfr(email?: string | null) {
   if (!email) return false
 
@@ -25,7 +27,15 @@ function isUfr(email?: string | null) {
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
-  session: { strategy: "jwt" },
+  session: { 
+    strategy: "jwt",  
+    maxAge: JWT_MAX_AGE,
+  },
+  
+  jwt: {
+    maxAge: JWT_MAX_AGE,
+  },
+  
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,

@@ -1,6 +1,11 @@
 import { apiClient } from "@/lib/api-client"
 import { Project } from "@prisma/client"
 
+export interface RequestCreateLocalInstrumentPayload {
+  type: string
+  history: { question: string; answer: string }[]
+}
+
 export const projectService = {
   getAll: async () => {
     return apiClient.get<any>("/projects")
@@ -16,5 +21,9 @@ export const projectService = {
         "Content-Type": "multipart/form-data",
       },
     })
+  },
+
+  createLegalInstrument: async (slug: string, payload: RequestCreateLocalInstrumentPayload) => {
+    return apiClient.post<any>(`/projects/${slug}/legal-instrument`, payload)
   },
 }

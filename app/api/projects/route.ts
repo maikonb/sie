@@ -3,12 +3,14 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 import { generateUniqueSlug } from "@/lib/slug"
+import { handleApiError, unauthorizedResponse } from "@/lib/api-utils"
+import { APP_ERRORS } from "@/lib/errors"
 
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.email) {
-      return new NextResponse("Unauthorized", { status: 401 })
+      return unauthorizedResponse()
     }
 
     const formData = await req.formData()
@@ -18,16 +20,13 @@ export async function POST(req: Request) {
     const abrangencia = String(formData.get("abrangencia") || "").trim()
 
     if (!titulo || !objetivos || !justificativa || !abrangencia) {
-      return new NextResponse("Preencha todos os campos obrigatórios.", { status: 400 })
+      return NextResponse.json({ error: APP_ERRORS.GENERIC_ERROR.code }, { status: 400 })
     }
 
-    const proponent = await prisma.proponent.findUnique({
-      where: { userId: session.user.id },
-      select: { id: true },
-    })
+    const proponent = await prisma.proponent.findUnique({ where: { userId: session.user.id }, select: { id: true } })
 
     if (!proponent) {
-      return new NextResponse("Proponente não encontrado para este usuário.", { status: 404 })
+      return NextResponse.json({ error: APP_ERRORS.GENERIC_ERROR.code }, { status: 404 })
     }
 
     const slug = await generateUniqueSlug(titulo)
@@ -46,7 +45,7 @@ export async function POST(req: Request) {
     return NextResponse.json(project)
   } catch (error) {
     console.error("[PROJECTS_POST]", error)
-    return new NextResponse("Internal Error", { status: 500 })
+    return handleApiError(error)
   }
 }
 export async function GET() {
@@ -81,6 +80,6 @@ export async function GET() {
     return NextResponse.json(projects)
   } catch (error) {
     console.error("[PROJECTS_GET]", error)
-    return new NextResponse("Internal Error", { status: 500 })
+    return handleApiError(error)
   }
 }

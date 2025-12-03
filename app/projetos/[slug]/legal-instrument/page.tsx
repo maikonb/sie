@@ -1,16 +1,14 @@
 "use client"
 
-import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { ArrowLeft, ChevronLeft } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import ProjectClassificationStart from "@/components/projects/project-classification-start"
 import { ProjectClassificationWizard } from "@/components/projects/project-classification-wizard"
 import { useProject } from "@/components/providers/project-context"
 import { Skeleton } from "@/components/ui/skeleton"
-import { saveLegalInstrumentResult } from "@/app/actions/legal-instrument"
-import { toast } from "sonner"
+import { projectService } from "@/services/project"
+import { notify } from "@/lib/notifications"
+import { APP_ERRORS } from "@/lib/errors"
 
 export default function Page() {
   const router = useRouter()
@@ -19,14 +17,16 @@ export default function Page() {
   const [initialState, setInitialState] = useState<any>(null)
 
   const handleComplete = async (res: any) => {
-    if (!project) return
+    if (!project || !project.slug) return
 
-    const result = await saveLegalInstrumentResult(project.id, res)
+    const result = await projectService.createLegalInstrument(project.slug, res)
+    
     if (result.success) {
-      toast.success("Instrumento jurídico salvo com sucesso!")
+      notify.success("Instrumento jurídico salvo com sucesso!")
       router.push(`/projetos/${project.slug}/work-plan`)
     } else {
-      toast.error("Erro ao salvar instrumento jurídico")
+      if (result.error) notify.error(result.error)
+      notify.error(APP_ERRORS.GENERIC_ERROR.code)
     }
   }
 

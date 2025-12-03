@@ -266,9 +266,11 @@ model LegalInstrument {
 }
 
 model LegalInstrumentInstance {
-  id                   String                     @id @default(uuid())
-  fieldsJson           Json
-  type                 LegalInstrumentType
+  id                              String                     @id @default(uuid())
+  fieldsJson                      Json
+  type                            LegalInstrumentType
+  answers                         Json?
+  project_classification_answers  Json?                      @db.JsonB 
 
   fileId               String
   file                 File                       @relation(fields: [fileId], references: [id])

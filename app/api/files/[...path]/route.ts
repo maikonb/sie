@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { fileService } from "@/lib/file-service"
 import { Readable } from "stream"
+import { handleApiError } from "@/lib/api-utils"
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   try {
@@ -45,9 +46,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ path
     })
   } catch (error: any) {
     console.error("Error serving file:", error)
-    if (error.name === "NoSuchKey") {
+    if (error?.name === "NoSuchKey") {
       return new NextResponse(null, { status: 404 })
     }
-    return new NextResponse(null, { status: 500 })
+    return handleApiError(error)
   }
 }
