@@ -1,5 +1,5 @@
 import { apiClient } from "@/lib/api-client"
-import { Project } from "@prisma/client"
+import { Project } from "@/prisma/client"
 
 export interface RequestCreateLocalInstrumentPayload {
   type: string

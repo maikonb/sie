@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { CheckCircle2, HelpCircle, RotateCcw, ThumbsUp, ThumbsDown, ArrowRight } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { LegalInstrumentType } from "@prisma/client"
+import { LegalInstrumentType } from "@/prisma/client"
 
 const STATE_TO_PARTNERSHIP_TYPE: Record<string, string> = {
   result_pdi_agreement: LegalInstrumentType.PDI_AGREEMENT,

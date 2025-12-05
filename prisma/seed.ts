@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client"
+import { PrismaClient } from "@/prisma/client"
 import { seedLegalInstruments } from "./seeds/legal-instruments"
 
 const prisma = new PrismaClient()

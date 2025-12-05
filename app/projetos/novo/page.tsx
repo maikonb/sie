@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db"
 
 import { ProjectForm } from "@/components/forms/project/create"
-import { Project } from "@prisma/client"
+import { Project } from "@/prisma/client"
 
 interface PageProps {
   searchParams: Promise<{ slug?: string }>

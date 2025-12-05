@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
-import { Project } from "@prisma/client"
+import { Project } from "@/prisma/client"
 import { Check, FileText, Scale, Clock } from "lucide-react"
 import { projectService } from "@/services/project"
 
