@@ -11,7 +11,7 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 
 import { getSession } from "next-auth/react"
 import { APP_ERRORS } from "@/lib/errors"
-import { authService } from "@/services/api/auth"
+import { authService } from "@/lib/services/api/auth"
 
 export function OTPForm({ ...props }: React.ComponentProps<typeof Card>) {
   const params = useSearchParams()

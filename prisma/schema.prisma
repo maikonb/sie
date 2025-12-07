@@ -328,6 +328,7 @@ model UserRole {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([userId]) 
   @@unique([userId, roleId])
 }
 
@@ -342,6 +343,8 @@ model RolePermission {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([roleId])
+  @@index([permissionId]) 
   @@unique([roleId, permissionId])
 }
 
@@ -372,6 +375,8 @@ model ResourceMembers {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([userId, permissionId])
+  @@index([referenceTable, referenceId]) 
   @@unique([userId, permissionId, referenceId])
 }
 

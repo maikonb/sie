@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
-import prisma from "@/lib/db"
+import prisma from "@/lib/config/db"
 import bcrypt from "bcryptjs"
 import { getAuthSession, handleApiError, unauthorizedResponse } from "@/lib/api-utils"
 import { APP_ERRORS } from "@/lib/errors"

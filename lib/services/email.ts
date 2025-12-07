@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer"
-import { EmailTemplateKey, EmailTemplateVars } from "./emails/types"
-import { otpTemplate } from "./emails/templates/otp"
+import { EmailTemplateKey, EmailTemplateVars } from "../emails/types"
+import { otpTemplate } from "../emails/templates/otp"
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST!,

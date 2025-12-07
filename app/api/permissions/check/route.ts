@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { getAuthSession, handleApiError, unauthorizedResponse } from "@/lib/api-utils"
-import PermissionsService from "@/lib/permissions"
+import PermissionsService from "@/lib/services/permissions"
 
 export async function POST(req: Request) {
   try {

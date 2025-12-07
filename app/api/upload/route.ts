@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { storageService } from "@/lib/storage"
+import { storageService } from "@/lib/services/storage"
 import { getAuthSession, handleApiError, unauthorizedResponse } from "@/lib/api-utils"
 import { APP_ERRORS } from "@/lib/errors"
 

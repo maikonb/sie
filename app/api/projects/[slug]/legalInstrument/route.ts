@@ -1,4 +1,4 @@
-import prisma from "@/lib/db"
+import prisma from "@/lib/config/db"
 import { APP_ERRORS } from "@/lib/errors"
 import { NextResponse } from "next/server"
 import { handleApiError } from "@/lib/api-utils"

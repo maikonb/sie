@@ -11,8 +11,8 @@ import { UserAvatar } from "@/components/user-avatar"
 import { notify } from "@/lib/notifications"
 import { useSession } from "next-auth/react"
 import { ImageCropper } from "@/components/ui/image-cropper"
-import { userService } from "@/services/api/user"
-import { fileService } from "@/services/api/file"
+import { userService } from "@/lib/services/api/user"
+import { fileService } from "@/lib/services/api/file"
 
 const profileFormSchema = z.object({
   name: z.string().min(2, {

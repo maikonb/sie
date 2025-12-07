@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db"
+import { prisma } from "@/lib/config/db"
 
 import { ProjectForm } from "@/components/forms/project/create"
 import { Project } from "@prisma/client"

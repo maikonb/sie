@@ -5,7 +5,7 @@ import Cropper from "react-easy-crop"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
-import { getCroppedImg } from "@/lib/image-utils"
+import { getCroppedImg } from "@/lib/utils/image"
 
 interface ImageCropperProps {
   imageSrc: string | null

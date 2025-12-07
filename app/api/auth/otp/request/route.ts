@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server"
-import { prisma } from "@/lib/db"
+import { prisma } from "@/lib/config/db"
 import { hash } from "bcryptjs"
 import { APP_ERRORS } from "@/lib/errors"
-import { sendOtpEmail } from "@/lib/email"
+import { sendOtpEmail } from "@/lib/services/email"
 import { handleApiError } from "@/lib/api-utils"
 
 function isUfr(email?: string | null) {

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { getAuthSession, handleApiError, unauthorizedResponse } from "@/lib/api-utils"
-import { fileService } from "@/lib/file-service"
+import { fileService } from "@/lib/services/file"
 import { z } from "zod"
 
 const uploadSchema = z.object({

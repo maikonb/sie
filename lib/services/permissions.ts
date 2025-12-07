@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db"
+import { prisma } from "@/lib/config/db"
 import { APP_ERRORS } from "@/lib/errors"
 
 type ResourceCheck = {

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { useSidebar } from "@/components/providers/sidebar"
 import { usePathname } from "next/navigation"
-import { getBreadcrumbs } from "@/lib/breadcrumb"
+import { getBreadcrumbs } from "@/lib/utils/breadcrumb"
 
 export function SiteHeader() {
   const { toggleSidebar } = useSidebar()

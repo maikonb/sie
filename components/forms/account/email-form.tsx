@@ -11,7 +11,7 @@ import { Field, FieldGroup } from "@/components/ui/field"
 import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from "@/components/ui/input-group"
 import { notify } from "@/lib/notifications"
 import { signOut } from "next-auth/react"
-import { userService } from "@/services/api/user"
+import { userService } from "@/lib/services/api/user"
 
 const emailFormSchema = z.object({
   localPart: z

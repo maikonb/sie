@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useMachine } from "@xstate/react"
-import { createProjectFlowMachine } from "@/lib/project-flow-machine"
+import { createProjectFlowMachine } from "@/lib/constrants/project-flow-machine"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"

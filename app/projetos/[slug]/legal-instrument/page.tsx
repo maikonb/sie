@@ -6,7 +6,7 @@ import ProjectClassificationStart from "@/components/projects/project-classifica
 import { ProjectClassificationWizard } from "@/components/projects/project-classification-wizard"
 import { useProject } from "@/components/providers/project-context"
 import { Skeleton } from "@/components/ui/skeleton"
-import { projectService } from "@/services/api/project"
+import { projectService } from "@/lib/services/api/project"
 import { notify } from "@/lib/notifications"
 import { APP_ERRORS } from "@/lib/errors"
 

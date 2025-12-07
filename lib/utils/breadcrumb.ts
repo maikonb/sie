@@ -1,5 +1,5 @@
 import { formatSegment } from "./format-segment"
-import { BREADCRUMB_MAP } from "./constrants/breadcrumb-map"
+import { BREADCRUMB_MAP } from "../constrants/breadcrumb-map"
 
 export type BreadcrumbItem = {
   href: string

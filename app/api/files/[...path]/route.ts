@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { fileService } from "@/lib/file-service"
+import { fileService } from "@/lib/services/file"
 import { Readable } from "stream"
 import { handleApiError } from "@/lib/api-utils"
 

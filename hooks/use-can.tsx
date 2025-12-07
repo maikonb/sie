@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { PermissionCheckPayload, permissionsService } from "@/services/api/permissions"
+import { PermissionCheckPayload, permissionsService } from "@/lib/services/api/permissions"
 
 type CheckInput = PermissionCheckPayload | string
 

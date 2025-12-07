@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { projectService } from "@/services/api/project"
+import { projectService } from "@/lib/services/api/project"
 
 interface Project {
   id: number

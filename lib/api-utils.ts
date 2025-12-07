@@ -1,5 +1,5 @@
 import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { authOptions } from "@/lib/config/auth"
 import { NextResponse } from "next/server"
 import { z } from "zod"
 import { APP_ERRORS, getAppError } from "@/lib/errors"

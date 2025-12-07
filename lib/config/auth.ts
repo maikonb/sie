@@ -2,10 +2,10 @@ import { User, type NextAuthOptions } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
 import Credentials from "next-auth/providers/credentials"
 import { PrismaAdapter } from "@next-auth/prisma-adapter"
-import { prisma } from "@/lib/db"
+import { prisma } from "@/lib/config/db"
 import { compare } from "bcryptjs"
 import { APP_ERRORS } from "@/lib/errors"
-import { getSystemDefaultId } from "./defaults"
+import { getSystemDefaultId } from "../services/defaults"
 
 const ALLOWED_DOMAINS =
   process.env.ALLOWED_EMAIL_DOMAINS?.toLowerCase()

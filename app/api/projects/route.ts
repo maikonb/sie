@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
-import { prisma } from "@/lib/db"
-import { generateUniqueSlug } from "@/lib/slug"
+import { authOptions } from "@/lib/config/auth"
+import { prisma } from "@/lib/config/db"
+import { generateUniqueSlug } from "@/lib/utils/slug"
 import { handleApiError, unauthorizedResponse } from "@/lib/api-utils"
 import { APP_ERRORS } from "@/lib/errors"
 
