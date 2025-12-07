@@ -44,7 +44,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json(project)
   } catch (error) {
-    console.error("[PROJECTS_POST]", error)
     return handleApiError(error)
   }
 }
@@ -79,7 +78,6 @@ export async function GET() {
 
     return NextResponse.json(projects)
   } catch (error) {
-    console.error("[PROJECTS_GET]", error)
     return handleApiError(error)
   }
 }

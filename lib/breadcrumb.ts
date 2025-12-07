@@ -1,5 +1,5 @@
-import { formatSegment } from './format-segment'
-import { BREADCRUMB_MAP } from './breadcrumb-map'
+import { formatSegment } from "./format-segment"
+import { BREADCRUMB_MAP } from "./constrants/breadcrumb-map"
 
 export type BreadcrumbItem = {
   href: string
@@ -7,19 +7,17 @@ export type BreadcrumbItem = {
 }
 
 export function getBreadcrumbs(pathname: string | null | undefined): BreadcrumbItem[] {
-  const path = pathname ?? '/'
-  if (path === '' || path === '/') return [{ href: '/', label: BREADCRUMB_MAP[''] ?? 'Início' }]
+  const path = pathname ?? "/"
+  if (path === "" || path === "/") return [{ href: "/", label: BREADCRUMB_MAP[""] ?? "Início" }]
 
-  const segments = path.split('/').filter(Boolean)
+  const segments = path.split("/").filter(Boolean)
   const breadcrumbs: BreadcrumbItem[] = []
 
-  // Always start with home
-  breadcrumbs.push({ href: '/', label: BREADCRUMB_MAP[''] ?? 'Início' })
+  breadcrumbs.push({ href: "/", label: BREADCRUMB_MAP[""] ?? "Início" })
 
-  let accumulated = ''
+  let accumulated = ""
   segments.forEach((seg) => {
     accumulated += `/${seg}`
-    // If there's a known friendly name, use it; otherwise format the segment
     const label = BREADCRUMB_MAP[seg] ?? formatSegment(seg)
     breadcrumbs.push({ href: accumulated, label })
   })

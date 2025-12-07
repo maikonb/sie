@@ -110,7 +110,7 @@ export function ProjectClassificationWizard({ onComplete, initialState, onReset 
           <CardDescription className="text-lg mt-2">{isFinal ? "Com base nas suas respostas, recomendamos o seguinte instrumento:" : "Responda as perguntas para identificarmos o instrumento ideal"}</CardDescription>
         </CardHeader>
 
-        <CardContent className="flex flex-col items-center justify-center min-h-[240px] py-4 px-6">
+        <CardContent className="flex flex-col items-center justify-center min-h-60 py-4 px-6">
           {isFinal ? (
             <div className="space-y-8 text-center w-full max-w-2xl animate-in fade-in zoom-in duration-500 delay-150">
               <div className="p-8 rounded-2xl bg-background shadow-sm border">
@@ -136,11 +136,11 @@ export function ProjectClassificationWizard({ onComplete, initialState, onReset 
         <CardFooter className="flex justify-center gap-6 pb-12 pt-4">
           {isFinal ? (
             <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-              <Button variant="outline" size="lg" onClick={handleReset} className="min-w-[160px] h-12 text-base">
+              <Button variant="outline" size="lg" onClick={handleReset} className="min-w-40 h-12 text-base">
                 <RotateCcw className="mr-2 h-4 w-4" />
                 Reiniciar
               </Button>
-              <Button onClick={handleConfirm} size="lg" className="min-w-[160px] h-12 text-base shadow-lg hover:shadow-xl transition-all">
+              <Button onClick={handleConfirm} size="lg" className="min-w-40 h-12 text-base shadow-lg hover:shadow-xl transition-all">
                 Confirmar Seleção
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>

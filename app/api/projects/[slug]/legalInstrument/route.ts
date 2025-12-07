@@ -21,29 +21,32 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
       return NextResponse.json({ error: APP_ERRORS.PROJECT_CREATE_LEGAL_INSTRUMENTS.code }, { status: 404 })
     }
 
-    await prisma.$transaction(async (prismaTx) => {
-      const instance = await prismaTx.legalInstrumentInstance.create({
-        data: {
-          type: result.type,
-          fieldsJson: legalInstrument.fieldsJson as any,
-          project_classification_answers: result.history,
-          fileId: legalInstrument.fileId,
-        },
-      })
+    await prisma.$transaction(
+      async (prismaTx) => {
+        const instance = await prismaTx.legalInstrumentInstance.create({
+          data: {
+            type: result.type,
+            fieldsJson: legalInstrument.fieldsJson as any,
+            project_classification_answers: result.history,
+            fileId: legalInstrument.fileId,
+          },
+        })
 
-      await prismaTx.projectLegalInstrument.create({
-        data: {
-          projectId: project.id,
-          legalInstrumentId: legalInstrument.id,
-          legalInstrumentInstanceId: instance.id,
-        },
-      })
+        await prismaTx.projectLegalInstrument.create({
+          data: {
+            projectId: project.id,
+            legalInstrumentId: legalInstrument.id,
+            legalInstrumentInstanceId: instance.id,
+          },
+        })
 
-      return
-    }, {
-      timeout: 10000,
-      isolationLevel: "Serializable",
-    })
+        return
+      },
+      {
+        timeout: 10000,
+        isolationLevel: "Serializable",
+      }
+    )
 
     return NextResponse.json({ success: true })
   } catch (error) {

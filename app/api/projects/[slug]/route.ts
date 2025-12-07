@@ -52,7 +52,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
 
     return NextResponse.json(project)
   } catch (error) {
-    console.error("[PROJECT_GET]", error)
     return handleApiError(error)
   }
 }

@@ -6,7 +6,7 @@ import ProjectClassificationStart from "@/components/projects/project-classifica
 import { ProjectClassificationWizard } from "@/components/projects/project-classification-wizard"
 import { useProject } from "@/components/providers/project-context"
 import { Skeleton } from "@/components/ui/skeleton"
-import { projectService } from "@/services/project"
+import { projectService } from "@/services/api/project"
 import { notify } from "@/lib/notifications"
 import { APP_ERRORS } from "@/lib/errors"
 
@@ -20,7 +20,7 @@ export default function Page() {
     if (!project || !project.slug) return
 
     const result = await projectService.createLegalInstrument(project.slug, res)
-    
+
     if (result.success) {
       notify.success("Instrumento jurídico salvo com sucesso!")
       router.push(`/projetos/${project.slug}/work-plan`)
@@ -79,7 +79,6 @@ export default function Page() {
   return (
     <div className="h-full bg-linear-to-b from-background to-muted/20">
       <div className="container justify-center min-h-full mx-auto py-8 px-4 md:py-12 max-w-5xl flex flex-col">
-
         <div className="flex-1 flex flex-col items-center justify-center">{mode === "start" ? <ProjectClassificationStart onStart={handleStart} onResume={handleResume} /> : <ProjectClassificationWizard initialState={initialState} onReset={handleWizardReset} onComplete={handleComplete} />}</div>
       </div>
     </div>

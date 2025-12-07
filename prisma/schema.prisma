@@ -11,7 +11,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 enum ScheduleStatus {
@@ -45,6 +44,10 @@ enum LegalInstrumentType {
   NDA
   TECH_TRANSFER
   REVIEW_SCOPE
+}
+
+enum SystemDefaultType {
+  Role
 }
 
 model Proponent {
@@ -193,10 +196,12 @@ model User {
 
   proponent Proponent?
 
-  accounts      Account[]
+  accounts  Account[]
+  userRoles UserRole[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  resourceMembers ResourceMembers[]
 }
 
 model File {
@@ -210,8 +215,8 @@ model File {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  user User?
-  legalInstruments LegalInstrument[]
+  user                     User?
+  legalInstruments         LegalInstrument[]
   legalInstrumentInstances LegalInstrumentInstance[]
 }
 
@@ -253,45 +258,131 @@ model OtpCode {
 }
 
 model LegalInstrument {
-  id                   String                     @id @default(uuid())
-  fieldsJson           Json
-  type                 LegalInstrumentType
+  id         String              @id @default(uuid())
+  fieldsJson Json
+  type       LegalInstrumentType
 
-  fileId               String
-  file                 File                       @relation(fields: [fileId], references: [id])
+  fileId String
+  file   File   @relation(fields: [fileId], references: [id])
 
   projectLegalInstruments ProjectLegalInstrument[]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model LegalInstrumentInstance {
-  id                              String                     @id @default(uuid())
-  fieldsJson                      Json
-  type                            LegalInstrumentType
-  answers                         Json?
-  project_classification_answers  Json?                      @db.JsonB 
+  id                             String              @id @default(uuid())
+  fieldsJson                     Json
+  type                           LegalInstrumentType
+  answers                        Json?
+  project_classification_answers Json?               @db.JsonB
 
-  fileId               String
-  file                 File                       @relation(fields: [fileId], references: [id])
+  fileId String
+  file   File   @relation(fields: [fileId], references: [id])
 
-  projectRelation      ProjectLegalInstrument[]
+  projectRelation ProjectLegalInstrument[]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model ProjectLegalInstrument {
-  id                        String                      @id @default(uuid())
+  id String @id @default(uuid())
 
-  projectId                 String                      @unique
-  project                   Project                     @relation(fields: [projectId], references: [id])
+  projectId                 String                  @unique
+  project                   Project                 @relation(fields: [projectId], references: [id])
   legalInstrumentId         String
-  legalInstrument           LegalInstrument             @relation(fields: [legalInstrumentId], references: [id])
-  legalInstrumentInstanceId String                      @unique
-  legalInstrumentInstance   LegalInstrumentInstance     @relation(fields: [legalInstrumentInstanceId], references: [id])
+  legalInstrument           LegalInstrument         @relation(fields: [legalInstrumentId], references: [id])
+  legalInstrumentInstanceId String                  @unique
+  legalInstrumentInstance   LegalInstrumentInstance @relation(fields: [legalInstrumentInstanceId], references: [id])
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Authenticaitons
+
+model Role {
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+  slug        String  @unique
+
+  userRoles       UserRole[]
+  rolePermissions RolePermission[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model UserRole {
+  id String @id @default(uuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+  roleId String
+  role   Role   @relation(fields: [roleId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, roleId])
+}
+
+model RolePermission {
+  id String @id @default(uuid())
+
+  roleId       String
+  role         Role       @relation(fields: [roleId], references: [id])
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([roleId, permissionId])
+}
+
+model Permission {
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+  slug        String  @unique
+
+  resourceMembers ResourceMembers[]
+  rolePermissions RolePermission[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ResourceMembers {
+  id String @id @default(uuid())
+
+  userId       String
+  user         User       @relation(fields: [userId], references: [id])
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id])
+
+  referenceTable String
+  referenceId    String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, permissionId, referenceId])
+}
+
+// System
+
+model SystemDefaults {
+  id             String             @id @default(uuid())
+  slug           String             @unique
+  referenceTable SystemDefaultType?
+  referenceId    String?
+  value          String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

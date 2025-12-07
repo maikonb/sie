@@ -3,13 +3,12 @@ import { PrismaClient, LegalInstrumentType } from "@/prisma/client"
 export async function seedLegalInstruments(prisma: PrismaClient) {
   console.log("Seeding Legal Instruments...")
 
-  // Create a dummy file for the relation if it doesn't exist
-  // We use upsert or findFirst to avoid duplicates if running multiple times
   let dummyFile = await prisma.file.findFirst({
     where: { key: "dummy-key" },
   })
 
   if (!dummyFile) {
+    // TODO: update to real values
     dummyFile = await prisma.file.create({
       data: {
         key: "dummy-key",
@@ -22,6 +21,7 @@ export async function seedLegalInstruments(prisma: PrismaClient) {
     })
   }
 
+  // TODO: insert real filds
   const instruments = [
     { type: LegalInstrumentType.PDI_AGREEMENT, fieldsJson: {} },
     { type: LegalInstrumentType.SERVICE_CONTRACT, fieldsJson: {} },
@@ -34,7 +34,6 @@ export async function seedLegalInstruments(prisma: PrismaClient) {
   ]
 
   for (const instrument of instruments) {
-    // Check if exists to avoid duplicates
     const exists = await prisma.legalInstrument.findFirst({
       where: { type: instrument.type },
     })

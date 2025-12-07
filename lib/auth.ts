@@ -5,6 +5,7 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import { prisma } from "@/lib/db"
 import { compare } from "bcryptjs"
 import { APP_ERRORS } from "@/lib/errors"
+import { getSystemDefaultId } from "./defaults"
 
 const ALLOWED_DOMAINS =
   process.env.ALLOWED_EMAIL_DOMAINS?.toLowerCase()
@@ -27,15 +28,15 @@ function isUfr(email?: string | null) {
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
-  session: { 
-    strategy: "jwt",  
+  session: {
+    strategy: "jwt",
     maxAge: JWT_MAX_AGE,
   },
-  
+
   jwt: {
     maxAge: JWT_MAX_AGE,
   },
-  
+
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -97,12 +98,20 @@ export const authOptions: NextAuthOptions = {
           const colors = ["bg-red-500", "bg-orange-500", "bg-amber-500", "bg-yellow-500", "bg-lime-500", "bg-green-500", "bg-emerald-500", "bg-teal-500", "bg-cyan-500", "bg-sky-500", "bg-blue-500", "bg-indigo-500", "bg-violet-500", "bg-purple-500", "bg-fuchsia-500", "bg-pink-500", "bg-rose-500"]
           const randomColor = colors[Math.floor(Math.random() * colors.length)]
 
+          // Cria o usuário com a role default
           user = await prisma.user.create({
             data: {
               email,
-              emailVerified: new Date(), // verifica email no cadastro via OTP
+              emailVerified: new Date(),
               firstAccess: true,
               color: randomColor,
+              userRoles: {
+                create: {
+                  role: {
+                    connect: { id: await getSystemDefaultId('user_role') }
+                  }
+                }
+              }
             },
             include: { imageFile: true },
           })

@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { useState } from "react"
 import { Project } from "@/prisma/client"
 import { Check, FileText, Scale, Clock } from "lucide-react"
-import { projectService } from "@/services/project"
+import { projectService } from "@/services/api/project"
 
 interface ProjectFormProps {
   initialProject?: Project | null

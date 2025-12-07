@@ -1,14 +1,14 @@
 "use client"
 
-import { Fragment } from 'react'
+import { Fragment } from "react"
 import { SidebarIcon } from "lucide-react"
 
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { useSidebar } from "@/components/providers/sidebar"
-import { usePathname } from 'next/navigation'
-import { getBreadcrumbs } from '@/lib/breadcrumb'
+import { usePathname } from "next/navigation"
+import { getBreadcrumbs } from "@/lib/breadcrumb"
 
 export function SiteHeader() {
   const { toggleSidebar } = useSidebar()
@@ -28,13 +28,7 @@ export function SiteHeader() {
               const isLast = idx === breadcrumbs.length - 1
               return (
                 <Fragment key={item.href}>
-                  <BreadcrumbItem>
-                    {isLast ? (
-                      <BreadcrumbPage>{item.label}</BreadcrumbPage>
-                    ) : (
-                      <BreadcrumbLink href={item.href}>{item.label}</BreadcrumbLink>
-                    )}
-                  </BreadcrumbItem>
+                  <BreadcrumbItem>{isLast ? <BreadcrumbPage>{item.label}</BreadcrumbPage> : <BreadcrumbLink href={item.href}>{item.label}</BreadcrumbLink>}</BreadcrumbItem>
                   {!isLast && <BreadcrumbSeparator />}
                 </Fragment>
               )

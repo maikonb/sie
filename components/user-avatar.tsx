@@ -18,9 +18,8 @@ interface UserAvatarProps {
 }
 
 export function UserAvatar({ size = "sm", preview, className }: UserAvatarProps) {
-
   const isPreviewObject = typeof preview === "object" && preview !== null
-  let user = null;
+  let user = null
 
   if (isPreviewObject) {
     user = preview

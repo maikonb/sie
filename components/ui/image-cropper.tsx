@@ -15,13 +15,7 @@ interface ImageCropperProps {
   aspectRatio?: number
 }
 
-export function ImageCropper({
-  imageSrc,
-  open,
-  onOpenChange,
-  onCropComplete,
-  aspectRatio = 1,
-}: ImageCropperProps) {
+export function ImageCropper({ imageSrc, open, onOpenChange, onCropComplete, aspectRatio = 1 }: ImageCropperProps) {
   const [crop, setCrop] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null)
@@ -62,30 +56,10 @@ export function ImageCropper({
         <DialogHeader>
           <DialogTitle>Editar Imagem</DialogTitle>
         </DialogHeader>
-        <div className="relative h-[400px] w-full overflow-hidden rounded-md bg-black">
-          {imageSrc && (
-            <Cropper
-              image={imageSrc}
-              crop={crop}
-              zoom={zoom}
-              aspect={aspectRatio}
-              onCropChange={onCropChange}
-              onCropComplete={onCropCompleteCallback}
-              onZoomChange={onZoomChange}
-            />
-          )}
-        </div>
+        <div className="relative h-[400px] w-full overflow-hidden rounded-md bg-black">{imageSrc && <Cropper image={imageSrc} crop={crop} zoom={zoom} aspect={aspectRatio} onCropChange={onCropChange} onCropComplete={onCropCompleteCallback} onZoomChange={onZoomChange} />}</div>
         <div className="flex items-center space-x-2 py-4">
           <span className="text-sm font-medium">Zoom</span>
-          <Slider
-            defaultValue={[1]}
-            min={1}
-            max={3}
-            step={0.1}
-            value={[zoom]}
-            onValueChange={(value) => setZoom(value[0])}
-            className="w-full"
-          />
+          <Slider defaultValue={[1]} min={1} max={3} step={0.1} value={[zoom]} onValueChange={(value) => setZoom(value[0])} className="w-full" />
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>

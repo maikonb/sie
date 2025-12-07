@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Prisma } from "@/prisma/client"
-import { projectService } from "@/services/project"
+import { projectService } from "@/services/api/project"
 
 const projectWithRelations = Prisma.validator<Prisma.ProjectDefaultArgs>()({
   include: {
