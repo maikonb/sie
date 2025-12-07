@@ -1,4 +1,4 @@
-import { PrismaClient, LegalInstrumentType } from "@/prisma/client"
+import { PrismaClient, LegalInstrumentType } from "@prisma/client"
 
 export async function seedLegalInstruments(prisma: PrismaClient) {
   console.log("Seeding Legal Instruments...")
@@ -47,6 +47,4 @@ export async function seedLegalInstruments(prisma: PrismaClient) {
       })
     }
   }
-
-  console.log("Legal Instruments seeded.")
 }

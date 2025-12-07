@@ -1,4 +1,4 @@
-import { PrismaClient, SystemDefaults } from "@/prisma/client"
+import { PrismaClient, SystemDefaults } from "@prisma/client"
 
 type SeedSystemDefault = Partial<SystemDefaults> & { query: () => Promise<{ id: string | undefined }>}
 
@@ -29,6 +29,4 @@ export async function seedSystemDefaults(prisma: PrismaClient) {
       },
     })
   }
-
-  console.log("System defaults seeded.")
 }

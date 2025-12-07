@@ -1,4 +1,4 @@
-import { Permission, PrismaClient, Role } from "@/prisma/client";
+import { Permission, PrismaClient, Role } from "@prisma/client";
 
 export async function seedPermissions(prisma: PrismaClient) {
   console.log("Seeding Permissions...")
@@ -67,6 +67,4 @@ export async function seedPermissions(prisma: PrismaClient) {
       }
     }
   }
-
-  console.log("Permissions seeding finished.");
 }
