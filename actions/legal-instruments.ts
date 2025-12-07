@@ -64,8 +64,16 @@ export async function previewLegalInstrument(id: string, fieldsJson: any[], samp
   }
 
   // Only support text templates for preview
-  const res = await fetch(li.file.url)
-  const text = await res.text()
+  let text = ""
+  try {
+    const fileStream = await fileService.getFileStream(li.file.key)
+    if (fileStream.Body) {
+      text = await fileStream.Body.transformToString()
+    }
+  } catch (error) {
+    console.error("Error fetching file content:", error)
+    throw new Error("failed_to_fetch_template")
+  }
 
   const sample = sampleValues || {}
   const fields = fieldsJson || (li.fieldsJson as any[]) || []
