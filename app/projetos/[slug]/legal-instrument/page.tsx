@@ -6,7 +6,7 @@ import ProjectClassificationStart from "@/components/projects/project-classifica
 import { ProjectClassificationWizard } from "@/components/projects/project-classification-wizard"
 import { useProject } from "@/components/providers/project-context"
 import { Skeleton } from "@/components/ui/skeleton"
-import { projectService } from "@/lib/services/api/project"
+import { createLegalInstrument } from "@/actions/projects"
 import { notify } from "@/lib/notifications"
 import { APP_ERRORS } from "@/lib/errors"
 
@@ -19,7 +19,7 @@ export default function Page() {
   const handleComplete = async (res: any) => {
     if (!project || !project.slug) return
 
-    const result = await projectService.createLegalInstrument(project.slug, res)
+    const result = await createLegalInstrument(project.slug, res)
 
     if (result.success) {
       notify.success("Instrumento jurídico salvo com sucesso!")

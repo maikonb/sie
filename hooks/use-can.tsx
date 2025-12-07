@@ -1,9 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { PermissionCheckPayload, permissionsService } from "@/lib/services/api/permissions"
+import { checkPermission } from "@/actions/permissions"
 
-type CheckInput = PermissionCheckPayload | string
+type CheckInput = { slug: string; referenceTable?: string; referenceId?: string } | string
 
 export function useCan(input: CheckInput) {
   const [can, setCan] = useState<boolean | null>(null)
@@ -20,9 +20,9 @@ export function useCan(input: CheckInput) {
       const payload = typeof input === "string" ? { slug: input } : input
 
       try {
-        const json = await permissionsService.check(payload)
+        const result = await checkPermission(payload.slug, payload.referenceTable, payload.referenceId)
         if (!isMounted) return
-        setCan(Boolean(json?.can))
+        setCan(result.can)
       } catch (err: any) {
         if (!isMounted) return
         setError(err?.message || String(err))

@@ -2,6 +2,7 @@ import { prisma } from "@/lib/config/db"
 
 import { ProjectForm } from "@/components/forms/project/create"
 import { Project } from "@prisma/client"
+import { getProjectBySlug } from "@/actions/projects"
 
 interface PageProps {
   searchParams: Promise<{ slug?: string }>
@@ -12,9 +13,12 @@ export default async function NovaPaginaProjeto(props: PageProps) {
 
   let initialProject: Project | null = null
   if (slug) {
-    initialProject = await prisma.project.findUnique({
-      where: { slug },
-    })
+    try {
+      initialProject = await getProjectBySlug(slug)
+    } catch (error) {
+      console.error("Failed to fetch project:", error)
+      // Handle error appropriately, maybe redirect or show error
+    }
   }
 
   return (

@@ -11,8 +11,8 @@ import { UserAvatar } from "@/components/user-avatar"
 import { notify } from "@/lib/notifications"
 import { useSession } from "next-auth/react"
 import { ImageCropper } from "@/components/ui/image-cropper"
-import { userService } from "@/lib/services/api/user"
-import { fileService } from "@/lib/services/api/file"
+import { generatePresignedUrl } from "@/actions/storage"
+import { updateUser } from "@/actions/user"
 
 const profileFormSchema = z.object({
   name: z.string().min(2, {
@@ -69,25 +69,27 @@ export function ProfileForm({ user }: { user: any }) {
         const file = new File([croppedFile], "profile-pic.jpg", { type: "image/jpeg" })
 
         // 1. Get pre-signed URL
-        const { url, key } = await fileService.getPresignedUrl({
-          filename: file.name,
-          contentType: file.type,
-          folder: "profile-images",
-        })
+        const { url, key } = await generatePresignedUrl(file.name, file.type, "profile-images")
 
         // 2. Upload to S3
-        await fileService.uploadToS3(url, file)
+        await fetch(url, {
+          method: "PUT",
+          body: file,
+          headers: { "Content-Type": file.type },
+        })
         imageKey = key
       }
 
-      const updatedUser = await userService.updateProfile({
+      const result = await updateUser({
         name: data.name,
         imageKey,
       })
 
+      if (!result.success) throw new Error("Failed to update profile")
+
       await update({
         name: data.name,
-        image: updatedUser.user.image,
+        image: result.user?.imageId ? `/api/files/${result.user.imageId}` : undefined, // Assuming imageId is returned
       })
 
       notify.success("Perfil atualizado com sucesso!")

@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { useState } from "react"
 import { Project } from "@prisma/client"
 import { Check, FileText, Scale, Clock } from "lucide-react"
-import { projectService } from "@/lib/services/api/project"
+import { createProject } from "@/actions/projects"
 
 interface ProjectFormProps {
   initialProject?: Project | null
@@ -24,7 +24,7 @@ export function ProjectForm({ initialProject }: ProjectFormProps) {
   const handleCreateProject = async (formData: FormData) => {
     setStep("loading")
     try {
-      const p = await projectService.create(formData)
+      const p = await createProject(formData)
 
       setProject(p)
       setStep("choisen")

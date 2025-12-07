@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Field, FieldGroup, FieldSeparator } from "@/components/ui/field"
 import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from "../ui/input-group"
 import { APP_ERRORS } from "@/lib/errors"
-import { authService } from "@/lib/services/api/auth"
+import { requestOtp } from "@/actions/user"
 
 export function LoginForm({ className, ...props }: React.ComponentProps<"div">) {
   const router = useRouter()
@@ -25,7 +25,8 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
     e.preventDefault()
     if (!email.endsWith("@ufr.edu.br")) return
     try {
-      await authService.requestOtp({ email })
+      const res = await requestOtp(email)
+      if (!res.success) throw new Error(res.error)
       router.push(`/auth/otp?email=${encodeURIComponent(email)}`)
     } catch (error: any) {
       notify.error(error.response?.data?.error || APP_ERRORS.AUTH_SEND_FAILED.code)

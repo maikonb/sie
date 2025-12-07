@@ -9,13 +9,13 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { projectService } from "@/lib/services/api/project"
+import { getAllProjects } from "@/actions/projects"
 
 interface Project {
   id: number
   slug?: string
   title: string
-  updatedAt: string
+  updatedAt: Date
   partnerships: { type: string }[]
 }
 
@@ -26,8 +26,8 @@ export default function ProjectsPage() {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const data = await projectService.getAll()
-        setProjects(data)
+        const data = await getAllProjects()
+        setProjects(data as any) // Type casting as quick fix, better to define proper types
       } catch (error) {
         console.error("Failed to fetch projects:", error)
       } finally {
@@ -81,11 +81,6 @@ export default function ProjectsPage() {
                 <CardHeader>
                   <div className="flex justify-between items-start gap-2">
                     <CardTitle className="line-clamp-2 text-lg">{project.title}</CardTitle>
-                    {project.partnerships?.[0] && (
-                      <Badge variant="secondary" className="shrink-0">
-                        {project.partnerships[0].type.replace(/_/g, " ")}
-                      </Badge>
-                    )}
                   </div>
                   <CardDescription>Atualizado {formatDistanceToNow(new Date(project.updatedAt), { addSuffix: true, locale: ptBR })}</CardDescription>
                 </CardHeader>

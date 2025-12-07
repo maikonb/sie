@@ -14,6 +14,8 @@ import { UserAvatar } from "@/components/user-avatar"
 import { Camera } from "lucide-react"
 import { ImageCropper } from "@/components/ui/image-cropper"
 import { APP_ERRORS } from "@/lib/errors"
+import { generatePresignedUrl } from "@/actions/storage"
+import { updateFirstAccess } from "@/actions/user"
 
 const formSchema = z.object({
   username: z
@@ -44,18 +46,7 @@ export default function FormRhfInput() {
 
       if (data.image) {
         // 1. Get pre-signed URL
-        const presignedRes = await fetch("/api/upload/presigned", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            filename: data.image.name,
-            contentType: data.image.type,
-            folder: "profile-images",
-          }),
-        })
-
-        if (!presignedRes.ok) throw new Error("Failed to get upload URL")
-        const { url, key } = await presignedRes.json()
+        const { url, key } = await generatePresignedUrl(data.image.name, data.image.type, "profile-images")
 
         // 2. Upload to S3
         const uploadRes = await fetch(url, {
@@ -69,20 +60,10 @@ export default function FormRhfInput() {
       }
 
       // 3. Submit form with imageKey
-      const response = await fetch("/api/user/first-access", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: data.username,
-          imageKey,
-        }),
+      await updateFirstAccess({
+        username: data.username,
+        imageKey,
       })
-      const res = await response.json()
-
-      if (!response.ok || res.error) {
-        notify.error(res.error || APP_ERRORS.USER_INVALID_IMAGE.code)
-        return
-      }
 
       notify.success("Dados salvos com sucesso!")
 

@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Prisma } from "@prisma/client"
-import { projectService } from "@/lib/services/api/project"
+import { getProjectBySlug } from "@/actions/projects"
 
 const projectWithRelations = Prisma.validator<Prisma.ProjectDefaultArgs>()({
   include: {
@@ -42,8 +42,8 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   const fetchProject = async () => {
     try {
       setLoading(true)
-      const data = await projectService.getBySlug(params.slug as string)
-      setProject(data)
+      const data = await getProjectBySlug(params.slug as string)
+      setProject(data as any)
     } catch (error: any) {
       console.error("Failed to fetch project:", error)
       if (error.response?.status === 404) router.push("/404")

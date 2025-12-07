@@ -94,6 +94,12 @@ const data = {
       icon: LifeBuoy,
     },
     {
+      title: "Instrumentos Jurídicos",
+      url: "/admin/legal-instruments",
+      icon: BookOpen,
+      permissionSlug: "legal_instruments.manage",
+    },
+    {
       title: "Feedback",
       url: "#",
       icon: Send,

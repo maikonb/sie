@@ -1,5 +1,16 @@
+/*
+  Warnings:
+
+  - Added the required column `description` to the `LegalInstrument` table without a default value. This is not possible if the table is not empty.
+  - Added the required column `name` to the `LegalInstrument` table without a default value. This is not possible if the table is not empty.
+
+*/
 -- CreateEnum
 CREATE TYPE "SystemDefaultType" AS ENUM ('Role');
+
+-- AlterTable
+ALTER TABLE "LegalInstrument" ADD COLUMN     "description" TEXT NOT NULL,
+ADD COLUMN     "name" TEXT NOT NULL;
 
 -- AlterTable
 ALTER TABLE "LegalInstrumentInstance" ADD COLUMN     "answers" JSONB;
@@ -80,13 +91,28 @@ CREATE TABLE "SystemDefaults" (
 CREATE UNIQUE INDEX "Role_slug_key" ON "Role"("slug");
 
 -- CreateIndex
+CREATE INDEX "UserRole_userId_idx" ON "UserRole"("userId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "UserRole_userId_roleId_key" ON "UserRole"("userId", "roleId");
+
+-- CreateIndex
+CREATE INDEX "RolePermission_roleId_idx" ON "RolePermission"("roleId");
+
+-- CreateIndex
+CREATE INDEX "RolePermission_permissionId_idx" ON "RolePermission"("permissionId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "RolePermission_roleId_permissionId_key" ON "RolePermission"("roleId", "permissionId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Permission_slug_key" ON "Permission"("slug");
+
+-- CreateIndex
+CREATE INDEX "ResourceMembers_userId_permissionId_idx" ON "ResourceMembers"("userId", "permissionId");
+
+-- CreateIndex
+CREATE INDEX "ResourceMembers_referenceTable_referenceId_idx" ON "ResourceMembers"("referenceTable", "referenceId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "ResourceMembers_userId_permissionId_referenceId_key" ON "ResourceMembers"("userId", "permissionId", "referenceId");

@@ -259,9 +259,11 @@ model OtpCode {
 }
 
 model LegalInstrument {
-  id         String              @id @default(uuid())
-  fieldsJson Json
-  type       LegalInstrumentType
+  id          String              @id @default(uuid())
+  name        String
+  description String
+  fieldsJson  Json
+  type        LegalInstrumentType
 
   fileId String
   file   File   @relation(fields: [fileId], references: [id])
@@ -328,8 +330,8 @@ model UserRole {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([userId]) 
   @@unique([userId, roleId])
+  @@index([userId])
 }
 
 model RolePermission {
@@ -343,9 +345,9 @@ model RolePermission {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([roleId])
-  @@index([permissionId]) 
   @@unique([roleId, permissionId])
+  @@index([roleId])
+  @@index([permissionId])
 }
 
 model Permission {
@@ -375,9 +377,9 @@ model ResourceMembers {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([userId, permissionId])
-  @@index([referenceTable, referenceId]) 
   @@unique([userId, permissionId, referenceId])
+  @@index([userId, permissionId])
+  @@index([referenceTable, referenceId])
 }
 
 // System

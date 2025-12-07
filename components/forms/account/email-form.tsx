@@ -11,7 +11,7 @@ import { Field, FieldGroup } from "@/components/ui/field"
 import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from "@/components/ui/input-group"
 import { notify } from "@/lib/notifications"
 import { signOut } from "next-auth/react"
-import { userService } from "@/lib/services/api/user"
+import { requestEmailChange, verifyEmailChange } from "@/actions/user"
 
 const emailFormSchema = z.object({
   localPart: z
@@ -48,7 +48,8 @@ export function EmailForm({ currentEmail }: { currentEmail: string }) {
     const fullEmail = `${data.localPart}@ufr.edu.br`
 
     try {
-      await userService.requestEmailChange({ newEmail: fullEmail })
+      const res = await requestEmailChange(fullEmail)
+      if (!res.success) throw new Error(res.error)
 
       setNewEmail(fullEmail)
       setStep("verify")
@@ -63,10 +64,8 @@ export function EmailForm({ currentEmail }: { currentEmail: string }) {
   async function onVerifyChange(data: z.infer<typeof otpSchema>) {
     setIsLoading(true)
     try {
-      await userService.verifyEmailChange({
-        newEmail: newEmail,
-        code: data.code,
-      })
+      const res = await verifyEmailChange(newEmail, data.code)
+      if (!res.success) throw new Error(res.error)
 
       notify.success("E-mail atualizado com sucesso! Faça login novamente.")
       setTimeout(() => signOut({ callbackUrl: "/auth/login" }), 2000)
