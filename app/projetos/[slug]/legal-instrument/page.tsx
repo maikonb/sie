@@ -78,8 +78,8 @@ export default function Page() {
 
   return (
     <div className="h-full bg-linear-to-b from-background to-muted/20">
-      <div className="container justify-center min-h-full mx-auto py-8 px-4 md:py-12 max-w-5xl flex flex-col">
-        <div className="flex-1 flex flex-col items-center justify-center">{mode === "start" ? <ProjectClassificationStart onStart={handleStart} onResume={handleResume} /> : <ProjectClassificationWizard initialState={initialState} onReset={handleWizardReset} onComplete={handleComplete} />}</div>
+      <div className="container min-h-full mx-auto py-6 px-4 md:py-8 flex flex-col">
+        <div className="flex-1 flex flex-col h-full">{mode === "start" ? <ProjectClassificationStart projectSlug={project.slug!} onStart={handleStart} onResume={handleResume} /> : <ProjectClassificationWizard initialState={initialState} onReset={handleWizardReset} onComplete={handleComplete} />}</div>
       </div>
     </div>
   )

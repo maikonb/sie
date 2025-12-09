@@ -219,6 +219,7 @@ model File {
   user                     User?
   legalInstruments         LegalInstrument[]
   legalInstrumentInstances LegalInstrumentInstance[]
+  legalInstrumentAnswers   LegalInstrumentInstance[] @relation("InstanceAnswerFile")
 }
 
 model Account {
@@ -283,6 +284,9 @@ model LegalInstrumentInstance {
 
   fileId String
   file   File   @relation(fields: [fileId], references: [id])
+
+  answerFileId String?
+  answerFile   File?   @relation("InstanceAnswerFile", fields: [answerFileId], references: [id])
 
   projectRelation ProjectLegalInstrument[]
 

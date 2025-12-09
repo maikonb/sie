@@ -87,3 +87,78 @@ export async function previewLegalInstrument(id: string, fieldsJson: any[], samp
 
   return { preview }
 }
+
+export async function saveLegalInstrumentAnswers(instanceId: string, answers: any) {
+  const session = await getAuthSession()
+  if (!session?.user?.id) throw new Error("Unauthorized")
+
+  // Fetch instance with template file
+  const instance = await prisma.legalInstrumentInstance.findUnique({
+    where: { id: instanceId },
+    include: { file: true },
+  })
+
+  if (!instance) throw new Error("Instance not found")
+
+  let answerFileId = undefined
+
+  // If we have a template file, generate the filled version
+  if (instance.file) {
+    try {
+      // Get template content
+      const fileStream = await fileService.getFileStream(instance.file.key)
+      if (fileStream.Body) {
+        let content = await fileStream.Body.transformToString()
+        const fields = (instance.fieldsJson as any[]) || []
+
+        // Replace placeholders
+        // answers keys are field IDs now
+        for (const field of fields) {
+          const answerValue = answers[field.id]
+          if (answerValue !== undefined && answerValue !== null) {
+            content = content.split(`{{${field.id}}}`).join(String(answerValue))
+          }
+        }
+
+        // Upload generated file
+        const newFilename = `filled_${instance.file.filename}`
+        const newFile = await fileService.uploadFile(
+          content,
+          newFilename,
+          "text/plain", // Assuming text/plain for now as we only support text templates in preview
+          "legal-instruments/filled"
+        )
+        answerFileId = newFile.id
+      }
+    } catch (error) {
+      console.error("Error generating filled file:", error)
+      // We continue even if file generation fails, just saving answers
+    }
+  }
+
+  return prisma.legalInstrumentInstance.update({
+    where: { id: instanceId },
+    data: {
+      answers,
+      answerFileId,
+    },
+  })
+}
+
+export async function checkExistingLegalInstrument(projectSlug: string) {
+  const session = await getAuthSession()
+  if (!session?.user?.id) throw new Error("Unauthorized")
+
+  const project = await prisma.project.findUnique({
+    where: { slug: projectSlug },
+    select: { id: true },
+  })
+
+  if (!project) throw new Error("Project not found")
+
+  const existing = await prisma.projectLegalInstrument.findUnique({
+    where: { projectId: project.id },
+  })
+
+  return { exists: !!existing }
+}

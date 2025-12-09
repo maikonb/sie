@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowLeft, Calendar, FileText, User } from "lucide-react"
+import { ArrowLeft, Calendar, FileText, User, Scale, Download, Edit } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -116,6 +116,65 @@ export default function ProjectDetailsPage() {
                     <div className="pt-2 border-t">
                       <p className="text-xs font-medium text-muted-foreground">Instituição</p>
                       <p className="text-sm">{project.proponent.institution}</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Legal Instrument Card */}
+            <div className="md:col-span-3">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Scale className="h-5 w-5" /> Instrumento Jurídico
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {project.legalInstruments && project.legalInstruments.length > 0 ? (
+                    <div className="space-y-4">
+                      {project.legalInstruments.map((li: any) => {
+                        const instance = li.legalInstrumentInstance
+                        const instrument = li.legalInstrument
+                        const hasAnswerFile = instance?.answerFile
+
+                        return (
+                          <div key={li.id} className="flex items-center justify-between p-4 border rounded-lg bg-muted/20">
+                            <div>
+                              <h4 className="font-semibold">{instrument.name}</h4>
+                              <p className="text-sm text-muted-foreground">{instrument.description}</p>
+                              {hasAnswerFile && <span className="text-xs text-green-600 font-medium mt-1 block">Documento gerado em {format(new Date(instance.updatedAt), "dd/MM/yyyy")}</span>}
+                            </div>
+                            <div className="flex gap-2">
+                              {hasAnswerFile ? (
+                                <>
+                                  <Button variant="outline" size="sm" asChild>
+                                    <Link href={`/projetos/${project.slug}/legal-instruments/fill`}>
+                                      <Edit className="mr-2 h-4 w-4" /> Editar Respostas
+                                    </Link>
+                                  </Button>
+                                  <Button size="sm" asChild>
+                                    <Link href={instance.answerFile.url} target="_blank">
+                                      <Download className="mr-2 h-4 w-4" /> Download
+                                    </Link>
+                                  </Button>
+                                </>
+                              ) : (
+                                <Button size="sm" asChild>
+                                  <Link href={`/projetos/${project.slug}/legal-instruments/fill`}>Preencher Instrumento</Link>
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-center py-6 space-y-3">
+                      <p className="text-muted-foreground">Nenhum instrumento jurídico selecionado para este projeto.</p>
+                      <Button asChild>
+                        <Link href={`/projetos/${project.slug}/legal-instrument`}>Selecionar Instrumento</Link>
+                      </Button>
                     </div>
                   )}
                 </CardContent>

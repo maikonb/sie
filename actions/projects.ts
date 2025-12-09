@@ -28,7 +28,16 @@ export async function getProjectBySlug(slug: string) {
           },
         },
       },
-      legalInstruments: true,
+      legalInstruments: {
+        include: {
+          legalInstrument: true,
+          legalInstrumentInstance: {
+            include: {
+              answerFile: true,
+            },
+          },
+        },
+      },
     },
   })
 
@@ -139,4 +148,32 @@ export async function getAllProjects() {
   })
 
   return projects
+}
+
+export async function getProjectLegalInstrument(slug: string) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.email) throw new Error("Unauthorized")
+
+  const project = await prisma.project.findUnique({
+    where: { slug },
+    include: {
+      legalInstruments: {
+        include: {
+          legalInstrumentInstance: {
+            include: {
+              file: true,
+            },
+          },
+        },
+      },
+    },
+  })
+
+  if (!project) return null
+
+  // Since projectId is unique in ProjectLegalInstrument, there is at most one.
+  const link = project.legalInstruments[0]
+  if (!link) return null
+
+  return link.legalInstrumentInstance
 }

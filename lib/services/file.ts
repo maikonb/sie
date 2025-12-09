@@ -43,6 +43,39 @@ class FileService {
     return { url: signedUrl, key, fileId }
   }
 
+  async uploadFile(content: Buffer | string, filename: string, contentType: string, folder: string = "generated"): Promise<any> {
+    const fileId = uuidv4()
+    const extension = filename.split(".").pop()
+    const key = `${folder}/${fileId}.${extension}`
+
+    const command = new PutObjectCommand({
+      Bucket: this.bucket,
+      Key: key,
+      Body: content,
+      ContentType: contentType,
+      ACL: "public-read",
+      Metadata: {
+        "original-name": filename,
+      },
+    })
+
+    await this.client.send(command)
+
+    const url = this.getPublicUrl(key)
+
+    return await prisma.file.create({
+      data: {
+        id: fileId,
+        key,
+        url,
+        bucket: this.bucket,
+        filename,
+        contentType,
+        size: content.length,
+      },
+    })
+  }
+
   async createFileFromS3(key: string): Promise<any> {
     const existingFile = await prisma.file.findFirst({
       where: { key },

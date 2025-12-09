@@ -2,19 +2,37 @@
 
 import { useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { FileText, Play, RotateCcw } from "lucide-react"
+import { FileText, Play, RotateCcw, AlertTriangle, Bot, ShieldCheck, FileCheck, ArrowRight } from "lucide-react"
+import { checkExistingLegalInstrument } from "@/actions/legal-instruments"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 interface Props {
+  projectSlug: string
   onStart: () => void
   onResume: (savedState: any) => void
 }
 
-export function ProjectClassificationStart({ onStart, onResume }: Props) {
+export function ProjectClassificationStart({ projectSlug, onStart, onResume }: Props) {
   const [savedState, setSavedState] = useState<any>(null)
+  const [hasExisting, setHasExisting] = useState(false)
+  const [checking, setChecking] = useState(true)
   const searchParams = useSearchParams()
   const router = useRouter()
+
+  useEffect(() => {
+    const check = async () => {
+      try {
+        const result = await checkExistingLegalInstrument(projectSlug)
+        setHasExisting(result.exists)
+      } catch (error) {
+        console.error("Failed to check existing instrument", error)
+      } finally {
+        setChecking(false)
+      }
+    }
+    check()
+  }, [projectSlug])
 
   useEffect(() => {
     const urlState = searchParams.get("state")
@@ -44,39 +62,70 @@ export function ProjectClassificationStart({ onStart, onResume }: Props) {
   }
 
   return (
-    <div className="w-full max-w-lg mx-auto animate-in fade-in zoom-in duration-500">
-      <Card className="w-full border-none shadow-xl bg-card/50 backdrop-blur-sm">
-        <CardHeader className="text-center pb-2">
-          <div className="mx-auto bg-primary/10 p-4 rounded-full w-fit mb-6">
-            <FileText className="w-10 h-10 text-primary" />
+    <div className="w-full max-w-3xl mx-auto">
+      <div className="text-center mb-10 space-y-4">
+        <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-primary/5 text-primary mb-2">
+          <FileText className="w-8 h-8" />
+        </div>
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground">Classificação do Instrumento Jurídico</h1>
+        <p className="text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed">Utilize nosso assistente para identificar e gerar o instrumento jurídico correto para o seu projeto.</p>
+      </div>
+
+      <div className="grid md:grid-cols-3 gap-6 mb-12">
+        <div className="flex flex-col items-center text-center p-4 rounded-lg bg-muted/30 border border-border/50">
+          <div className="p-2 rounded-full bg-background border mb-3">
+            <Bot className="w-5 h-5 text-primary" />
           </div>
-          <CardTitle className="text-3xl font-bold tracking-tight">Classificação do Projeto</CardTitle>
-          <CardDescription className="text-lg mt-2">Vamos identificar o instrumento jurídico ideal para o seu projeto através de algumas perguntas simples.</CardDescription>
-        </CardHeader>
+          <h3 className="font-medium mb-1">Assistente Inteligente</h3>
+          <p className="text-sm text-muted-foreground">Responda a perguntas simples para determinar o tipo de parceria.</p>
+        </div>
+        <div className="flex flex-col items-center text-center p-4 rounded-lg bg-muted/30 border border-border/50">
+          <div className="p-2 rounded-full bg-background border mb-3">
+            <ShieldCheck className="w-5 h-5 text-primary" />
+          </div>
+          <h3 className="font-medium mb-1">Conformidade</h3>
+          <p className="text-sm text-muted-foreground">Garantia de uso dos modelos aprovados pelo jurídico.</p>
+        </div>
+        <div className="flex flex-col items-center text-center p-4 rounded-lg bg-muted/30 border border-border/50">
+          <div className="p-2 rounded-full bg-background border mb-3">
+            <FileCheck className="w-5 h-5 text-primary" />
+          </div>
+          <h3 className="font-medium mb-1">Geração Automática</h3>
+          <p className="text-sm text-muted-foreground">O documento é gerado automaticamente com os dados do projeto.</p>
+        </div>
+      </div>
 
-        <CardContent className="text-center pb-8">
-          <p className="text-muted-foreground">Este processo ajuda a garantir a conformidade e a escolher o modelo de contrato mais adequado.</p>
-        </CardContent>
+      <div className="max-w-md mx-auto space-y-6">
+        {hasExisting && (
+          <Alert variant="destructive" className="bg-destructive/5 border-destructive/20">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Atenção</AlertTitle>
+            <AlertDescription>Este projeto já possui um instrumento jurídico selecionado. Iniciar um novo processo substituirá o atual.</AlertDescription>
+          </Alert>
+        )}
 
-        <CardFooter className="flex flex-col gap-3 sm:flex-row sm:justify-center pb-8">
+        <div className="flex flex-col gap-3">
           {savedState ? (
             <>
-              <Button variant="outline" size="lg" onClick={handleStart} className="w-full sm:w-auto">
-                <RotateCcw className="mr-2 h-4 w-4" />
-                Começar do zero
-              </Button>
-              <Button size="lg" onClick={handleResume} className="w-full sm:w-auto">
+              <Button size="lg" onClick={handleResume} className="w-full h-12 text-base shadow-sm hover:shadow-md transition-all" disabled={hasExisting || checking}>
                 <Play className="mr-2 h-4 w-4" />
                 Continuar de onde parou
               </Button>
+              <Button variant="ghost" onClick={handleStart} className="w-full text-muted-foreground hover:text-foreground" disabled={hasExisting || checking}>
+                <RotateCcw className="mr-2 h-4 w-4" />
+                Começar do zero
+              </Button>
             </>
           ) : (
-            <Button size="lg" onClick={handleStart} className="w-full sm:w-auto min-w-[200px] text-lg h-12">
-              Iniciar Classificação
+            <Button size="lg" onClick={handleStart} className="w-full h-12 text-base shadow-sm hover:shadow-md transition-all" disabled={hasExisting || checking}>
+              {hasExisting ? "Reiniciar Classificação" : "Iniciar Assistente"}
+              <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           )}
-        </CardFooter>
-      </Card>
+        </div>
+
+        <p className="text-xs text-center text-muted-foreground">Tempo estimado: 2-3 minutos</p>
+      </div>
     </div>
   )
 }
