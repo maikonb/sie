@@ -1,6 +1,6 @@
 "use client"
 
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useState } from "react"
 import ProjectClassificationStart from "@/components/projects/project-classification-start"
 import { ProjectClassificationWizard } from "@/components/projects/project-classification-wizard"
@@ -12,6 +12,7 @@ import { APP_ERRORS } from "@/lib/errors"
 
 export default function Page() {
   const router = useRouter()
+  const searchParams = useSearchParams();
   const { project, loading } = useProject()
   const [mode, setMode] = useState<"start" | "wizard">("start")
   const [initialState, setInitialState] = useState<any>(null)
@@ -19,11 +20,19 @@ export default function Page() {
   const handleComplete = async (res: any) => {
     if (!project || !project.slug) return
 
+    
     const result = await createLegalInstrument(project.slug, res)
-
+    
     if (result.success) {
       notify.success("Instrumento jurídico salvo com sucesso!")
-      router.push(`/projetos/${project.slug}/work-plan`)
+
+      const next = searchParams.get("next")
+      if (next) {
+        router.push(`/projetos/${project.slug}/${next}`)
+        return
+      }
+
+      router.push(`/projetos/${project.slug}/`)
     } else {
       if (result.error) notify.error(result.error)
       notify.error(APP_ERRORS.GENERIC_ERROR.code)
@@ -48,15 +57,6 @@ export default function Page() {
     const url = new URL(window.location.href)
     url.searchParams.delete("state")
     router.replace(url.pathname + url.search)
-  }
-
-  const handleBack = () => {
-    // Check if there is a previous history entry, otherwise fallback to project page
-    if (window.history.length > 2) {
-      router.back()
-    } else {
-      router.push(`/projetos/${project?.slug}`)
-    }
   }
 
   if (loading) {
