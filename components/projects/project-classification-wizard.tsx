@@ -100,24 +100,22 @@ export function ProjectClassificationWizard({ onComplete, initialState, onReset 
   }, [currentStateValue, history, router, searchParams])
 
   return (
-    <div key={resetKey} className="flex flex-1 w-full h-full bg-background rounded-xl overflow-hidden border shadow-sm">
-      {/* Main Content Area (Left) */}
-      <div className="flex-1 flex flex-col relative min-w-0">
-        {/* Header / Progress */}
-        <div className="px-6 py-4 md:px-10 md:py-6 shrink-0 border-b bg-card/50 backdrop-blur-sm z-10">
-          <div className="flex items-center justify-between text-sm font-medium text-muted-foreground mb-3">
-            <span className="flex items-center gap-2 text-foreground">
-              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold">{isFinal ? <CheckCircle2 className="w-4 h-4" /> : history.length + 1}</span>
-              Classificação do Projeto
-            </span>
-            <span>{isFinal ? "Concluído" : `${Math.min((history.length + 1) * 15, 90)}%`}</span>
-          </div>
-          <div className="h-1 w-full bg-secondary/50 rounded-full overflow-hidden">
-            <div className="h-full bg-primary transition-all duration-700 ease-out" style={{ width: isFinal ? "100%" : `${Math.min((history.length + 1) * 15, 90)}%` }} />
-          </div>
+    <div key={resetKey} className="flex flex-col flex-1 w-full h-full bg-background rounded-xl overflow-hidden border shadow-sm">
+      {/* Header / Progress */}
+      <div className="px-6 py-4 md:px-10 md:py-6 shrink-0 border-b bg-card/50 backdrop-blur-sm z-10">
+        <div className="flex items-center justify-between text-sm font-medium text-muted-foreground mb-3">
+          <span className="flex items-center gap-2 text-foreground">
+            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold">{isFinal ? <CheckCircle2 className="w-4 h-4" /> : history.length + 1}</span>
+            Classificação do Projeto
+          </span>
+          <span>{isFinal ? "Concluído" : `${Math.min((history.length + 1) * 15, 90)}%`}</span>
         </div>
-
-        {/* Content */}
+        <div className="h-1 w-full bg-secondary/50 rounded-full overflow-hidden">
+          <div className="h-full bg-primary transition-all duration-700 ease-out" style={{ width: isFinal ? "100%" : `${Math.min((history.length + 1) * 15, 90)}%` }} />
+        </div>
+      </div>
+      <div className="flex h-full flex-1">
+        {/* Main Content Area (Left) */}
         <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-10 overflow-y-auto">
           {isFinal ? (
             <div className="w-full max-w-2xl space-y-8 text-center animate-in fade-in zoom-in duration-500">
@@ -154,10 +152,10 @@ export function ProjectClassificationWizard({ onComplete, initialState, onReset 
           ) : (
             <div className="w-full max-w-3xl space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-500 flex flex-col items-center" key={currentStateValue}>
               <div className="min-h-[120px] flex items-center justify-center w-full">
-                <h2 className="text-2xl md:text-4xl font-semibold leading-tight text-foreground text-center text-balance max-w-2xl">{description}</h2>
+                <h2 className="text-2xl md:text-3xl font-semibold leading-tight text-foreground text-center text-balance max-w-2xl">{description}</h2>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 md:gap-6 w-full max-w-lg mx-auto">
+              <div className="grid md:grid-cols-2 gap-4 md:gap-6 w-full max-w-lg mx-auto">
                 <Button variant="outline" onClick={() => handleAnswer("NO")} className="h-20 md:h-24 text-lg font-medium border-2 hover:border-destructive hover:bg-destructive/5 hover:text-destructive transition-all rounded-xl">
                   Não
                 </Button>
@@ -168,47 +166,47 @@ export function ProjectClassificationWizard({ onComplete, initialState, onReset 
             </div>
           )}
         </div>
-      </div>
 
-      {/* Sidebar (Right) */}
-      <div className="hidden xl:flex w-[320px] flex-col border-l bg-muted/30 h-full shrink-0">
-        <div className="p-8 border-b bg-background/50 backdrop-blur-sm">
-          <div className="flex items-center justify-between">
-            <h3 className="font-bold text-xs uppercase tracking-widest text-muted-foreground">Histórico</h3>
-            <Button variant="ghost" size="sm" onClick={handleReset} className="h-7 text-xs text-muted-foreground hover:text-foreground px-2">
-              <RotateCcw className="h-3 w-3 mr-1.5" />
-              Reiniciar
-            </Button>
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-5 custom-scrollbar">
-          {history.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-center p-6 text-muted-foreground/40 border-2 border-dashed rounded-xl bg-background/50">
-              <p className="text-sm font-medium">Suas respostas aparecerão aqui</p>
+        {/* Sidebar (Right) */}
+        <div className="hidden xl:flex w-2/6 flex-col border-l bg-muted/30 min-h-full">
+          <div className="p-8 border-b bg-background/50 backdrop-blur-sm">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-xs uppercase tracking-widest text-muted-foreground">Histórico</h3>
+              <Button variant="ghost" size="sm" onClick={handleReset} className="h-7 text-xs text-muted-foreground hover:text-foreground px-2">
+                <RotateCcw className="h-3 w-3 mr-1.5" />
+                Reiniciar
+              </Button>
             </div>
-          ) : (
-            <div className="space-y-5 relative pl-3">
-              <div className="absolute left-[23px] top-3 bottom-3 w-px bg-border" />
-              {history.map((item, index) => (
-                <div key={index} className="relative animate-in fade-in slide-in-from-right-4 duration-300" style={{ animationDelay: `${index * 50}ms` }}>
-                  <div className="flex items-start gap-3">
-                    <div className={cn("relative z-10 flex items-center justify-center w-5 h-5 rounded-full border shadow-sm transition-colors bg-background mt-0.5", item.answer === "Sim" ? "border-primary text-primary" : "border-destructive text-destructive")}>
-                      <div className={cn("w-1.5 h-1.5 rounded-full", item.answer === "Sim" ? "bg-primary" : "bg-destructive")} />
-                    </div>
-                    <div className="flex-1 space-y-1.5">
-                      <div className="p-3 rounded-lg bg-background border shadow-sm hover:shadow-md transition-all">
-                        <p className="text-sm text-foreground/80 leading-snug font-medium">{item.question}</p>
-                        <div className="mt-2 flex items-center gap-2">
-                          <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider border", item.answer === "Sim" ? "bg-primary/10 text-primary border-primary/20" : "bg-destructive/10 text-destructive border-destructive/20")}>{item.answer}</span>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-5 custom-scrollbar">
+            {history.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-center p-6 text-muted-foreground/40 border-2 border-dashed rounded-xl bg-background/50">
+                <p className="text-sm font-medium">Suas respostas aparecerão aqui</p>
+              </div>
+            ) : (
+              <div className="space-y-5 relative pl-3">
+                <div className="absolute left-[23px] top-3 bottom-3 w-px bg-border" />
+                {history.map((item, index) => (
+                  <div key={index} className="relative animate-in fade-in slide-in-from-right-4 duration-300" style={{ animationDelay: `${index * 50}ms` }}>
+                    <div className="flex items-start gap-3">
+                      <div className={cn("relative z-10 flex items-center justify-center w-5 h-5 rounded-full border shadow-sm transition-colors bg-background mt-0.5", item.answer === "Sim" ? "border-primary text-primary" : "border-destructive text-destructive")}>
+                        <div className={cn("w-1.5 h-1.5 rounded-full", item.answer === "Sim" ? "bg-primary" : "bg-destructive")} />
+                      </div>
+                      <div className="flex-1 space-y-1.5">
+                        <div className="p-3 rounded-lg bg-background border shadow-sm hover:shadow-md transition-all">
+                          <p className="text-sm text-foreground/80 leading-snug font-medium">{item.question}</p>
+                          <div className="mt-2 flex items-center gap-2">
+                            <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider border", item.answer === "Sim" ? "bg-primary/10 text-primary border-primary/20" : "bg-destructive/10 text-destructive border-destructive/20")}>{item.answer}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

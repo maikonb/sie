@@ -62,7 +62,7 @@ export function ProjectClassificationStart({ projectSlug, onStart, onResume }: P
   }
 
   return (
-    <div className="w-full max-w-3xl mx-auto">
+    <div className="w-full max-w-3xl mx-auto h-full">
       <div className="text-center mb-10 space-y-4">
         <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-primary/5 text-primary mb-2">
           <FileText className="w-8 h-8" />
@@ -100,7 +100,7 @@ export function ProjectClassificationStart({ projectSlug, onStart, onResume }: P
           <Alert variant="destructive" className="bg-destructive/5 border-destructive/20">
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Atenção</AlertTitle>
-            <AlertDescription>Este projeto já possui um instrumento jurídico selecionado. Iniciar um novo processo substituirá o atual.</AlertDescription>
+            <AlertDescription>Este projeto já possui um instrumento jurídico selecionado. Não é possível selecionar um novo.</AlertDescription>
           </Alert>
         )}
 
