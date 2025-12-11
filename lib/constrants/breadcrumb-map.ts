@@ -1,3 +1,5 @@
+// Map of routes to their respective breadcrumbs
+
 export const BREADCRUMB_MAP: Record<string, string> = {
   "": "Início",
   projetos: "Projetos",
@@ -8,6 +10,5 @@ export const BREADCRUMB_MAP: Record<string, string> = {
   upload: "Upload",
   "legal-instrument": "Instrumento Jurídico",
   "legal-instruments": "Instrumentos Jurídicos",
-  "work-plan": "Plano de Trabalho",
-  // Adicione mais mapeamentos conhecidos aqui conforme necessário
+  "work-plan": "Plano de negócio",
 }
