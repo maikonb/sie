@@ -4,6 +4,7 @@ import prisma from "@/lib/config/db"
 import PermissionsService from "@/lib/services/permissions"
 import { getAuthSession } from "@/lib/api-utils"
 import { fileService } from "@/lib/services/file"
+import { LegalInstrumentStatus, ProjectStatus } from "@/prisma/client"
 
 export async function getLegalInstruments() {
   const session = await getAuthSession()
@@ -173,10 +174,26 @@ export async function sendForAnalysis(instanceId: string) {
 
   if (!instance) throw new Error("Instance not found")
 
-  return prisma.legalInstrumentInstance.update({
+  // Update instance status
+  await prisma.legalInstrumentInstance.update({
     where: { id: instanceId },
     data: {
-      status: "SENT_FOR_ANALYSIS",
-    } as any, // Cast to any to avoid type error if client not updated yet
+      status: LegalInstrumentStatus.SENT_FOR_ANALYSIS,
+    } as any,
   })
+
+  // Update project status
+  const relation = await prisma.projectLegalInstrument.findUnique({
+    where: { legalInstrumentInstanceId: instanceId },
+    select: { projectId: true },
+  })
+
+  if (relation) {
+    await prisma.project.update({
+      where: { id: relation.projectId },
+      data: { status: ProjectStatus.IN_ANALYSIS },
+    })
+  }
+
+  return { success: true }
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { Plus } from "lucide-react"
+import { Plus, FileText, Scale } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -16,7 +16,14 @@ interface Project {
   slug?: string
   title: string
   updatedAt: Date
-  partnerships: { type: string }[]
+  status?: "DRAFT" | "IN_ANALYSIS" | "APPROVED" | "REJECTED"
+  workPlan?: { id: string } | null
+  legalInstruments?: {
+    legalInstrumentInstance: {
+      status: "DRAFT" | "SENT_FOR_ANALYSIS" | "APPROVED" | "REJECTED"
+      type: string
+    }
+  }[]
 }
 
 export default function ProjectsPage() {
@@ -75,22 +82,62 @@ export default function ProjectsPage() {
             </Button>
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {projects.map((project) => (
-              <Card key={project.id} className="hover:bg-muted/50 transition-colors cursor-pointer">
-                <Link href={`/projetos/${project.slug || project.id}`}>
-                  <CardHeader>
-                    <div className="flex justify-between items-start gap-2">
-                      <CardTitle className="line-clamp-2 text-lg">{project.title}</CardTitle>
-                    </div>
-                    <CardDescription>Atualizado {formatDistanceToNow(new Date(project.updatedAt), { addSuffix: true, locale: ptBR })}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground line-clamp-3">Clique para ver detalhes e gerenciar o plano de trabalho.</p>
-                  </CardContent>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {projects.map((project) => {
+              const hasWorkPlan = !!project.workPlan
+              const legalInstrument = project.legalInstruments?.[0]?.legalInstrumentInstance
+              const status = project.status || "DRAFT"
+              const statusLabel = {
+                DRAFT: "Em Elaboração",
+                IN_ANALYSIS: "Em Análise",
+                APPROVED: "Aprovado",
+                REJECTED: "Rejeitado",
+              }[status]
+
+              const statusColor = {
+                DRAFT: "bg-muted text-muted-foreground",
+                IN_ANALYSIS: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+                APPROVED: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+                REJECTED: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+              }[status]
+
+              return (
+                <Link key={project.id} href={`/projetos/${project.slug || project.id}`} className="group block h-full">
+                  <Card className="h-full transition-all duration-300 hover:border-primary/50 hover:shadow-md flex flex-col">
+                    <CardHeader className="pb-4">
+                      <div className="flex justify-between items-start gap-4 mb-2">
+                        <div className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColor}`}>{statusLabel}</div>
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">{formatDistanceToNow(new Date(project.updatedAt), { addSuffix: true, locale: ptBR })}</span>
+                      </div>
+                      <CardTitle className="line-clamp-2 text-xl group-hover:text-primary transition-colors">{project.title}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex-1 flex flex-col justify-end gap-4">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className={`flex items-center gap-2 p-2 rounded-md border ${hasWorkPlan ? "bg-green-50 border-green-200 dark:bg-green-900/10 dark:border-green-900/30" : "bg-muted/50 border-transparent"}`}>
+                          <div className={`p-1.5 rounded-full ${hasWorkPlan ? "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400" : "bg-muted text-muted-foreground"}`}>
+                            <FileText className="w-4 h-4" />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-xs font-medium">Plano</span>
+                            <span className="text-[10px] text-muted-foreground">{hasWorkPlan ? "Concluído" : "Pendente"}</span>
+                          </div>
+                        </div>
+
+                        <div className={`flex items-center gap-2 p-2 rounded-md border ${legalInstrument ? "bg-blue-50 border-blue-200 dark:bg-blue-900/10 dark:border-blue-900/30" : "bg-muted/50 border-transparent"}`}>
+                          <div className={`p-1.5 rounded-full ${legalInstrument ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400" : "bg-muted text-muted-foreground"}`}>
+                            <Scale className="w-4 h-4" />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-xs font-medium">Jurídico</span>
+                            <span className="text-[10px] text-muted-foreground">{legalInstrument ? "Anexado" : "Pendente"}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </Link>
-              </Card>
-            ))}
+              )
+            })}
           </div>
         )}
       </PageContent>

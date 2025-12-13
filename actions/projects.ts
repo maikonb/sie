@@ -176,6 +176,16 @@ export async function getAllProjects() {
 
   const projects = await prisma.project.findMany({
     where: { proponentId: proponent.id },
+    include: {
+      workPlan: { select: { id: true } },
+      legalInstruments: {
+        include: {
+          legalInstrumentInstance: {
+            select: { status: true, type: true },
+          },
+        },
+      },
+    },
     orderBy: { updatedAt: "desc" },
   })
 

@@ -63,6 +63,13 @@ model Proponent {
   updatedAt DateTime @updatedAt
 }
 
+enum ProjectStatus {
+  DRAFT
+  IN_ANALYSIS
+  APPROVED
+  REJECTED
+}
+
 model Project {
   id            String  @id @default(uuid())
   slug          String? @unique
@@ -70,6 +77,8 @@ model Project {
   objectives    String  @db.Text
   justification String  @db.Text
   scope         String  @db.Text
+
+  status ProjectStatus @default(DRAFT)
 
   proponentId String
   proponent   Proponent @relation(fields: [proponentId], references: [id], onDelete: Restrict)
