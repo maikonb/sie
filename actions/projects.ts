@@ -5,6 +5,37 @@ import { generateUniqueSlug } from "@/lib/utils/slug"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/config/auth"
 import { APP_ERRORS } from "@/lib/errors"
+import { Prisma } from "@/prisma/client"
+
+const projectWithRelations = Prisma.validator<Prisma.ProjectDefaultArgs>()({
+  include: {
+    proponent: {
+      include: {
+        user: {
+          select: {
+            name: true,
+            email: true,
+            color: true,
+            imageFile: true,
+          },
+        },
+      },
+    },
+    legalInstruments: {
+      include: {
+        legalInstrument: true,
+        legalInstrumentInstance: {
+          include: {
+            answerFile: true,
+          },
+        },
+      },
+    },
+    workPlan: true,
+  },
+})
+
+export type getProjectBySlugResponse = Prisma.ProjectGetPayload<typeof projectWithRelations> | null
 
 export async function getProjectBySlug(slug: string) {
   const session = await getServerSession(authOptions)
@@ -13,7 +44,7 @@ export async function getProjectBySlug(slug: string) {
     throw new Error("Unauthorized")
   }
 
-  const project = await prisma.project.findUnique({
+  const project: getProjectBySlugResponse = await prisma.project.findUnique({
     where: { slug: slug },
     include: {
       proponent: {
@@ -38,6 +69,7 @@ export async function getProjectBySlug(slug: string) {
           },
         },
       },
+      workPlan: true,
     },
   })
 
@@ -176,4 +208,48 @@ export async function getProjectLegalInstrument(slug: string) {
   if (!link) return null
 
   return link.legalInstrumentInstance
+}
+
+export async function updateProject(slug: string, formData: FormData) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.email) throw new Error("Unauthorized")
+
+  const titulo = String(formData.get("titulo") || "").trim()
+  const objetivos = String(formData.get("objetivos") || "").trim()
+  const justificativa = String(formData.get("justificativa") || "").trim()
+  const abrangencia = String(formData.get("abrangencia") || "").trim()
+
+  if (!titulo || !objetivos || !justificativa || !abrangencia) {
+    throw new Error(APP_ERRORS.GENERIC_ERROR.code)
+  }
+
+  const project = await prisma.project.findUnique({
+    where: { slug },
+    include: { proponent: true },
+  })
+
+  if (!project) throw new Error("Project not found")
+
+  const proponent = await prisma.proponent.findUnique({ where: { userId: session.user.id }, select: { id: true } })
+  if (!proponent || project.proponentId !== proponent.id) {
+    throw new Error("Unauthorized access to project")
+  }
+
+  // Only update slug if title changed, but keeping it simple for now and NOT updating slug to avoid breaking URLs
+  // If slug update is needed, we need to handle redirects. For now, let's keep slug stable or update it if really needed.
+  // The user request didn't explicitly ask for slug updates, but title update implies it might be desired.
+  // However, changing slug breaks the current page context if not handled.
+  // Let's update the title but keep the slug for now to avoid complexity, or regenerate slug if title changes.
+  // Given the "edit details" request, usually title change expects slug change in some systems, but here it might be safer to keep slug or update it.
+  // Let's update ONLY the fields, NOT the slug for now to ensure stability.
+
+  return prisma.project.update({
+    where: { slug },
+    data: {
+      title: titulo,
+      objectives: objetivos,
+      justification: justificativa,
+      scope: abrangencia,
+    },
+  })
 }

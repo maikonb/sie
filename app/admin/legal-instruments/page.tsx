@@ -19,16 +19,16 @@ export default async function Page() {
 
   return (
     <div className="space-y-8 w-6xl max-w-6xl mx-auto p-7">
-        <div className="sticky top-14 z-20 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 py-4 border-b -mx-6 px-6 flex items-center justify-between transition-all">
-          <div className="space-y-1">
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">Instrumentos Jurídicos</h1>
-            <p className="text-muted-foreground text-sm max-w-2xl">Gerencie os modelos de documentos e contratos utilizados no sistema.</p>
-          </div>
-          <Button className="shadow-sm">
-            <Plus className="mr-2 h-4 w-4" />
-            Novo Instrumento
-          </Button>
+      <div className="sticky top-14 z-20 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 py-4 border-b -mx-6 px-6 flex items-center justify-between transition-all">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Instrumentos Jurídicos</h1>
+          <p className="text-muted-foreground text-sm max-w-2xl">Gerencie os modelos de documentos e contratos utilizados no sistema.</p>
         </div>
+        <Button className="shadow-sm">
+          <Plus className="mr-2 h-4 w-4" />
+          Novo Instrumento
+        </Button>
+      </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {list.map((li) => (

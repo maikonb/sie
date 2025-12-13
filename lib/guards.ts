@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation"
 import { getAuthSession } from "@/lib/api-utils"
-import PermissionsService from "./services/permissions";
+import PermissionsService from "./services/permissions"
 
 export async function requirePermissionOr404(check: { slug: string; referenceTable?: string; referenceId?: string }) {
   const session = await getAuthSession()

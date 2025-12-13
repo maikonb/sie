@@ -2,48 +2,33 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { Prisma } from "@prisma/client"
-import { getProjectBySlug } from "@/actions/projects"
-
-const projectWithRelations = Prisma.validator<Prisma.ProjectDefaultArgs>()({
-  include: {
-    proponent: {
-      include: {
-        user: {
-          select: {
-            name: true,
-            email: true,
-            color: true,
-            imageFile: true,
-          },
-        },
-      },
-    },
-    legalInstruments: true,
-  },
-})
-
-export type ProjectType = Prisma.ProjectGetPayload<typeof projectWithRelations> | null
+import { getProjectBySlug, getProjectBySlugResponse } from "@/actions/projects"
 
 interface ProjectContextType {
-  project: ProjectType
+  project: getProjectBySlugResponse
   loading: boolean
+  dependences: Record<string, any>
   refetch: () => Promise<void>
 }
 
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined)
 
 export function ProjectProvider({ children }: { children: ReactNode }) {
-  const params = useParams()
+  const params: { slug: string } = useParams()
   const router = useRouter()
-  const [project, setProject] = useState<ProjectType>(null)
+  const [project, setProject] = useState<getProjectBySlugResponse>(null)
   const [loading, setLoading] = useState(true)
+  const [dependences, setDependences] = useState({})
 
   const fetchProject = async () => {
     try {
       setLoading(true)
-      const data = await getProjectBySlug(params.slug as string)
-      setProject(data as any)
+      const data = await getProjectBySlug(params.slug)
+      setProject(data)
+      setDependences({
+        "work-plan": data?.workPlan || null,
+        "legal-instrument": data?.legalInstruments || null,
+      })
     } catch (error: any) {
       console.error("Failed to fetch project:", error)
       if (error.response?.status === 404) router.push("/404")
@@ -58,7 +43,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     }
   }, [params.slug, router])
 
-  return <ProjectContext.Provider value={{ project, loading, refetch: fetchProject }}>{children}</ProjectContext.Provider>
+  return <ProjectContext.Provider value={{ project, dependences, loading, refetch: fetchProject }}>{children}</ProjectContext.Provider>
 }
 
 export function useProject() {

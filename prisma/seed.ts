@@ -11,7 +11,7 @@ async function main() {
   await seedLegalInstruments(prisma)
   await seedPermissions(prisma)
 
-  // Always last 
+  // Always last
   await seedSystemDefaults(prisma)
 
   console.log("Seeding finished.")

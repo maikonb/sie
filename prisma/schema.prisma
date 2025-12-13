@@ -275,12 +275,20 @@ model LegalInstrument {
   updatedAt DateTime @updatedAt
 }
 
+enum LegalInstrumentStatus {
+  DRAFT
+  SENT_FOR_ANALYSIS
+  APPROVED
+  REJECTED
+}
+
 model LegalInstrumentInstance {
   id                             String              @id @default(uuid())
   fieldsJson                     Json
   type                           LegalInstrumentType
   answers                        Json?
   project_classification_answers Json?               @db.JsonB
+  status                         LegalInstrumentStatus @default(DRAFT)
 
   fileId String
   file   File   @relation(fields: [fileId], references: [id])

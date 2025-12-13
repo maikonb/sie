@@ -108,10 +108,10 @@ export const authOptions: NextAuthOptions = {
               userRoles: {
                 create: {
                   role: {
-                    connect: { id: await getSystemDefaultId('user_role') }
-                  }
-                }
-              }
+                    connect: { id: await getSystemDefaultId("user_role") },
+                  },
+                },
+              },
             },
             include: { imageFile: true },
           })

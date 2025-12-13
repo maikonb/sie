@@ -162,3 +162,21 @@ export async function checkExistingLegalInstrument(projectSlug: string) {
 
   return { exists: !!existing }
 }
+
+export async function sendForAnalysis(instanceId: string) {
+  const session = await getAuthSession()
+  if (!session?.user?.id) throw new Error("Unauthorized")
+
+  const instance = await prisma.legalInstrumentInstance.findUnique({
+    where: { id: instanceId },
+  })
+
+  if (!instance) throw new Error("Instance not found")
+
+  return prisma.legalInstrumentInstance.update({
+    where: { id: instanceId },
+    data: {
+      status: "SENT_FOR_ANALYSIS",
+    } as any, // Cast to any to avoid type error if client not updated yet
+  })
+}

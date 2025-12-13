@@ -12,7 +12,7 @@ import { APP_ERRORS } from "@/lib/errors"
 
 export default function Page() {
   const router = useRouter()
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams()
   const { project, loading } = useProject()
   const [mode, setMode] = useState<"start" | "wizard">("start")
   const [initialState, setInitialState] = useState<any>(null)
@@ -20,9 +20,8 @@ export default function Page() {
   const handleComplete = async (res: any) => {
     if (!project || !project.slug) return
 
-    
     const result = await createLegalInstrument(project.slug, res)
-    
+
     if (result.success) {
       notify.success("Instrumento jurídico salvo com sucesso!")
 

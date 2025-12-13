@@ -1,18 +1,22 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowLeft, Calendar, FileText, User, Scale, Download, Edit } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ArrowLeft, Calendar, FileText, Plus, Edit, Scale, Download, Eye } from "lucide-react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { UserAvatar } from "@/components/user-avatar"
 import { useProject } from "@/components/providers/project-context"
+import { cn } from "@/lib/utils"
+import { InlineEdit } from "@/components/ui/inline-edit"
+import { updateProject } from "@/actions/projects"
+import { toast } from "sonner"
+import { Badge } from "@/components/ui/badge"
 
 export default function ProjectDetailsPage() {
-  const { project, loading } = useProject()
+  const { project, dependences, loading, refetch } = useProject()
 
   if (loading) {
     return (
@@ -30,6 +34,72 @@ export default function ProjectDetailsPage() {
   }
 
   if (!project) return null
+
+  const workPlan = dependences["work-plan"]
+  const legalInstruments = (dependences["legal-instrument"] as any[]) || []
+
+  // Calculate dependencies
+  const missingDependencies = []
+
+  // 1. Work Plan Dependency
+  if (!workPlan) {
+    missingDependencies.push({
+      id: "work-plan",
+      label: "Plano de Trabalho",
+      description: "O plano de trabalho ainda não foi criado.",
+      link: `/projetos/${project.slug}/work-plan`,
+      action: "Criar Plano",
+    })
+  }
+
+  // 2. Legal Instrument Dependency
+  // If no legal instrument is selected
+  if (legalInstruments.length === 0) {
+    missingDependencies.push({
+      id: "legal-instrument-select",
+      label: "Instrumento Jurídico",
+      description: "Nenhum instrumento jurídico foi selecionado.",
+      link: `/projetos/${project.slug}/legal-instrument`,
+      action: "Selecionar Instrumento",
+    })
+  } else {
+    // If selected but not filled (check for answerFile or answers)
+    // Assuming if answerFile is present, it's filled. Or we can check if answers are present.
+    // The previous code checked `instance?.answerFile`.
+    const pendingInstruments = legalInstruments.filter((li) => !li.legalInstrumentInstance?.answerFile)
+
+    pendingInstruments.forEach((li) => {
+      missingDependencies.push({
+        id: `legal-instrument-fill-${li.id}`,
+        label: `Preencher ${li.legalInstrument.name}`,
+        description: "O instrumento jurídico precisa ser preenchido.",
+        link: `/projetos/${project.slug}/legal-instrument/fill`,
+        action: "Preencher",
+      })
+    })
+  }
+
+  const handleUpdate = async (field: string, value: string) => {
+    if (!project) return
+
+    const formData = new FormData()
+    formData.append("titulo", project.title)
+    formData.append("objetivos", project.objectives)
+    formData.append("justificativa", project.justification)
+    formData.append("abrangencia", project.scope)
+
+    // Update specific field
+    formData.set(field, value)
+
+    try {
+      await updateProject(project.slug!, formData)
+      toast.success("Projeto atualizado com sucesso!")
+      await refetch()
+    } catch (error) {
+      console.error(error)
+      toast.error("Erro ao atualizar projeto.")
+    }
+  }
 
   return (
     <div className="p-8 space-y-8 max-w-7xl w-7xl mx-auto">
@@ -58,128 +128,62 @@ export default function ProjectDetailsPage() {
         <TabsList>
           <TabsTrigger value="overview">Visão Geral</TabsTrigger>
           <TabsTrigger value="workplan">Plano de Trabalho</TabsTrigger>
+          <TabsTrigger value="legal-instrument">Instrumento Jurídico</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-3">
             {/* Main Info */}
-            <Card className="md:col-span-2">
-              <CardHeader>
+            <Card className={cn(missingDependencies.length > 0 ? "md:col-span-2" : "md:col-span-3")}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle>Detalhes do Projeto</CardTitle>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link href={`/projetos/${project.slug}/edit`}>
+                    <Edit className="h-4 w-4 mr-2" />
+                    Editar
+                  </Link>
+                </Button>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-6 pt-4">
                 <div>
                   <h3 className="font-semibold mb-2 flex items-center gap-2">
                     <FileText className="h-4 w-4" /> Objetivos
                   </h3>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{project.objectives}</p>
+                  <InlineEdit value={project.objectives} onSave={(val) => handleUpdate("objetivos", val)} label="Objetivos" multiline />
                 </div>
                 <div>
                   <h3 className="font-semibold mb-2">Justificativa</h3>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{project.justification}</p>
+                  <InlineEdit value={project.justification} onSave={(val) => handleUpdate("justificativa", val)} label="Justificativa" multiline />
                 </div>
                 <div>
                   <h3 className="font-semibold mb-2">Abrangência</h3>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">{project.scope}</p>
+                  <InlineEdit value={project.scope} onSave={(val) => handleUpdate("abrangencia", val)} label="Abrangência" multiline />
                 </div>
               </CardContent>
             </Card>
 
-            {/* Sidebar Info */}
-            <div className="space-y-4">
-              <Card>
+            {/* Dependencies Card */}
+            {missingDependencies.length > 0 && (
+              <Card className="border-orange-200 bg-orange-50 dark:bg-orange-950/10 dark:border-orange-900">
                 <CardHeader>
-                  <CardTitle className="text-lg">Proponente</CardTitle>
+                  <CardTitle className="text-orange-700 dark:text-orange-400 flex items-center gap-2">
+                    <FileText className="h-5 w-5" /> Pendências
+                  </CardTitle>
+                  <CardDescription>Itens que precisam de atenção para prosseguir.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    {project.proponent.user?.imageFile?.url ? (
-                      <UserAvatar
-                        size="md"
-                        preview={{
-                          name: project.proponent.user?.name,
-                          image: project.proponent.user?.imageFile?.url,
-                          color: project.proponent.user?.color,
-                        }}
-                      />
-                    ) : (
-                      <div className="bg-primary/10 p-2 rounded-full">
-                        <User className="h-5 w-5 text-primary" />
-                      </div>
-                    )}
-                    <div>
-                      <p className="font-medium">{project.proponent.user?.name}</p>
-                      <p className="text-xs text-muted-foreground">{project.proponent.user?.email}</p>
-                    </div>
-                  </div>
-                  {project.proponent.institution && (
-                    <div className="pt-2 border-t">
-                      <p className="text-xs font-medium text-muted-foreground">Instituição</p>
-                      <p className="text-sm">{project.proponent.institution}</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Legal Instrument Card */}
-            <div className="md:col-span-3">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Scale className="h-5 w-5" /> Instrumento Jurídico
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {project.legalInstruments && project.legalInstruments.length > 0 ? (
-                    <div className="space-y-4">
-                      {project.legalInstruments.map((li: any) => {
-                        const instance = li.legalInstrumentInstance
-                        const instrument = li.legalInstrument
-                        const hasAnswerFile = instance?.answerFile
-
-                        return (
-                          <div key={li.id} className="flex items-center justify-between p-4 border rounded-lg bg-muted/20">
-                            <div>
-                              <h4 className="font-semibold">{instrument.name}</h4>
-                              <p className="text-sm text-muted-foreground">{instrument.description}</p>
-                              {hasAnswerFile && <span className="text-xs text-green-600 font-medium mt-1 block">Documento gerado em {format(new Date(instance.updatedAt), "dd/MM/yyyy")}</span>}
-                            </div>
-                            <div className="flex gap-2">
-                              {hasAnswerFile ? (
-                                <>
-                                  <Button variant="outline" size="sm" asChild>
-                                    <Link href={`/projetos/${project.slug}/legal-instruments/fill`}>
-                                      <Edit className="mr-2 h-4 w-4" /> Editar Respostas
-                                    </Link>
-                                  </Button>
-                                  <Button size="sm" asChild>
-                                    <Link href={instance.answerFile.url} target="_blank">
-                                      <Download className="mr-2 h-4 w-4" /> Download
-                                    </Link>
-                                  </Button>
-                                </>
-                              ) : (
-                                <Button size="sm" asChild>
-                                  <Link href={`/projetos/${project.slug}/legal-instruments/fill`}>Preencher Instrumento</Link>
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  ) : (
-                    <div className="text-center py-6 space-y-3">
-                      <p className="text-muted-foreground">Nenhum instrumento jurídico selecionado para este projeto.</p>
-                      <Button asChild>
-                        <Link href={`/projetos/${project.slug}/legal-instrument`}>Selecionar Instrumento</Link>
+                  {missingDependencies.map((dep) => (
+                    <div key={dep.id} className="bg-white dark:bg-card p-4 rounded-lg border shadow-sm">
+                      <h4 className="font-medium mb-1">{dep.label}</h4>
+                      <p className="text-sm text-muted-foreground mb-3">{dep.description}</p>
+                      <Button size="sm" variant="outline" className="w-full border-orange-200 hover:bg-orange-50 hover:text-orange-700 dark:border-orange-800 dark:hover:bg-orange-950" asChild>
+                        <Link href={dep.link}>{dep.action}</Link>
                       </Button>
                     </div>
-                  )}
+                  ))}
                 </CardContent>
               </Card>
-            </div>
+            )}
           </div>
         </TabsContent>
 
@@ -189,11 +193,119 @@ export default function ProjectDetailsPage() {
               <CardTitle>Plano de Trabalho</CardTitle>
               <CardDescription>Gerencie as metas, cronograma e equipe do projeto.</CardDescription>
             </CardHeader>
-            <CardContent className="h-[300px] flex items-center justify-center border-2 border-dashed rounded-lg m-6">
-              <div className="text-center">
-                <p className="text-muted-foreground mb-4">Funcionalidade em desenvolvimento.</p>
-                <Button disabled>Criar Plano de Trabalho</Button>
-              </div>
+            <CardContent>
+              {workPlan ? (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/20">
+                    <div>
+                      <h4 className="font-semibold">Plano de Trabalho Ativo</h4>
+                      <p className="text-sm text-muted-foreground">Criado em {format(new Date(workPlan.createdAt), "dd/MM/yyyy")}</p>
+                    </div>
+                    <Button variant="outline" asChild>
+                      <Link href={`/projetos/${project.slug}/work-plan`}>
+                        <Edit className="mr-2 h-4 w-4" /> Editar Plano
+                      </Link>
+                    </Button>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="p-4 rounded-lg border">
+                      <h4 className="font-medium mb-2">Objetivo Geral</h4>
+                      <p className="text-sm text-muted-foreground">{workPlan.generalObjective}</p>
+                    </div>
+                    <div className="p-4 rounded-lg border">
+                      <h4 className="font-medium mb-2">Vigência</h4>
+                      <p className="text-sm text-muted-foreground">
+                        {workPlan.validityStart ? format(new Date(workPlan.validityStart), "dd/MM/yyyy") : "-"} até {workPlan.validityEnd ? format(new Date(workPlan.validityEnd), "dd/MM/yyyy") : "-"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="h-[300px] flex flex-col items-center justify-center border-2 border-dashed rounded-lg m-6 gap-4">
+                  <div className="text-center space-y-2">
+                    <h3 className="font-semibold text-lg">Nenhum plano de trabalho encontrado</h3>
+                    <p className="text-muted-foreground max-w-sm mx-auto">Crie um plano de trabalho para definir os objetivos, cronograma e equipe do projeto.</p>
+                  </div>
+                  <Button asChild>
+                    <Link href={`/projetos/${project.slug}/work-plan`}>
+                      <Plus className="mr-2 h-4 w-4" /> Criar Plano de Trabalho
+                    </Link>
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="legal-instrument">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Scale className="h-5 w-5" /> Instrumento Jurídico
+              </CardTitle>
+              <CardDescription>Gerencie os documentos legais do projeto.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {legalInstruments.length > 0 ? (
+                <div className="space-y-4">
+                  {legalInstruments.map((li: any) => {
+                    const instance = li.legalInstrumentInstance
+                    const instrument = li.legalInstrument
+                    const hasAnswerFile = instance?.answerFile
+                    const status = instance?.status || "DRAFT"
+
+                    return (
+                      <div key={li.id} className="flex items-center justify-between p-4 border rounded-lg bg-muted/20">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-semibold">{instrument.name}</h4>
+                            {status === "SENT_FOR_ANALYSIS" && <Badge className="bg-blue-500">Em Análise</Badge>}
+                            {status === "APPROVED" && <Badge className="bg-green-500">Aprovado</Badge>}
+                            {status === "REJECTED" && <Badge variant="destructive">Rejeitado</Badge>}
+                            {status === "DRAFT" && <Badge variant="secondary">Rascunho</Badge>}
+                          </div>
+                          <p className="text-sm text-muted-foreground">{instrument.description}</p>
+                          {hasAnswerFile ? <span className="text-xs text-green-600 font-medium mt-1 block">Documento gerado em {format(new Date(instance.updatedAt), "dd/MM/yyyy")}</span> : <span className="text-xs text-orange-600 font-medium mt-1 block">Pendente de preenchimento</span>}
+                        </div>
+                        <div className="flex gap-2">
+                          {status === "DRAFT" ? (
+                            <Button size="sm" asChild>
+                              <Link href={`/projetos/${project.slug}/legal-instrument/fill`}>{hasAnswerFile ? "Continuar Preenchimento" : "Preencher Instrumento"}</Link>
+                            </Button>
+                          ) : (
+                            <Button size="sm" variant="outline" asChild>
+                              <Link href={`/projetos/${project.slug}/legal-instrument/fill`}>
+                                <Eye className="mr-2 h-4 w-4" /> Visualizar
+                              </Link>
+                            </Button>
+                          )}
+
+                          {hasAnswerFile && (
+                            <Button size="sm" variant="outline" asChild>
+                              <Link href={instance.answerFile.url} target="_blank">
+                                <Download className="mr-2 h-4 w-4" /> Download
+                              </Link>
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="h-[300px] flex flex-col items-center justify-center border-2 border-dashed rounded-lg m-6 gap-4">
+                  <div className="text-center space-y-2">
+                    <h3 className="font-semibold text-lg">Nenhum instrumento jurídico selecionado</h3>
+                    <p className="text-muted-foreground max-w-sm mx-auto">Selecione um instrumento jurídico adequado para o seu projeto.</p>
+                  </div>
+                  <Button asChild>
+                    <Link href={`/projetos/${project.slug}/legal-instrument`}>
+                      <Scale className="mr-2 h-4 w-4" /> Selecionar Instrumento
+                    </Link>
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

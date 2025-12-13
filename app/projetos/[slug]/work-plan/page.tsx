@@ -163,7 +163,7 @@ export default function Page() {
             <div className="p-6 pt-0 space-y-6">
               <div className="space-y-2">
                 <Skeleton className="h-4 w-[120px]" />
-                <Skeleton className="h-[80px] w-full" />
+                <Skeleton className="h-20 w-full" />
               </div>
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
