@@ -16,6 +16,7 @@ export const APP_ERRORS = {
   UPLOAD_NO_FILE: { code: "UPL-001", message: "Nenhum arquivo enviado." },
   UPLOAD_INVALID_TYPE: { code: "UPL-002", message: "Apenas imagens são permitidas." },
   UPLOAD_FAILED: { code: "UPL-003", message: "Erro ao fazer upload do arquivo." },
+  PROJECT_CREATE_LEGAL_INSTRUMENTS: { code: "PRJ-001", message: "Falha ao criar instrumento legal do projeto." },
   GENERIC_ERROR: { code: "SYS-001", message: "Ocorreu um erro inesperado." },
 } as const
 

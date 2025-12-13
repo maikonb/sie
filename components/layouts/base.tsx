@@ -14,7 +14,7 @@ export default function BaseLayout({
         <div className="flex flex-1">
           <AppSidebar />
           <SidebarInset>
-            <div className="flex flex-1 flex-col p-4">{children}</div>
+            <div className="flex flex-1 flex-col">{children}</div>
           </SidebarInset>
         </div>
       </SidebarProvider>
