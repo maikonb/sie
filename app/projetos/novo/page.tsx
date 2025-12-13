@@ -22,7 +22,7 @@ export default async function NovaPaginaProjeto(props: PageProps) {
   }
 
   return (
-    <div className="py-4 bg-muted/50 min-h-full flex items-center justify-center">
+    <div className="p-4 bg-muted/50 min-h-full flex items-center justify-center">
       <ProjectForm initialProject={initialProject} />
     </div>
   )
