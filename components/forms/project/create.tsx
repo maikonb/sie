@@ -3,14 +3,27 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
 import { Project } from "@prisma/client"
 import { Check, FileText, Scale, Clock } from "lucide-react"
 import { createProject } from "@/actions/projects"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { notify } from "@/lib/notifications"
+
+const projectFormSchema = z.object({
+  titulo: z.string().min(3, "O título deve ter pelo menos 3 caracteres").max(200, "O título deve ter no máximo 200 caracteres"),
+  objetivos: z.string().min(10, "Descreva os objetivos com mais detalhes (mínimo 10 caracteres)"),
+  justificativa: z.string().min(10, "A justificativa deve ser mais detalhada (mínimo 10 caracteres)"),
+  abrangencia: z.string().min(5, "Defina a abrangência (mínimo 5 caracteres)"),
+})
+
+type ProjectFormValues = z.infer<typeof projectFormSchema>
 
 interface ProjectFormProps {
   initialProject?: Project | null
@@ -21,9 +34,25 @@ export function ProjectForm({ initialProject }: ProjectFormProps) {
   const [step, setStep] = useState<"create" | "choisen" | "loading">(initialProject ? "choisen" : "create")
   const [project, setProject] = useState<Project | null>(initialProject || null)
 
-  const handleCreateProject = async (formData: FormData) => {
+  const form = useForm<ProjectFormValues>({
+    resolver: zodResolver(projectFormSchema),
+    defaultValues: {
+      titulo: "",
+      objetivos: "",
+      justificativa: "",
+      abrangencia: "",
+    },
+  })
+
+  const onSubmit = async (data: ProjectFormValues) => {
     setStep("loading")
     try {
+      const formData = new FormData()
+      formData.append("titulo", data.titulo)
+      formData.append("objetivos", data.objetivos)
+      formData.append("justificativa", data.justificativa)
+      formData.append("abrangencia", data.abrangencia)
+
       const p = await createProject(formData)
 
       setProject(p)
@@ -31,6 +60,7 @@ export function ProjectForm({ initialProject }: ProjectFormProps) {
       router.replace(`/projetos/novo?slug=${p.slug}`)
     } catch (error) {
       console.error(error)
+      notify.error("Erro ao criar projeto")
       setStep("create")
     }
   }
@@ -106,33 +136,74 @@ export function ProjectForm({ initialProject }: ProjectFormProps) {
           <CardDescription>Preencha os dados do seu projeto (Plano de Trabalho ficará para depois).</CardDescription>
         </CardHeader>
         <CardContent>
-          <form action={handleCreateProject} className="space-y-6">
-            <div className="grid gap-2">
-              <Label htmlFor="titulo">Título</Label>
-              <Input id="titulo" name="titulo" placeholder="Ex.: Plataforma de Inovação SIE/UFR" required maxLength={200} />
-            </div>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <FormField
+                control={form.control}
+                name="titulo"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Título</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ex.: Plataforma de Inovação SIE/UFR" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <div className="grid gap-2">
-              <Label htmlFor="objetivos">Objetivos</Label>
-              <Textarea id="objetivos" name="objetivos" placeholder="Descreva os objetivos do projeto..." required rows={6} />
-            </div>
+              <FormField
+                control={form.control}
+                name="objetivos"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Objetivos</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="Descreva os objetivos do projeto..." rows={6} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <div className="grid gap-2">
-              <Label htmlFor="justificativa">Justificativa</Label>
-              <Textarea id="justificativa" name="justificativa" placeholder="Explique a relevância pública/acadêmica, demanda atendida, etc." required rows={6} />
-            </div>
+              <FormField
+                control={form.control}
+                name="justificativa"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Justificativa</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="Explique a relevância pública/acadêmica, demanda atendida, etc." rows={6} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <div className="grid gap-2">
-              <Label htmlFor="abrangencia">Abrangência</Label>
-              <Textarea id="abrangencia" name="abrangencia" placeholder="Defina localidades, público-alvo e alcance..." required rows={5} />
-            </div>
-            <div className="flex items-center justify-end gap-3">
-              <Button variant="outline" asChild>
-                <Link href="/projetos/">Cancelar</Link>
-              </Button>
-              <Button type="submit">Salvar projeto</Button>
-            </div>
-          </form>
+              <FormField
+                control={form.control}
+                name="abrangencia"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Abrangência</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="Defina localidades, público-alvo e alcance..." rows={5} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex items-center justify-end gap-3">
+                <Button variant="outline" asChild type="button">
+                  <Link href="/projetos/">Cancelar</Link>
+                </Button>
+                <Button type="submit" disabled={step === "loading"}>
+                  {step === "loading" ? "Salvando..." : "Salvar projeto"}
+                </Button>
+              </div>
+            </form>
+          </Form>
         </CardContent>
       </Card>
     </div>

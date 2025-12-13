@@ -103,7 +103,7 @@ export function ProfileForm({ user }: { user: any }) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <div className="flex items-center gap-4">
           <UserAvatar size="xl" preview={preview} />
           <div className="flex flex-col gap-2">

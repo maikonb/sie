@@ -1,5 +1,3 @@
-import { prisma } from "@/lib/config/db"
-
 import { ProjectForm } from "@/components/forms/project/create"
 import { Project } from "@prisma/client"
 import { getProjectBySlug } from "@/actions/projects"
