@@ -1,4 +1,3 @@
-import { description } from "@/app/admin/layout"
 import { PrismaClient, LegalInstrumentType } from "@prisma/client"
 
 export async function seedLegalInstruments(prisma: PrismaClient) {

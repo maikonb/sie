@@ -2,17 +2,37 @@ import { PrismaClient } from "@prisma/client"
 import { seedLegalInstruments } from "./seeds/legal-instruments"
 import { seedPermissions } from "./seeds/permissions"
 import { seedSystemDefaults } from "./seeds/system-defaults"
+import { seedAdminUser } from "./seeds/admin-user"
 
 const prisma = new PrismaClient({})
 
+const devSeeds = [
+  seedLegalInstruments, 
+  seedPermissions, 
+  seedAdminUser,
+  seedSystemDefaults
+]
+
+const prodSeeds = [
+  seedLegalInstruments, 
+  seedPermissions, 
+  seedSystemDefaults
+]
+
+function chooseSeeds(arg: string): Array<(prisma: PrismaClient) => Promise<any>> {
+  if (arg === "prod" || arg === "production") return prodSeeds
+  return devSeeds
+}
+
 async function main() {
-  console.log("Start seeding...")
+  const arg = (process.argv[2] || process.env.SEED_ENV || "dev").toLowerCase()
+  console.log(`Start ${arg} seeding...`)
 
-  await seedLegalInstruments(prisma)
-  await seedPermissions(prisma)
+  const seeds = chooseSeeds(arg)
 
-  // Always last
-  await seedSystemDefaults(prisma)
+  for (const seedFn of seeds) {
+    await seedFn(prisma)
+  }
 
   console.log("Seeding finished.")
 }

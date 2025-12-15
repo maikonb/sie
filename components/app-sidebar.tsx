@@ -13,6 +13,7 @@ import { Logo } from "./logo"
 import Link from "next/link"
 import { useSession } from "next-auth/react"
 
+
 const data = {
   navMain: [
     {
@@ -52,6 +53,12 @@ const data = {
       name: "Meus Projetos",
       url: "/projetos",
       icon: Frame,
+      transforms: [
+        {
+          permission: "projects.view.all",
+          changes: { name: "Projetos" },
+        },
+      ],
     },
     {
       name: "Sales & Marketing",
@@ -75,6 +82,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     avatar: session?.user?.image || "",
     color: session?.user?.color || "bg-sidebar-primary",
   }
+
+
 
   return (
     <Sidebar className="top-(--header-height) h-[calc(100svh-var(--header-height))]!" {...props}>
