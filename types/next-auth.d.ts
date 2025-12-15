@@ -8,12 +8,14 @@ declare module "next-auth" {
       firstAccess: boolean
       color?: string
       name?: string
+      image?: string
     } & DefaultSession["user"]
   }
   interface User {
     firstAccess: boolean
     color?: string
     name?: string
+    image?: string
   }
 }
 
@@ -23,5 +25,6 @@ declare module "next-auth/jwt" {
     firstAccess?: boolean
     color?: string
     name?: string
+    image?: string
   }
 }

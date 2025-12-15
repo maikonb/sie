@@ -10,9 +10,12 @@ import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/c
 import { Input } from "@/components/ui/input"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Camera } from "lucide-react"
+import { UserAvatar } from "@/components/user-avatar"
+import { Camera, Loader2, Sparkles } from "lucide-react"
 import { ImageCropper } from "@/components/ui/image-cropper"
+import { APP_ERRORS } from "@/lib/errors"
+import { generatePresignedUrl } from "@/actions/storage"
+import { updateFirstAccess } from "@/actions/user"
 
 const formSchema = z.object({
   username: z
@@ -29,6 +32,7 @@ export default function FormRhfInput() {
   const [preview, setPreview] = useState<string | null>(null)
   const [cropperOpen, setCropperOpen] = useState(false)
   const [imageToCrop, setImageToCrop] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -38,25 +42,32 @@ export default function FormRhfInput() {
   })
 
   async function onSubmit(data: z.infer<typeof formSchema>) {
+    setIsLoading(true)
     try {
-      const formData = new FormData()
-      formData.append("username", data.username)
+      let imageKey: string | undefined
+
       if (data.image) {
-        formData.append("image", data.image)
+        // 1. Get pre-signed URL
+        const { url, key } = await generatePresignedUrl(data.image.name, data.image.type, "profile-images")
+
+        // 2. Upload to S3
+        const uploadRes = await fetch(url, {
+          method: "PUT",
+          body: data.image,
+          headers: { "Content-Type": data.image.type },
+        })
+
+        if (!uploadRes.ok) throw new Error("Failed to upload image")
+        imageKey = key
       }
 
-      const response = await fetch("/api/user/first-access", {
-        method: "POST",
-        body: formData,
+      // 3. Submit form with imageKey
+      await updateFirstAccess({
+        username: data.username,
+        imageKey,
       })
-      const res = await response.json()
 
-      if (!response.ok || res.error) {
-        notify.error(res.error || "USER-002")
-        return
-      }
-
-      notify.success("Dados salvos com sucesso!")
+      notify.success("Perfil configurado com sucesso!")
 
       // Force session update to reflect firstAccess: false
       await update()
@@ -64,7 +75,9 @@ export default function FormRhfInput() {
       router.push("/projetos")
     } catch (error) {
       console.error(error)
-      notify.error("SYS-001")
+      notify.error(APP_ERRORS.GENERIC_ERROR.code)
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -91,58 +104,59 @@ export default function FormRhfInput() {
   }
 
   return (
-    <Card className="w-full sm:max-w-md">
-      <CardHeader>
-        <CardTitle>Configurações do Perfil</CardTitle>
-        <CardDescription>Atualize seus dados para facilitar os demais cadastros.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form id="form-rhf-input" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <div className="flex flex-col items-center justify-center space-y-4">
-            <div className="relative group cursor-pointer">
-              <Avatar className="h-24 w-24 border-2 border-border">
-                <AvatarImage src={preview || ""} />
-                <AvatarFallback className="bg-muted text-muted-foreground text-2xl">{form.watch("username")?.charAt(0)?.toUpperCase() || "?"}</AvatarFallback>
-              </Avatar>
-              <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
-                <Camera className="h-8 w-8 text-white" />
+    <div className="flex min-h-full flex-col items-center justify-center gap-6 p-6 md:p-10">
+      <div className="flex w-full max-w-xl flex-col gap-6">
+        <Card>
+          <CardHeader className="text-center">
+            <CardTitle className="text-xl">Configurações do Perfil</CardTitle>
+            <CardDescription>Atualize seus dados para continuar</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form id="form-rhf-input" onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="flex flex-col items-center justify-center space-y-4">
+                <div className="relative group cursor-pointer">
+                  <div className="relative">
+                    <UserAvatar size="xl" preview={preview} className="h-24 w-24 border-2 border-border" />
+                    <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                      <Camera className="h-6 w-6 text-white" />
+                    </div>
+                  </div>
+                  <Input type="file" accept="image/*" className="absolute inset-0 h-full w-full cursor-pointer opacity-0 z-10" onChange={handleImageChange} />
+                </div>
+                <p className="text-xs text-muted-foreground">Clique para alterar a foto</p>
               </div>
-              <Input type="file" accept="image/*" className="absolute inset-0 h-full w-full cursor-pointer opacity-0" onChange={handleImageChange} />
-            </div>
-            <p className="text-xs text-muted-foreground">Clique para alterar a foto</p>
-          </div>
 
-          <ImageCropper
-            open={cropperOpen}
-            onOpenChange={setCropperOpen}
-            imageSrc={imageToCrop}
-            onCropComplete={handleCropComplete}
-            aspectRatio={1}
-          />
+              <ImageCropper open={cropperOpen} onOpenChange={setCropperOpen} imageSrc={imageToCrop} onCropComplete={handleCropComplete} aspectRatio={1} />
 
-          <FieldGroup>
-            <Controller
-              name="username"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="form-rhf-input-username">Nome Completo do Proponente</FieldLabel>
-                  <Input {...field} id="form-rhf-input-username" aria-invalid={fieldState.invalid} placeholder="Nome Completo" autoComplete="name" />
-                  <FieldDescription>Este nome será utilizado para preenchimento de todas as documentações.</FieldDescription>
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
-          </FieldGroup>
-        </form>
-      </CardContent>
-      <CardFooter>
-        <Field orientation="horizontal">
-          <Button type="submit" form="form-rhf-input" className="w-full">
-            Salvar e Continuar
-          </Button>
-        </Field>
-      </CardFooter>
-    </Card>
+              <FieldGroup>
+                <Controller
+                  name="username"
+                  control={form.control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="form-rhf-input-username">Nome Completo</FieldLabel>
+                      <Input {...field} id="form-rhf-input-username" aria-invalid={fieldState.invalid} placeholder="Ex: João Silva" autoComplete="name" />
+                      <FieldDescription>Nome utilizado em documentos.</FieldDescription>
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
+                />
+              </FieldGroup>
+
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Salvando...
+                  </>
+                ) : (
+                  "Salvar e Continuar"
+                )}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   )
 }

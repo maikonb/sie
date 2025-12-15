@@ -2,6 +2,7 @@ version: "3.8"
 
 services:
   mailhog:
+    profiles: ["dev"]
     image: mailhog/mailhog
     container_name: sie-mailhog
     restart: unless-stopped
@@ -10,6 +11,7 @@ services:
       - "8025:8025" # Web UI
 
   postgres:
+    profiles: ["dev"]
     image: postgres:16
     container_name: sie-postgres
     restart: unless-stopped
@@ -22,18 +24,46 @@ services:
     volumes:
       - sie_postgres_data:/var/lib/postgresql/data
 
-  localstack:
-    image: localstack/localstack
-    container_name: sie-localstack
+  minio:
+    profiles: ["dev", "prod"]
+    image: minio/minio
+    container_name: sie-minio
     restart: unless-stopped
     ports:
-      - "4566:4566"
+      - "9000:9000" # API S3
+      - "9001:9001" # Web UI
     environment:
-      - SERVICES=s3
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio123
+      MINIO_BROWSER_REDIRECT_URL: http://localhost:9001
+      MINIO_SERVER_URL: http://localhost:9000
+      MINIO_CORS_ALLOW_ORIGIN: "http://localhost:3000"
+      MINIO_CORS_ALLOW_METHODS: "PUT,GET,POST,DELETE"
+      MINIO_CORS_ALLOW_HEADERS: "*"
+    command: server /data --console-address ":9001"
     volumes:
-      - ./localstack/init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh
-      - sie_localstack_data:/var/lib/localstack
+      - sie_minio_data:/data
+      - ./minio/init:/docker-entrypoint-init.d
+
+  create-bucket:
+    profiles: ["dev", "prod"]
+    image: minio/mc
+    container_name: sie-create-bucket
+    depends_on:
+      - minio
+    environment:
+      AWS_BUCKET_NAME: ${AWS_BUCKET_NAME:-sie-localhost-bucket}
+    entrypoint: >
+      /bin/sh -c "
+      until /usr/bin/mc alias set myminio http://minio:9000 minio minio123; do
+        echo 'Waiting for MinIO...';
+        sleep 5;
+      done;
+      /usr/bin/mc mb --ignore-existing myminio/$${AWS_BUCKET_NAME};
+      /usr/bin/mc policy set download myminio/$${AWS_BUCKET_NAME};
+      exit 0;
+      "
 
 volumes:
   sie_postgres_data:
-  sie_localstack_data:
+  sie_minio_data:

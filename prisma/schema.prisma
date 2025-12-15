@@ -6,13 +6,13 @@
 
 generator client {
   provider = "prisma-client-js"
+  output   = "client"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-
 
 enum ScheduleStatus {
   PLANNED
@@ -36,68 +36,93 @@ enum ApprovalSector {
   OTHER
 }
 
+enum LegalInstrumentType {
+  PDI_AGREEMENT
+  SERVICE_CONTRACT
+  APPDI_PRIVATE
+  APPDI_NO_FUNDING
+  COOP_AGREEMENT
+  NDA
+  TECH_TRANSFER
+  REVIEW_SCOPE
+}
+
+enum SystemDefaultType {
+  Role
+}
+
 model Proponent {
-  id        Int       @id @default(autoincrement())
-  name      String
-  email     String    @unique
+  id          String    @id @default(uuid())
   institution String?
-  projects  Project[]
+  projects    Project[]
 
-  userId   String?   @unique
-  user     User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String? @unique
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum ProjectStatus {
+  DRAFT
+  IN_ANALYSIS
+  APPROVED
+  REJECTED
 }
 
 model Project {
-  id            Int           @id @default(autoincrement())
+  id            String  @id @default(uuid())
+  slug          String? @unique
   title         String
-  objectives    String        @db.Text
-  justification String        @db.Text
-  scope         String        @db.Text
+  objectives    String  @db.Text
+  justification String  @db.Text
+  scope         String  @db.Text
 
-  proponentId   Int
-  proponent     Proponent     @relation(fields: [proponentId], references: [id], onDelete: Restrict)
+  status ProjectStatus @default(DRAFT)
 
-  workPlan      WorkPlan?
+  proponentId String
+  proponent   Proponent @relation(fields: [proponentId], references: [id], onDelete: Restrict)
 
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  workPlan WorkPlan?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  legalInstruments ProjectLegalInstrument[]
 
   @@index([proponentId])
 }
 
 model WorkPlan {
-  id          Int      @id @default(autoincrement())
+  id String @id @default(uuid())
 
   // 1–1 with Project
-  projectId   Int      @unique
-  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String  @unique
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   // Typical plan fields
-  object               String?   @db.Text       // title/short description of the object
-  diagnosis            String?   @db.Text
-  planScope            String?   @db.Text
-  planJustification    String?   @db.Text
+  object            String? @db.Text // title/short description of the object
+  diagnosis         String? @db.Text
+  planScope         String? @db.Text
+  planJustification String? @db.Text
 
-  generalObjective     String    @db.Text
-  specificObjectives   Json?             
+  generalObjective   String @db.Text
+  specificObjectives Json?
 
-  methodology          String?   @db.Text
-  responsibleUnit      String?
-  ictManager           String?
-  partnerManager       String?
+  methodology     String? @db.Text
+  responsibleUnit String?
+  ictManager      String?
+  partnerManager  String?
 
-  monitoring           String?   @db.Text
-  expectedResults      String?   @db.Text
+  monitoring      String? @db.Text
+  expectedResults String? @db.Text
 
-  validityStart        DateTime?
-  validityEnd          DateTime?
+  validityStart DateTime?
+  validityEnd   DateTime?
 
-  schedule       ScheduleItem[]
-  team           TeamMember[]
-  participants   Participant[]
+  schedule         ScheduleItem[]
+  team             TeamMember[]
+  participants     Participant[]
   responsibilities Responsibility[]
 
   createdAt DateTime @default(now())
@@ -105,141 +130,288 @@ model WorkPlan {
 }
 
 model ScheduleItem {
-  id               Int            @id @default(autoincrement())
-  workPlanId       Int
-  workPlan         WorkPlan       @relation(fields: [workPlanId], references: [id], onDelete: Cascade)
+  id         String   @id @default(uuid())
+  workPlanId String
+  workPlan   WorkPlan @relation(fields: [workPlanId], references: [id], onDelete: Cascade)
 
-  axisGoal         String
-  actionStep       String         @db.Text
-  indicator        String         @db.Text
-  responsible      String
-  startDate        DateTime
-  endDate          DateTime
-  status           ScheduleStatus @default(PLANNED)
+  axisGoal    String
+  actionStep  String         @db.Text
+  indicator   String         @db.Text
+  responsible String
+  startDate   DateTime
+  endDate     DateTime
+  status      ScheduleStatus @default(PLANNED)
 
   @@index([workPlanId])
 }
 
 model TeamMember {
-  id               Int            @id @default(autoincrement())
-  workPlanId       Int
-  workPlan         WorkPlan       @relation(fields: [workPlanId], references: [id], onDelete: Cascade)
+  id         String   @id @default(uuid())
+  workPlanId String
+  workPlan   WorkPlan @relation(fields: [workPlanId], references: [id], onDelete: Cascade)
 
-  name            String
-  titrationArea   String?
-  institution     String?
-  role            String?
-  weeklyHours     Int?
+  name          String
+  titrationArea String?
+  institution   String?
+  role          String?
+  weeklyHours   Int?
 
   @@index([workPlanId])
 }
 
 model Participant {
-  id               Int            @id @default(autoincrement())
-  workPlanId       Int
-  workPlan         WorkPlan       @relation(fields: [workPlanId], references: [id], onDelete: Cascade)
+  id         String   @id @default(uuid())
+  workPlanId String
+  workPlan   WorkPlan @relation(fields: [workPlanId], references: [id], onDelete: Cascade)
 
-  entityOrg        String
-  cnpj             String?
-  sphere           AdministrativeSphere?
-  address          String?         @db.Text
+  entityOrg String
+  cnpj      String?
+  sphere    AdministrativeSphere?
+  address   String?               @db.Text
 
-  authorityName    String?
-  authorityRole    String?
-  authorityDoc     String?       // CPF/RG
-  contact          String?       // e-mail/phone
+  authorityName String?
+  authorityRole String?
+  authorityDoc  String? // CPF/RG
+  contact       String? // e-mail/phone
 
   responsibilities Responsibility[]
 
   @@index([workPlanId])
-
 }
 
 model Responsibility {
-  id               Int            @id @default(autoincrement())
-  workPlanId       Int
-  workPlan         WorkPlan       @relation(fields: [workPlanId], references: [id], onDelete: Cascade)
+  id         String   @id @default(uuid())
+  workPlanId String
+  workPlan   WorkPlan @relation(fields: [workPlanId], references: [id], onDelete: Cascade)
 
   // Responsibility can be associated with a specific participant (or be general to the plan)
-  participantId    Int?
-  participant      Participant?   @relation(fields: [participantId], references: [id])
+  participantId String?
+  participant   Participant? @relation(fields: [participantId], references: [id])
 
-  description      String         @db.Text
+  description String @db.Text
 
   @@index([workPlanId])
   @@index([participantId])
 }
 
 model User {
-  id            String   @id @default(cuid())
+  id            String    @id @default(cuid())
   name          String?
-  email         String?  @unique
+  email         String?   @unique
   emailVerified DateTime?
-  image         String?
+  imageId       String?   @unique
+  imageFile     File?     @relation(fields: [imageId], references: [id])
   color         String?
-  firstAccess   Boolean  @default(true)
+  firstAccess   Boolean   @default(true)
 
-  proponent     Proponent?
+  proponent Proponent?
 
-  accounts      Account[]
-  sessions      Session[]
+  accounts  Account[]
+  userRoles UserRole[]
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  resourceMembers ResourceMembers[]
+}
+
+model File {
+  id          String   @id @default(cuid())
+  key         String
+  url         String
+  bucket      String
+  filename    String
+  contentType String
+  size        Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user                     User?
+  legalInstruments         LegalInstrument[]
+  legalInstrumentInstances LegalInstrumentInstance[]
+  legalInstrumentAnswers   LegalInstrumentInstance[] @relation("InstanceAnswerFile")
 }
 
 model Account {
-  id                String  @id @default(cuid())
+  id                String @id @default(cuid())
   userId            String
   type              String
   provider          String
   providerAccountId String
 
-  refresh_token     String?  @db.Text
-  access_token      String?  @db.Text
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String?  @db.Text
-  session_state     String?
+  refresh_token String? @db.Text
+  access_token  String? @db.Text
+  expires_at    Int?
+  token_type    String?
+  scope         String?
+  id_token      String? @db.Text
+  session_state String?
 
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@index([userId])
 }
 
-model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-}
-
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
-}
-
 // --- OTP by email (6 digit code, hash + expiration) ---
 model OtpCode {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   email     String
-  codeHash  String   // bcrypt hash of the code
+  codeHash  String // bcrypt hash of the code
   expiresAt DateTime
   usedAt    DateTime?
   sentAt    DateTime  @default(now())
 
   // optional: limit attempts
-  attempts  Int       @default(0)
+  attempts Int @default(0)
 
   @@index([email])
   @@index([expiresAt])
+}
+
+model LegalInstrument {
+  id          String              @id @default(uuid())
+  name        String
+  description String
+  fieldsJson  Json
+  type        LegalInstrumentType
+
+  fileId String
+  file   File   @relation(fields: [fileId], references: [id])
+
+  projectLegalInstruments ProjectLegalInstrument[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum LegalInstrumentStatus {
+  DRAFT
+  SENT_FOR_ANALYSIS
+  APPROVED
+  REJECTED
+}
+
+model LegalInstrumentInstance {
+  id                             String              @id @default(uuid())
+  fieldsJson                     Json
+  type                           LegalInstrumentType
+  answers                        Json?
+  project_classification_answers Json?               @db.JsonB
+  status                         LegalInstrumentStatus @default(DRAFT)
+
+  fileId String
+  file   File   @relation(fields: [fileId], references: [id])
+
+  answerFileId String?
+  answerFile   File?   @relation("InstanceAnswerFile", fields: [answerFileId], references: [id])
+
+  projectRelation ProjectLegalInstrument[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ProjectLegalInstrument {
+  id String @id @default(uuid())
+
+  projectId                 String                  @unique
+  project                   Project                 @relation(fields: [projectId], references: [id])
+  legalInstrumentId         String
+  legalInstrument           LegalInstrument         @relation(fields: [legalInstrumentId], references: [id])
+  legalInstrumentInstanceId String                  @unique
+  legalInstrumentInstance   LegalInstrumentInstance @relation(fields: [legalInstrumentInstanceId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Authenticaitons
+
+model Role {
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+  slug        String  @unique
+
+  userRoles       UserRole[]
+  rolePermissions RolePermission[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model UserRole {
+  id String @id @default(uuid())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+  roleId String
+  role   Role   @relation(fields: [roleId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, roleId])
+  @@index([userId])
+}
+
+model RolePermission {
+  id String @id @default(uuid())
+
+  roleId       String
+  role         Role       @relation(fields: [roleId], references: [id])
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([roleId, permissionId])
+  @@index([roleId])
+  @@index([permissionId])
+}
+
+model Permission {
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+  slug        String  @unique
+
+  resourceMembers ResourceMembers[]
+  rolePermissions RolePermission[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ResourceMembers {
+  id String @id @default(uuid())
+
+  userId       String
+  user         User       @relation(fields: [userId], references: [id])
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id])
+
+  referenceTable String
+  referenceId    String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, permissionId, referenceId])
+  @@index([userId, permissionId])
+  @@index([referenceTable, referenceId])
+}
+
+// System
+
+model SystemDefaults {
+  id             String             @id @default(uuid())
+  slug           String             @unique
+  referenceTable SystemDefaultType?
+  referenceId    String?
+  value          String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
