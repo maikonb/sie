@@ -5,7 +5,8 @@ import { generateUniqueSlug } from "@/lib/utils/slug"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/config/auth"
 import { APP_ERRORS } from "@/lib/errors"
-import { Prisma } from "@/prisma/client"
+import { Prisma } from "@prisma/client"
+import PermissionsService from "@/lib/services/permissions"
 
 const projectWithRelations = Prisma.validator<Prisma.ProjectDefaultArgs>()({
   include: {
@@ -95,6 +96,8 @@ export async function createProject(formData: FormData) {
   const session = await getServerSession(authOptions)
   if (!session?.user?.email) throw new Error("Unauthorized")
 
+  await PermissionsService.authorize(session.user.id, { slug: "projects.create" })
+
   const titulo = String(formData.get("titulo") || "").trim()
   const objetivos = String(formData.get("objetivos") || "").trim()
   const justificativa = String(formData.get("justificativa") || "").trim()
@@ -168,8 +171,28 @@ export async function getAllProjects() {
   const session = await getServerSession(authOptions)
   if (!session?.user?.email) return []
 
+  const canViewAll = await PermissionsService.can(session.user.id, { slug: "projects.view.all" })
+
+  if (canViewAll) {
+    const projects = await prisma.project.findMany({
+      include: {
+        workPlan: { select: { id: true } },
+        legalInstruments: {
+          include: {
+            legalInstrumentInstance: {
+              select: { status: true, type: true },
+            },
+          },
+        },
+      },
+      orderBy: { updatedAt: "desc" },
+    })
+
+    return projects
+  }
+
   const proponent = await prisma.proponent.findFirst({
-    where: { user: { email: session.user.email } },
+    where: { user: { id: session.user.id } },
   })
 
   if (!proponent) return []
@@ -244,14 +267,6 @@ export async function updateProject(slug: string, formData: FormData) {
   if (!proponent || project.proponentId !== proponent.id) {
     throw new Error("Unauthorized access to project")
   }
-
-  // Only update slug if title changed, but keeping it simple for now and NOT updating slug to avoid breaking URLs
-  // If slug update is needed, we need to handle redirects. For now, let's keep slug stable or update it if really needed.
-  // The user request didn't explicitly ask for slug updates, but title update implies it might be desired.
-  // However, changing slug breaks the current page context if not handled.
-  // Let's update the title but keep the slug for now to avoid complexity, or regenerate slug if title changes.
-  // Given the "edit details" request, usually title change expects slug change in some systems, but here it might be safer to keep slug or update it.
-  // Let's update ONLY the fields, NOT the slug for now to ensure stability.
 
   return prisma.project.update({
     where: { slug },

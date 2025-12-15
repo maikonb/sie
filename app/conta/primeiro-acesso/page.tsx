@@ -135,7 +135,7 @@ export default function FormRhfInput() {
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel htmlFor="form-rhf-input-username">Nome Completo</FieldLabel>
-                      <Input {...field} id="form-rhf-input-username" aria-invalid={fieldState.invalid} placeholder="Ex: João Silva" autoComplete="name" />
+                      <Input {...field} id="form-rhf-input-username" aria-invalid={fieldState.invalid} placeholder="Ex: Nome" autoComplete="name" />
                       <FieldDescription>Nome utilizado em documentos.</FieldDescription>
                       {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                     </Field>

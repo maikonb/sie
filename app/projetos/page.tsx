@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { getAllProjects } from "@/actions/projects"
+import useCan from "@/hooks/use-can"
 import { PageContent, PageHeader, PageHeaderDescription, PageHeaderHeading, PageShell } from "@/components/shell"
 
 interface Project {
@@ -29,6 +30,7 @@ interface Project {
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
+  const { can: canCreate, loading: loadingCreate } = useCan("projects.create")
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -52,11 +54,13 @@ export default function ProjectsPage() {
           <PageHeaderHeading>Projetos</PageHeaderHeading>
           <PageHeaderDescription>Gerencie seus projetos de pesquisa e inovação.</PageHeaderDescription>
         </div>
-        <Button asChild>
-          <Link href="/projetos/novo">
-            <Plus className="mr-2 h-4 w-4" /> Novo Projeto
-          </Link>
-        </Button>
+        {canCreate && (
+          <Button asChild>
+            <Link href="/projetos/novo">
+              <Plus className="mr-2 h-4 w-4" /> Novo Projeto
+            </Link>
+          </Button>
+        )}
       </PageHeader>
 
       <PageContent>
@@ -78,7 +82,7 @@ export default function ProjectsPage() {
           <div className="flex flex-col items-center justify-center h-[400px] border-2 border-dashed rounded-lg bg-muted/50">
             <p className="text-lg text-muted-foreground mb-4">Nenhum projeto encontrado.</p>
             <Button variant="outline" asChild>
-              <Link href="/projetos/novo">Criar meu primeiro projeto</Link>
+              {canCreate && (<Link href="/projetos/novo">Criar meu primeiro projeto</Link>)}
             </Button>
           </div>
         ) : (

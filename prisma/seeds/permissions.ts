@@ -4,6 +4,7 @@ export async function seedPermissions(prisma: PrismaClient) {
   console.log("Seeding Permissions...")
   const permissions = [
     { slug: "projects.view.all", name: "Visualizar Projetos", description: "Pode visualizar projetos" },
+    { slug: "projects.create", name: "Criar Projetos", description: "Pode criar projetos" },
     { slug: "projects.approve", name: "Aprovar/Reprovar Projetos", description: "Pode aprovar ou reprovar projetos submetidos" },
     { slug: "legal_instruments.manage", name: "Gerenciar Instrumentos Legais", description: "Pode alterar o arquivo vinculado a um instrumento legal" },
     { slug: "users.manage", name: "Gerenciar Usuários", description: "Pode gerenciar contas de usuários e atribuir papéis" },
@@ -45,7 +46,7 @@ export async function seedPermissions(prisma: PrismaClient) {
   }
 
   const rolePermissionMap: Record<string, string[]> = {
-    user: [],
+    user: ["projects.create"],
     project_admin: ["projects.view", "projects.approve", "legal_instruments.manage", "projects.view.all"],
     admin: permissions.map((p) => p.slug),
   }
