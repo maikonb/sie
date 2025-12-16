@@ -1,9 +1,10 @@
-import { prisma } from "@/lib/config/db"
+import { ResourceMembersType } from "@prisma/client"
 import { APP_ERRORS } from "@/lib/errors"
+import { prisma } from "@/lib/config/db"
 
 type ResourceCheck = {
   slug: string
-  referenceTable?: string
+  referenceTable?: ResourceMembersType
   referenceId?: string
 }
 

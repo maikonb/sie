@@ -172,7 +172,7 @@ export default function ProjectDetailsPage() {
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <div className="space-y-1">
-                      <CardTitle>Plano de Trabalho Ativo</CardTitle>
+                      <CardTitle>Plano de Trabalho</CardTitle>
                       <CardDescription>Criado em {format(new Date(workPlan.createdAt), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</CardDescription>
                     </div>
                     <Button variant="outline" asChild>

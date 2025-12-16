@@ -24,6 +24,11 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     try {
       setLoading(true)
       const data = await getProjectBySlug(params.slug)
+      if (!data) {
+        router.push("/404")
+        return
+      }
+
       setProject(data)
       setDependences({
         "work-plan": data?.workPlan || null,

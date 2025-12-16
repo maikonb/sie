@@ -51,6 +51,10 @@ enum SystemDefaultType {
   Role
 }
 
+enum ResourceMembersType {
+  Project
+}
+
 model Proponent {
   id          String    @id @default(uuid())
   institution String?
@@ -392,7 +396,7 @@ model ResourceMembers {
   permissionId String
   permission   Permission @relation(fields: [permissionId], references: [id])
 
-  referenceTable String
+  referenceTable ResourceMembersType
   referenceId    String
 
   createdAt DateTime @default(now())

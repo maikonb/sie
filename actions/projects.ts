@@ -5,7 +5,7 @@ import { generateUniqueSlug } from "@/lib/utils/slug"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/config/auth"
 import { APP_ERRORS } from "@/lib/errors"
-import { Prisma } from "@prisma/client"
+import { Prisma, ResourceMembersType } from "@prisma/client"
 import PermissionsService from "@/lib/services/permissions"
 
 const projectWithRelations = Prisma.validator<Prisma.ProjectDefaultArgs>()({
@@ -80,16 +80,27 @@ export async function getProjectBySlug(slug: string) {
 
   const proponent = await prisma.proponent.findUnique({ where: { userId: session.user.id }, select: { id: true } })
 
-  if (!proponent) {
-    throw new Error("Proponent not found")
+  if (proponent && project.proponentId === proponent.id) {
+    return project
   }
 
-  // Ensure the user owns the project
-  if (project.proponentId !== proponent.id) {
-    throw new Error("Unauthorized access to project")
+  const canViewResource = await PermissionsService.can(session.user.id, {
+    slug: "projects.view",
+    referenceTable: ResourceMembersType.Project,
+    referenceId: project.id,
+  })
+
+  if (canViewResource) {
+    return project
   }
 
-  return project
+  const canApprove = await PermissionsService.can(session.user.id, { slug: "projects.approve" })
+
+  if (canApprove) {
+    return project
+  }
+
+  return null
 }
 
 export async function createProject(formData: FormData) {

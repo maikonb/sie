@@ -1,8 +1,9 @@
 import { notFound } from "next/navigation"
 import { getAuthSession } from "@/lib/api-utils"
 import PermissionsService from "./services/permissions"
+import { ResourceMembersType } from "@/prisma/client";
 
-export async function requirePermissionOr404(check: { slug: string; referenceTable?: string; referenceId?: string }) {
+export async function requirePermissionOr404(check: { slug: string; referenceTable?: ResourceMembersType; referenceId?: string }) {
   const session = await getAuthSession()
   if (!session?.user?.id) return notFound()
 

@@ -3,8 +3,9 @@ import { Permission, PrismaClient, Role } from "@prisma/client"
 export async function seedPermissions(prisma: PrismaClient) {
   console.log("Seeding Permissions...")
   const permissions = [
-    { slug: "projects.view.all", name: "Visualizar Projetos", description: "Pode visualizar projetos" },
     { slug: "projects.create", name: "Criar Projetos", description: "Pode criar projetos" },
+    { slug: "projects.view", name: "Visualizar Projetos", description: "Pode visualizar projetos" },
+    { slug: "projects.view.all", name: "Visualizar Projetos", description: "Pode visualizar projetos" },
     { slug: "projects.approve", name: "Aprovar/Reprovar Projetos", description: "Pode aprovar ou reprovar projetos submetidos" },
     { slug: "legal_instruments.manage", name: "Gerenciar Instrumentos Legais", description: "Pode alterar o arquivo vinculado a um instrumento legal" },
     { slug: "users.manage", name: "Gerenciar Usuários", description: "Pode gerenciar contas de usuários e atribuir papéis" },

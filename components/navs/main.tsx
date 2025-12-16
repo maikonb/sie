@@ -24,7 +24,6 @@ export function NavMain({
     }[]
   }[]
 }) {
-  // Collect transform permissions and explicit permission slugs from items and subitems
   const transformPermissions = items.flatMap((it) => [
     ...(it as any).transforms?.map((t: any) => t.permission) || [],
     ...((it.items || []) as any[]).flatMap((s) => s.transforms?.map((t: any) => t.permission) || []),
@@ -103,7 +102,7 @@ export function NavMain({
                       </CollapsibleTrigger>
                       <CollapsibleContent>
                         <SidebarMenuSub>
-                          {item.items?.map((subItem) => (
+                          {item.items?.map((subItem: any) => (
                             <SidebarMenuSubItem key={subItem.title}>
                               <PermissionGuard permission={subItem.permissionSlug}>
                                 <SidebarMenuSubButton asChild>

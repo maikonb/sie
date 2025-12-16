@@ -2,8 +2,9 @@
 
 import { getAuthSession } from "@/lib/api-utils"
 import PermissionsService from "@/lib/services/permissions"
+import { ResourceMembersType } from "@/prisma/client"
 
-export async function checkPermission(slug: string, referenceTable?: string, referenceId?: string) {
+export async function checkPermission(slug: string, referenceTable?: ResourceMembersType, referenceId?: string) {
   const session = await getAuthSession()
   if (!session?.user?.id) return { can: false }
 

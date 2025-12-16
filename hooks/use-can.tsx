@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react"
 import { checkPermission } from "@/actions/permissions"
+import { ResourceMembersType } from "@/prisma/client";
 
-type CheckInput = { slug: string; referenceTable?: string; referenceId?: string } | string
+type CheckInput = { slug: string; referenceTable?: ResourceMembersType; referenceId?: string } | string
 
 export function useCan(input: CheckInput) {
   const [can, setCan] = useState<boolean | null>(null)

@@ -4,7 +4,7 @@ import prisma from "@/lib/config/db"
 import PermissionsService from "@/lib/services/permissions"
 import { getAuthSession } from "@/lib/api-utils"
 import { fileService } from "@/lib/services/file"
-import { LegalInstrumentStatus, ProjectStatus } from "@/prisma/client"
+import { LegalInstrumentStatus, ProjectStatus } from "@prisma/client"
 
 export async function getLegalInstruments() {
   const session = await getAuthSession()

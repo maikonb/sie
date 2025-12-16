@@ -18,19 +18,19 @@ export async function seedSystemDefaults(prisma: PrismaClient) {
 
   // Upsert the default system defaults
   for (const defaultItem of defaults) {
-    await prisma.systemDefaults.upsert({
+    const existing = await prisma.systemDefaults.findUnique({
       where: { slug: defaultItem.slug },
-      create: {
-        slug: defaultItem.slug as string,
-        referenceTable: defaultItem.referenceTable,
-        referenceId: defaultItem.referenceId || (await defaultItem.query())?.id,
-        value: defaultItem.value || null,
-      },
-      update: {
-        referenceTable: defaultItem.referenceTable,
-        referenceId: defaultItem.referenceId || (await defaultItem.query())?.id,
-        value: defaultItem.value || null,
-      },
     })
+
+    if (!existing) {
+      await prisma.systemDefaults.create({
+        data: {
+          slug: defaultItem.slug as string,
+          referenceTable: defaultItem.referenceTable,
+          referenceId: defaultItem.referenceId || (await defaultItem.query())?.id,
+          value: defaultItem.value || null,
+        },
+      })
+    }
   }
 }
