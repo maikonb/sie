@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -13,17 +13,21 @@ import { useSession } from "next-auth/react"
 import { ImageCropper } from "@/components/ui/image-cropper"
 import { generatePresignedUrl } from "@/actions/storage"
 import { updateUser } from "@/actions/user"
+import { PROFILE_COLORS } from "@/lib/constrants/profile-colors"
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuGroup } from "@/components/ui/dropdown-menu"
 
 const profileFormSchema = z.object({
   name: z.string().min(2, {
     message: "Nome deve ter pelo menos 2 caracteres.",
   }),
   image: z.any().optional(),
+  color: z.string().min(1, { message: "Escolha uma cor." }),
 })
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>
 
 import { useRouter } from "next/navigation"
+import { cn } from "@/lib/utils"
 
 export function ProfileForm({ user }: { user: any }) {
   const router = useRouter()
@@ -38,6 +42,7 @@ export function ProfileForm({ user }: { user: any }) {
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
       name: user.name,
+      color: user.color || PROFILE_COLORS[0].value,
     },
   })
 
@@ -83,13 +88,15 @@ export function ProfileForm({ user }: { user: any }) {
       const result = await updateUser({
         name: data.name,
         imageKey,
+        color: data.color,
       })
 
       if (!result.success) throw new Error("Failed to update profile")
 
       await update({
         name: data.name,
-        image: result.user?.imageId ? `/api/files/${result.user.imageId}` : undefined, // Assuming imageId is returned
+        image: result.user?.imageId ? `/api/files/${result.user.imageId}` : undefined,
+        color: result.user?.color,
       })
 
       notify.success("Perfil atualizado com sucesso!")
@@ -104,33 +111,97 @@ export function ProfileForm({ user }: { user: any }) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="flex items-center gap-4">
-          <UserAvatar size="xl" preview={preview} />
-          <div className="flex flex-col gap-2">
-            <FormLabel htmlFor="picture">Foto de Perfil</FormLabel>
-            <Input id="picture" type="file" accept="image/*" onChange={handleImageChange} />
+        <div className="flex items-start gap-6">
+          <div className="flex-shrink-0 flex flex-col items-center">
+            <UserAvatar size="3xl" preview={preview}/>
+            <div className="mt-3">
+              <input ref={useRef<HTMLInputElement | null>(null)} id="picture" type="file" accept="image/*" onChange={handleImageChange} className="sr-only" />
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  const el = document.getElementById("picture") as HTMLInputElement | null
+                  el?.click()
+                }}
+              >
+                Alterar Foto
+              </Button>
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">PNG/JPEG recomendado</p>
+          </div>
+
+          <div className="flex-1">
+            <div className="grid grid-cols-1 gap-4">
+              <div className="flex items-start gap-4">
+                <div className="flex-1">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nome</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Seu nome" {...field} />
+                        </FormControl>
+                        <FormDescription>Este é o nome que será exibido publicamente.</FormDescription>
+                        <FormMessage className="mt-1 text-xs" />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="w-40 relative">
+                  <FormField
+                    control={form.control}
+                    name="color"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Cor do Perfil</FormLabel>
+                        <div className="mt-2 relative">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                type="button"
+                                className={`flex items-center justify-center h-10 w-10 rounded-full ring-2 ring-offset-2 ${field.value} ring-transparent`}
+                                aria-label="Selecionar cor"
+                              />
+                            </DropdownMenuTrigger>
+
+                            <DropdownMenuContent side="right" align="end" className="w-44 p-3 pr-6 bg-popover rounded-lg shadow-lg">
+                              <DropdownMenuGroup className="grid grid-cols-6 gap-2">
+                                {PROFILE_COLORS.map((c) => (
+                                  <button
+                                    key={c.value}
+                                    type="button"
+                                    onClick={() => {
+                                      field.onChange(c.value)
+                                    }}
+                                    className={cn("h-8 w-8 ring-1 rounded-full cursor-pointer", c.value, field.value === c.value ? 'ring-primary' : 'ring-gray-300')}
+                                  />
+                                ))}
+                              </DropdownMenuGroup>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+
+                        <FormMessage className="mt-1 text-xs" />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
         <ImageCropper open={cropperOpen} onOpenChange={setCropperOpen} imageSrc={imageToCrop} onCropComplete={handleCropComplete} aspectRatio={1} />
 
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem className="relative">
-              <FormLabel>Nome</FormLabel>
-              <FormControl>
-                <Input placeholder="Seu nome" {...field} />
-              </FormControl>
-              <FormDescription>Este é o nome que será exibido publicamente.</FormDescription>
-              <FormMessage className="absolute -bottom-5 left-0 text-xs" />
-            </FormItem>
-          )}
-        />
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? "Salvando..." : "Salvar Alterações"}
-        </Button>
+        <div>
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? "Salvando..." : "Salvar Alterações"}
+          </Button>
+        </div>
       </form>
     </Form>
   )

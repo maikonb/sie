@@ -6,6 +6,7 @@ import { prisma } from "@/lib/config/db"
 import { compare } from "bcryptjs"
 import { APP_ERRORS } from "@/lib/errors"
 import { getSystemDefaultId } from "../services/defaults"
+import { PROFILE_COLORS } from "@/lib/constrants/profile-colors"
 
 const ALLOWED_DOMAINS =
   process.env.ALLOWED_EMAIL_DOMAINS?.toLowerCase()
@@ -94,9 +95,9 @@ export const authOptions: NextAuthOptions = {
           include: { imageFile: true },
         })
         if (!user) {
-          // Generate random color
-          const colors = ["bg-red-500", "bg-orange-500", "bg-amber-500", "bg-yellow-500", "bg-lime-500", "bg-green-500", "bg-emerald-500", "bg-teal-500", "bg-cyan-500", "bg-sky-500", "bg-blue-500", "bg-indigo-500", "bg-violet-500", "bg-purple-500", "bg-fuchsia-500", "bg-pink-500", "bg-rose-500"]
-          const randomColor = colors[Math.floor(Math.random() * colors.length)]
+          // Generate random color from central PROFILE_COLORS
+          const colorValues = PROFILE_COLORS.map((c) => c.value)
+          const randomColor = colorValues[Math.floor(Math.random() * colorValues.length)]
 
           // Cria o usuário com a role default
           user = await prisma.user.create({

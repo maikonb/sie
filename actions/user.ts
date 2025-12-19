@@ -43,7 +43,7 @@ export async function updateFirstAccess(data: { username: string; imageKey?: str
   }
 }
 
-export async function updateUser(data: { name: string; imageKey?: string; imageId?: string }) {
+export async function updateUser(data: { name: string; imageKey?: string; imageId?: string; color?: string }) {
   const session = await getAuthSession()
   if (!session?.user?.id) throw new Error("Unauthorized")
 
@@ -68,6 +68,7 @@ export async function updateUser(data: { name: string; imageKey?: string; imageI
     data: {
       name: data.name,
       imageId: fileRecord?.id,
+      color: data.color,
     },
   })
 

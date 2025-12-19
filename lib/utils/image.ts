@@ -64,10 +64,27 @@ export async function getCroppedImg(imageSrc: string, pixelCrop: { x: number; y:
   // paste generated rotate image at the top left corner
   ctx.putImageData(data, 0, 0)
 
-  // As Blob
+  // detect if the cropped area contains any transparent pixels
+  let hasAlpha = false
+  for (let i = 3; i < data.data.length; i += 4) {
+    if (data.data[i] < 255) {
+      hasAlpha = true
+      break
+    }
+  }
+
+  // As Blob — use PNG when transparency present to preserve alpha, otherwise JPEG
+  const mime = hasAlpha ? "image/png" : "image/jpeg"
+
   return new Promise((resolve, reject) => {
-    canvas.toBlob((file) => {
-      resolve(file)
-    }, "image/jpeg")
+    // quality parameter applies only to image/jpeg and image/webp; ignored for png
+    const quality = hasAlpha ? undefined : 0.92
+    canvas.toBlob(
+      (file) => {
+        resolve(file)
+      },
+      mime,
+      quality
+    )
   })
 }

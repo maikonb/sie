@@ -28,7 +28,6 @@ export default function Page({}) {
           <PageHeaderDescription>Gerencie suas informações pessoais.</PageHeaderDescription>
         </div>
       </PageHeader>
-      <Separator />
       <PageContent>
         <ProfileForm user={user} />
         <Separator />
