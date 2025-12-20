@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Plus, FileText, Scale } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
@@ -54,6 +54,7 @@ export default function ProjectsPage() {
           <PageHeaderHeading>Projetos</PageHeaderHeading>
           <PageHeaderDescription>Gerencie seus projetos de pesquisa e inovação.</PageHeaderDescription>
         </div>
+        {loadingCreate && <div className="w-32 h-9 mr-2"/>}
         {canCreate && (
           <Button asChild>
             <Link href="/projetos/novo">
@@ -67,7 +68,7 @@ export default function ProjectsPage() {
         {loading ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {[1, 2, 3].map((i) => (
-              <Card key={i} className="h-[200px]">
+              <Card key={i} className="h-[203px]">
                 <CardHeader>
                   <Skeleton className="h-6 w-3/4" />
                   <Skeleton className="h-4 w-1/2" />
