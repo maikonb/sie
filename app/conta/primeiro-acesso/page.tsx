@@ -117,7 +117,7 @@ export default function FormRhfInput() {
                 <div className="relative group cursor-pointer">
                   <div className="relative">
                     <UserAvatar size="xl" preview={preview} className="h-24 w-24 border-2 border-border" />
-                    <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                    <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
                       <Camera className="h-6 w-6 text-white" />
                     </div>
                   </div>

@@ -2,6 +2,9 @@
 
 import { useSession } from "next-auth/react"
 import { Separator } from "@/components/ui/separator"
+import { Button } from "@/components/ui/button"
+import { Copy } from "lucide-react"
+import { notify } from "@/lib/notifications"
 import { ProfileForm } from "@/components/forms/account/profile-form"
 import { EmailForm } from "@/components/forms/account/email-form"
 import { PageContent, PageHeader, PageHeaderDescription, PageHeaderHeading, PageShell } from "@/components/shell"
@@ -15,6 +18,7 @@ export default function Page({}) {
     email: session?.user?.email || "",
     avatar: session?.user?.image || "",
     color: session?.user?.color || "",
+    id: session?.user?.id || "",
   }
 
   if (status === 'loading') {
@@ -25,6 +29,7 @@ export default function Page({}) {
             <PageHeaderHeading>Perfil</PageHeaderHeading>
             <PageHeaderDescription>Gerencie suas informações pessoais.</PageHeaderDescription>
           </div>
+          <Skeleton className="w-52 h-3" />
         </PageHeader>
         <PageContent>
           {/* ProfileForm skeleton */}
@@ -32,7 +37,7 @@ export default function Page({}) {
             <div className="flex items-start gap-6">
               <div className="shrink-0">
                 <div className="relative">
-                  <Skeleton className="h-40 w-40 rounded-2xl" />
+                  <Skeleton className="h-40 w-40 rounded-4xl" />
                 </div>
               </div>
 
@@ -70,10 +75,31 @@ export default function Page({}) {
 
   return (
     <PageShell>
-      <PageHeader>
+      <PageHeader className="items-center justify-between">
         <div className="space-y-1">
           <PageHeaderHeading>Perfil</PageHeaderHeading>
           <PageHeaderDescription>Gerencie suas informações pessoais.</PageHeaderDescription>
+        </div>
+        <div className="flex items-center group gap-2 opacity-80">
+          <Button
+            type="button"
+            size="icon-sm"
+            variant="outline"
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(user.id)
+                notify.success("ID copiado")
+              } catch (err) {
+                notify.error("Falha ao copiar ID")
+              }
+            }}
+            className="p-1 opacity-0 group-hover:opacity-50 cursor-pointer transition-opacity"
+          >
+            <Copy className="h-4 w-4" />
+          </Button>
+          <p className="text-xs text-muted-foreground opacity-50 transition-all duration-300">
+            ID: <span className="font-mono">{user.id}</span>
+          </p>
         </div>
       </PageHeader>
       <PageContent>
