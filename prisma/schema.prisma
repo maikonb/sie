@@ -55,18 +55,6 @@ enum ResourceMembersType {
   Project
 }
 
-model Proponent {
-  id          String    @id @default(uuid())
-  institution String?
-  projects    Project[]
-
-  userId String? @unique
-  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
 enum ProjectStatus {
   DRAFT
   IN_ANALYSIS
@@ -84,8 +72,8 @@ model Project {
 
   status ProjectStatus @default(DRAFT)
 
-  proponentId String
-  proponent   Proponent @relation(fields: [proponentId], references: [id], onDelete: Restrict)
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
 
   workPlan WorkPlan?
 
@@ -94,18 +82,16 @@ model Project {
 
   legalInstruments ProjectLegalInstrument[]
 
-  @@index([proponentId])
+  @@index([userId])
 }
 
 model WorkPlan {
   id String @id @default(uuid())
 
-  // 1–1 with Project
   projectId String  @unique
   project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
-  // Typical plan fields
-  object            String? @db.Text // title/short description of the object
+  object            String? @db.Text
   diagnosis         String? @db.Text
   planScope         String? @db.Text
   planJustification String? @db.Text
@@ -175,8 +161,8 @@ model Participant {
 
   authorityName String?
   authorityRole String?
-  authorityDoc  String? // CPF/RG
-  contact       String? // e-mail/phone
+  authorityDoc  String?
+  contact       String?
 
   responsibilities Responsibility[]
 
@@ -188,7 +174,6 @@ model Responsibility {
   workPlanId String
   workPlan   WorkPlan @relation(fields: [workPlanId], references: [id], onDelete: Cascade)
 
-  // Responsibility can be associated with a specific participant (or be general to the plan)
   participantId String?
   participant   Participant? @relation(fields: [participantId], references: [id])
 
@@ -206,9 +191,10 @@ model User {
   imageId       String?   @unique
   imageFile     File?     @relation(fields: [imageId], references: [id])
   color         String?
+  institution   String?
   firstAccess   Boolean   @default(true)
 
-  proponent Proponent?
+  projects Project[]
 
   accounts  Account[]
   userRoles UserRole[]
@@ -296,11 +282,11 @@ enum LegalInstrumentStatus {
 }
 
 model LegalInstrumentInstance {
-  id                             String              @id @default(uuid())
+  id                             String                @id @default(uuid())
   fieldsJson                     Json
   type                           LegalInstrumentType
   answers                        Json?
-  project_classification_answers Json?               @db.JsonB
+  project_classification_answers Json?                 @db.JsonB
   status                         LegalInstrumentStatus @default(DRAFT)
 
   fileId String

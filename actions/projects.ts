@@ -10,16 +10,12 @@ import PermissionsService from "@/lib/services/permissions"
 
 const projectWithRelations = Prisma.validator<Prisma.ProjectDefaultArgs>()({
   include: {
-    proponent: {
-      include: {
-        user: {
-          select: {
-            name: true,
-            email: true,
-            color: true,
-            imageFile: true,
-          },
-        },
+    user: {
+      select: {
+        name: true,
+        email: true,
+        color: true,
+        imageFile: true,
       },
     },
     legalInstruments: {
@@ -48,16 +44,12 @@ export async function getProjectBySlug(slug: string) {
   const project: getProjectBySlugResponse = await prisma.project.findUnique({
     where: { slug: slug },
     include: {
-      proponent: {
-        include: {
-          user: {
-            select: {
-              name: true,
-              email: true,
-              color: true,
-              imageFile: true,
-            },
-          },
+      user: {
+        select: {
+          name: true,
+          email: true,
+          color: true,
+          imageFile: true,
         },
       },
       legalInstruments: {
@@ -78,9 +70,7 @@ export async function getProjectBySlug(slug: string) {
     return null
   }
 
-  const proponent = await prisma.proponent.findUnique({ where: { userId: session.user.id }, select: { id: true } })
-
-  if (proponent && project.proponentId === proponent.id) {
+  if (project.userId == session.user.id) {
     return project
   }
 
@@ -118,9 +108,6 @@ export async function createProject(formData: FormData) {
     throw new Error(APP_ERRORS.GENERIC_ERROR.code)
   }
 
-  const proponent = await prisma.proponent.findUnique({ where: { userId: session.user.id }, select: { id: true } })
-  if (!proponent) throw new Error("Proponent not found")
-
   const slug = await generateUniqueSlug(titulo)
 
   return prisma.project.create({
@@ -130,7 +117,7 @@ export async function createProject(formData: FormData) {
       objectives: objetivos,
       justification: justificativa,
       scope: abrangencia,
-      proponent: { connect: { id: proponent.id } },
+      userId: session.user.id,
     },
   })
 }
@@ -202,14 +189,8 @@ export async function getAllProjects() {
     return projects
   }
 
-  const proponent = await prisma.proponent.findFirst({
-    where: { user: { id: session.user.id } },
-  })
-
-  if (!proponent) return []
-
   const projects = await prisma.project.findMany({
-    where: { proponentId: proponent.id },
+    where: { userId: session.user.id },
     include: {
       workPlan: { select: { id: true } },
       legalInstruments: {
@@ -269,13 +250,10 @@ export async function updateProject(slug: string, formData: FormData) {
 
   const project = await prisma.project.findUnique({
     where: { slug },
-    include: { proponent: true },
   })
 
   if (!project) throw new Error("Project not found")
-
-  const proponent = await prisma.proponent.findUnique({ where: { userId: session.user.id }, select: { id: true } })
-  if (!proponent || project.proponentId !== proponent.id) {
+  if (project.userId !== session.user.id) {
     throw new Error("Unauthorized access to project")
   }
 

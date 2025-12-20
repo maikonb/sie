@@ -127,14 +127,6 @@ export const authOptions: NextAuthOptions = {
           }
         }
 
-        // garante  vinculado (1-1 por userId)
-        const exists = await prisma.proponent.findUnique({ where: { userId: user.id } })
-        if (!exists) {
-          await prisma.proponent.create({
-            data: { userId: user.id },
-          })
-        }
-
         let imageUrl: string | null | undefined = null
         if (user.imageFile) {
           imageUrl = user.imageFile.url
@@ -160,16 +152,7 @@ export const authOptions: NextAuthOptions = {
 
       if (!email) return false
 
-      // Restringe a @ufr.edu.br
       if (!isUfr(email)) return false
-
-      await prisma.proponent.upsert({
-        where: { userId: user.id },
-        update: {},
-        create: {
-          userId: user.id,
-        },
-      })
 
       return true
     },

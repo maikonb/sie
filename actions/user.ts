@@ -29,13 +29,6 @@ export async function updateFirstAccess(data: { username: string; imageKey?: str
       data: updateData,
     })
 
-    // Also update or create Proponent record
-    await prisma.proponent.upsert({
-      where: { userId: session.user.id },
-      create: { userId: session.user.id },
-      update: {},
-    })
-
     return { success: true }
   } catch (error) {
     console.error("Error updating user first access:", error)
