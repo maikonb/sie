@@ -56,6 +56,7 @@ export function ProfileForm({ user }: { user: any }) {
         setImageToCrop(reader.result as string)
         setCropperOpen(true)
       }
+      form.setValue("image", file, { shouldDirty: true })
       reader.readAsDataURL(file)
       e.target.value = ""
     }
@@ -65,6 +66,7 @@ export function ProfileForm({ user }: { user: any }) {
     setCroppedFile(croppedBlob)
     const croppedUrl = URL.createObjectURL(croppedBlob)
     setPreview(croppedUrl)
+    form.setValue("image", croppedBlob, { shouldDirty: true })
   }
 
   const { formState } = form
@@ -77,29 +79,10 @@ export function ProfileForm({ user }: { user: any }) {
       return ''
     }
 
-    function onDocumentClick(e: MouseEvent) {
-      if (!isDirty) return
-      const target = e.target as HTMLElement | null
-      if (!target) return
-      const anchor = target.closest("a") as HTMLAnchorElement | null
-      if (!anchor) return
-
-      if (anchor.target === "_blank") return
-      if (anchor.dataset && anchor.dataset.bypassUnsaved === "true") return
-
-      const confirmLeave = confirm("Você tem alterações não salvas. Deseja realmente sair desta página e perder as alterações?")
-      if (!confirmLeave) {
-        e.preventDefault()
-        e.stopPropagation()
-      }
-    }
-
     window.addEventListener("beforeunload", onBeforeUnload)
-    document.addEventListener("click", onDocumentClick, true)
 
     return () => {
       window.removeEventListener("beforeunload", onBeforeUnload)
-      document.removeEventListener("click", onDocumentClick, true)
     }
   }, [isDirty])
 
