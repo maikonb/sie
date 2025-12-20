@@ -11,10 +11,12 @@ export async function getWorkPlan(projectId: string) {
 
     if (!workPlan) return null
 
-    // Parse specificObjectives if it exists and is an array, otherwise return empty array
+    // Parse specificObjectives robustly into string[]
     let specificObjectives: string[] = []
     if (workPlan.specificObjectives && Array.isArray(workPlan.specificObjectives)) {
-      specificObjectives = workPlan.specificObjectives as string[]
+      specificObjectives = (workPlan.specificObjectives as any[])
+        .map((item) => (typeof item === "string" ? item : item?.value))
+        .filter((v): v is string => typeof v === "string" && v.length > 0)
     }
 
     return {

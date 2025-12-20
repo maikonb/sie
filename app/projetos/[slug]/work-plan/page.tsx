@@ -43,7 +43,7 @@ export default function Page() {
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
-    name: "specificObjectives",
+    name: "specificObjectives" as const,
   })
 
   async function onSubmit(data: WorkPlanFormData) {
