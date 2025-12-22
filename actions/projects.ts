@@ -267,3 +267,40 @@ export async function updateProject(slug: string, formData: FormData) {
     },
   })
 }
+
+export type ProjectViewerContext = {
+  mode: "owner" | "resource" | "approver" | "other"
+  allowActions: boolean
+}
+
+export async function getProjectViewerContext(slug: string): Promise<ProjectViewerContext> {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized")
+  }
+
+  const project = await prisma.project.findUnique({ where: { slug }, select: { id: true, userId: true } })
+  if (!project) {
+    throw new Error("Project not found")
+  }
+
+  const isOwner = project.userId === session.user.id
+
+  const isResourceMember = await prisma.resourceMembers.findFirst({
+    where: {
+      userId: session.user.id,
+      referenceTable: ResourceMembersType.Project,
+      referenceId: project.id,
+    },
+    select: { id: true },
+  })
+
+  const canApprove = await PermissionsService.can(session.user.id, { slug: "projects.approve" })
+
+  const mode: ProjectViewerContext["mode"] = isOwner ? "owner" : isResourceMember ? "resource" : canApprove ? "approver" : "other"
+
+  return {
+    mode,
+    allowActions: isOwner || !!isResourceMember,
+  }
+}

@@ -2,12 +2,13 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { getProjectBySlug, getProjectBySlugResponse } from "@/actions/projects"
+import { getProjectBySlug, getProjectBySlugResponse, getProjectViewerContext, type ProjectViewerContext } from "@/actions/projects"
 
 interface ProjectContextType {
   project: getProjectBySlugResponse
   loading: boolean
   dependences: Record<string, any>
+  view: ProjectViewerContext | null
   refetch: () => Promise<void>
 }
 
@@ -19,17 +20,19 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   const [project, setProject] = useState<getProjectBySlugResponse>(null)
   const [loading, setLoading] = useState(true)
   const [dependences, setDependences] = useState({})
+  const [view, setView] = useState<ProjectViewerContext | null>(null)
 
   const fetchProject = async () => {
     try {
       setLoading(true)
-      const data = await getProjectBySlug(params.slug)
+      const [data, viewer] = await Promise.all([getProjectBySlug(params.slug), getProjectViewerContext(params.slug)])
       if (!data) {
         router.push("/404")
         return
       }
 
       setProject(data)
+      setView(viewer)
       setDependences({
         "work-plan": data?.workPlan || null,
         "legal-instrument": data?.legalInstruments || null,
@@ -48,7 +51,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     }
   }, [params.slug, router])
 
-  return <ProjectContext.Provider value={{ project, dependences, loading, refetch: fetchProject }}>{children}</ProjectContext.Provider>
+  return <ProjectContext.Provider value={{ project, dependences, loading, view, refetch: fetchProject }}>{children}</ProjectContext.Provider>
 }
 
 export function useProject() {

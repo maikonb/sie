@@ -15,9 +15,10 @@ import { Badge } from "@/components/ui/badge"
 import { PageContent, PageHeader, PageHeaderHeading, PageShell } from "@/components/shell"
 import { ProjectEditSheet } from "@/components/projects/project-edit-sheet"
 import { DependencyCard } from "@/components/projects/dependency-card"
+import { UserAvatar } from "@/components/user-avatar"
 
 export default function ProjectDetailsPage() {
-  const { project, dependences, loading } = useProject()
+  const { project, dependences, loading, view } = useProject()
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false)
 
   if (loading) {
@@ -105,12 +106,23 @@ export default function ProjectDetailsPage() {
             <Badge variant="outline" className="font-normal">
               Em Andamento
             </Badge>
+            {view?.mode !== "owner" && project.user && (
+              <>
+                <span className="hidden md:inline">•</span>
+                <span className="flex items-center gap-2">
+                  <UserAvatar size="sm" preview={{ name: project.user.name, image: project.user.imageFile?.url, color: project.user.color }} />
+                  <span>{project.user.name}</span>
+                </span>
+              </>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={() => setIsEditSheetOpen(true)}>
+          {view?.allowActions && (
+            <Button onClick={() => setIsEditSheetOpen(true)}>
             <Edit className="mr-2 h-4 w-4" /> Editar Detalhes
-          </Button>
+            </Button>
+          )}
         </div>
       </PageHeader>
 
@@ -159,7 +171,7 @@ export default function ProjectDetailsPage() {
                     Pendências do Projeto
                   </div>
                   {missingDependencies.map((dep) => (
-                    <DependencyCard key={dep.id} title={dep.label} description={dep.description} icon={dep.icon} actionLabel={dep.action} actionLink={dep.link} variant="warning" />
+                    <DependencyCard key={dep.id} title={dep.label} description={dep.description} icon={dep.icon} actionLabel={dep.action} actionLink={dep.link} variant="warning" readOnly={!view?.allowActions} />
                   ))}
                 </div>
               )}
@@ -175,11 +187,13 @@ export default function ProjectDetailsPage() {
                       <CardTitle>Plano de Trabalho</CardTitle>
                       <CardDescription>Criado em {format(new Date(workPlan.createdAt), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</CardDescription>
                     </div>
-                    <Button variant="outline" asChild>
-                      <Link href={`/projetos/${project.slug}/work-plan`}>
-                        <Edit className="mr-2 h-4 w-4" /> Gerenciar Plano
-                      </Link>
-                    </Button>
+                    {view?.allowActions && (
+                      <Button variant="outline" asChild>
+                        <Link href={`/projetos/${project.slug}/work-plan`}>
+                          <Edit className="mr-2 h-4 w-4" /> Gerenciar Plano
+                        </Link>
+                      </Button>
+                    )}
                   </CardHeader>
                   <CardContent className="pt-6">
                     <div className="grid gap-6 md:grid-cols-2">
@@ -237,9 +251,11 @@ export default function ProjectDetailsPage() {
                     <CardContent>
                       <div className="flex flex-col items-center justify-center py-6 text-center space-y-2">
                         <p className="text-sm text-muted-foreground">Em desenvolvimento</p>
-                        <Button variant="link" size="sm" asChild>
-                          <Link href={`/projetos/${project.slug}/work-plan`}>Ver Equipe</Link>
-                        </Button>
+                        {view?.allowActions && (
+                          <Button variant="link" size="sm" asChild>
+                            <Link href={`/projetos/${project.slug}/work-plan`}>Ver Equipe</Link>
+                          </Button>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -251,9 +267,11 @@ export default function ProjectDetailsPage() {
                     <CardContent>
                       <div className="flex flex-col items-center justify-center py-6 text-center space-y-2">
                         <p className="text-sm text-muted-foreground">Em desenvolvimento</p>
-                        <Button variant="link" size="sm" asChild>
-                          <Link href={`/projetos/${project.slug}/work-plan`}>Ver Cronograma</Link>
-                        </Button>
+                        {view?.allowActions && (
+                          <Button variant="link" size="sm" asChild>
+                            <Link href={`/projetos/${project.slug}/work-plan`}>Ver Cronograma</Link>
+                          </Button>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -266,11 +284,13 @@ export default function ProjectDetailsPage() {
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Nenhum plano de trabalho</h3>
                 <p className="text-muted-foreground max-w-sm text-center mb-6">Crie um plano de trabalho para definir os objetivos, cronograma e equipe do projeto.</p>
-                <Button asChild>
-                  <Link href={`/projetos/${project.slug}/work-plan`}>
-                    <Plus className="mr-2 h-4 w-4" /> Criar Plano de Trabalho
-                  </Link>
-                </Button>
+                {view?.allowActions && (
+                  <Button asChild>
+                    <Link href={`/projetos/${project.slug}/work-plan`}>
+                      <Plus className="mr-2 h-4 w-4" /> Criar Plano de Trabalho
+                    </Link>
+                  </Button>
+                )}
               </div>
             )}
           </TabsContent>
@@ -360,24 +380,26 @@ export default function ProjectDetailsPage() {
                       </Card>
 
                       <div className="space-y-4">
-                        <Card>
-                          <CardHeader>
-                            <CardTitle className="text-base">Ações</CardTitle>
-                          </CardHeader>
-                          <CardContent className="space-y-3">
-                            <Button className="w-full" variant={status === "DRAFT" ? "default" : "secondary"} asChild>
-                              <Link href={`/projetos/${project.slug}/legal-instrument/fill`}>{status === "DRAFT" ? (isFilled ? "Editar Respostas" : "Preencher Formulário") : "Visualizar Respostas"}</Link>
-                            </Button>
-
-                            {hasAnswerFile && (
-                              <Button className="w-full" variant="outline" asChild>
-                                <Link href={instance.answerFile.url} target="_blank">
-                                  <Download className="mr-2 h-4 w-4" /> Download PDF
-                                </Link>
+                        {view?.allowActions && (
+                          <Card>
+                            <CardHeader>
+                              <CardTitle className="text-base">Ações</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                              <Button className="w-full" variant={status === "DRAFT" ? "default" : "secondary"} asChild>
+                                <Link href={`/projetos/${project.slug}/legal-instrument/fill`}>{status === "DRAFT" ? (isFilled ? "Editar Respostas" : "Preencher Formulário") : "Visualizar Respostas"}</Link>
                               </Button>
-                            )}
-                          </CardContent>
-                        </Card>
+
+                              {hasAnswerFile && (
+                                <Button className="w-full" variant="outline" asChild>
+                                  <Link href={instance.answerFile.url} target="_blank">
+                                    <Download className="mr-2 h-4 w-4" /> Download PDF
+                                  </Link>
+                                </Button>
+                              )}
+                            </CardContent>
+                          </Card>
+                        )}
 
                         <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border border-blue-100 dark:border-blue-900">
                           <h4 className="font-medium text-blue-800 dark:text-blue-300 mb-2 text-sm">Informação Importante</h4>
@@ -395,11 +417,13 @@ export default function ProjectDetailsPage() {
                 </div>
                 <h3 className="text-lg font-semibold mb-2">Nenhum instrumento jurídico</h3>
                 <p className="text-muted-foreground max-w-sm text-center mb-6">Selecione um instrumento jurídico adequado para o seu projeto.</p>
-                <Button asChild>
-                  <Link href={`/projetos/${project.slug}/legal-instrument`}>
-                    <Plus className="mr-2 h-4 w-4" /> Selecionar Instrumento
-                  </Link>
-                </Button>
+                {view?.allowActions && (
+                  <Button asChild>
+                    <Link href={`/projetos/${project.slug}/legal-instrument`}>
+                      <Plus className="mr-2 h-4 w-4" /> Selecionar Instrumento
+                    </Link>
+                  </Button>
+                )}
               </div>
             )}
           </TabsContent>
