@@ -1,68 +1,26 @@
 "use client"
 
-import { ChevronRight, type LucideIcon } from "lucide-react"
+import { ChevronRight } from "lucide-react"
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuAction, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem } from "@/components/providers/sidebar"
 import PermissionGuard from "@/components/permissions/permission-guard"
 import useManyCan from "@/hooks/use-many-can"
 import { Skeleton } from "@/components/ui/skeleton"
+import { extractPermissionSlugs, extractTransformPermissions, processNavItems, type NavItem } from "@/lib/services/nav-items"
 
 export function NavMain({
   items,
 }: {
-  items: {
-    title: string
-    url: string
-    icon: LucideIcon
-    isActive?: boolean
-    permissionSlug?: string
-    items?: {
-      title: string
-      url: string
-      permissionSlug?: string
-    }[]
-  }[]
+  items: NavItem[]
 }) {
-  const transformPermissions = items.flatMap((it) => [
-    ...(it as any).transforms?.map((t: any) => t.permission) || [],
-    ...((it.items || []) as any[]).flatMap((s) => s.transforms?.map((t: any) => t.permission) || []),
-  ])
-
-  const permissionSlugs = items.flatMap((it) => [(it as any).permissionSlug].filter(Boolean)).concat(
-    items.flatMap((it) => (it.items || []).flatMap((s: any) => [s.permissionSlug].filter(Boolean)))
-  )
-
+  const transformPermissions = extractTransformPermissions(items)
+  const permissionSlugs = extractPermissionSlugs(items)
   const allPermissions = Array.from(new Set([...transformPermissions, ...permissionSlugs]))
 
   const { canMap, loading } = useManyCan(allPermissions)
 
-  const transformedItems = items.map((it) => {
-    let out: any = { ...it }
-    if ((it as any).transforms) {
-      for (const t of (it as any).transforms) {
-        const has = !!canMap[t.permission]
-        const apply = t.negate ? !has : has
-        if (apply) out = { ...out, ...t.changes }
-      }
-    }
-
-    if (it.items) {
-      out.items = it.items.map((s: any) => {
-        let so = { ...s }
-        if (s.transforms) {
-          for (const t of s.transforms) {
-            const has = !!canMap[t.permission]
-            const apply = t.negate ? !has : has
-            if (apply) so = { ...so, ...t.changes }
-          }
-        }
-        return so
-      })
-    }
-
-    return out
-  })
+  const visibleItems = processNavItems(items, canMap)
 
   return (
     <SidebarGroup>
@@ -82,29 +40,41 @@ export function NavMain({
         </SidebarMenu>
       ) : (
         <SidebarMenu>
-          {transformedItems.map((item) => (
-            <Collapsible key={item.title} asChild defaultOpen={item.isActive}>
+          {visibleItems.map(({ item }) => (
+            <Collapsible key={item.title} asChild defaultOpen={(item as any).isActive}>
               <SidebarMenuItem>
-                <PermissionGuard permission={item.permissionSlug}>
-                  <SidebarMenuButton asChild tooltip={item.title}>
-                    <a href={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </a>
-                  </SidebarMenuButton>
-                  {item.items?.length ? (
+                <PermissionGuard permission={item.permissionSlug} canMap={canMap}>
+                  {item.url ? (
+                    <SidebarMenuButton asChild tooltip={item.title}>
+                      <a href={item.url}>
+                        {item.icon && <item.icon />}
+                        <span>{item.title}</span>
+                      </a>
+                    </SidebarMenuButton>
+                  ) : (
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton tooltip={item.title}>
+                        {item.icon && <item.icon />}
+                        <span>{item.title}</span>
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                  )}
+
+                  {(item as any).items?.length ? (
                     <>
-                      <CollapsibleTrigger asChild>
-                        <SidebarMenuAction className="data-[state=open]:rotate-90">
-                          <ChevronRight />
-                          <span className="sr-only">Toggle</span>
-                        </SidebarMenuAction>
-                      </CollapsibleTrigger>
+                      {item.url && (
+                        <CollapsibleTrigger asChild>
+                          <SidebarMenuAction className="data-[state=open]:rotate-90">
+                            <ChevronRight />
+                            <span className="sr-only">Toggle</span>
+                          </SidebarMenuAction>
+                        </CollapsibleTrigger>
+                      )}
                       <CollapsibleContent>
                         <SidebarMenuSub>
-                          {item.items?.map((subItem: any) => (
+                          {(item as any).items?.map((subItem: any) => (
                             <SidebarMenuSubItem key={subItem.title}>
-                              <PermissionGuard permission={subItem.permissionSlug}>
+                              <PermissionGuard permission={subItem.permissionSlug} canMap={canMap}>
                                 <SidebarMenuSubButton asChild>
                                   <a href={subItem.url}>
                                     <span>{subItem.title}</span>

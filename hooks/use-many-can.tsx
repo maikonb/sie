@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { checkPermission } from "@/actions/permissions"
+import { checkManyPermissions } from "@/actions/permissions"
 
 export type CanMap = Record<string, boolean>
 
@@ -18,21 +18,16 @@ export default function useManyCan(slugs: string[] | undefined) {
       const unique = Array.from(new Set((slugs || []).filter(Boolean))) as string[]
 
       try {
-        const pairs = await Promise.all(
-          unique.map(async (s) => {
-            try {
-              const res = await checkPermission(s)
-              return [s, !!res.can] as const
-            } catch {
-              return [s, false] as const
-            }
-          })
-        )
+        const map = await checkManyPermissions(unique)
 
         if (!isMounted) return
 
-        const map = Object.fromEntries(pairs)
         setCanMap(map)
+      } catch (error) {
+        console.error("Error checking permissions:", error)
+        if (!isMounted) return
+        // Em caso de erro, retorna todas como false
+        setCanMap(unique.reduce((acc, s) => ({ ...acc, [s]: false }), {} as CanMap))
       } finally {
         if (isMounted) setLoading(false)
       }

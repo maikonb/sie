@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { BookOpen, Bot, Frame, LifeBuoy, Map, PieChart, Send, Settings2, SquareTerminal } from "lucide-react"
+import { Bot, Frame, LifeBuoy, Send, Settings2, SquareTerminal } from "lucide-react"
 
 import { NavMain } from "@/components/navs/main"
 import { NavProjects } from "@/components/navs/projects"
@@ -24,13 +24,11 @@ const data = {
     },
     {
       title: "Configurações",
-      url: "#",
       icon: Settings2,
       items: [
         {
           title: "Instrumentos Jurídicos",
           url: "/admin/legal-instruments",
-          icon: BookOpen,
           permissionSlug: "legal_instruments.manage",
         },
       ],
@@ -38,7 +36,7 @@ const data = {
   ],
   navSecondary: [
     {
-      title: "Support",
+      title: "Suporte",
       url: "#",
       icon: LifeBuoy,
     },
@@ -48,27 +46,17 @@ const data = {
       icon: Send,
     },
   ],
-  projects: [
+  navProjects: [
     {
-      name: "Meus Projetos",
+      title: "Meus Projetos",
       url: "/projetos",
       icon: Frame,
       transforms: [
         {
           permission: "projects.view.all",
-          changes: { name: "Projetos" },
+          changes: { title: "Projetos" },
         },
       ],
-    },
-    {
-      name: "Sales & Marketing",
-      url: "#",
-      icon: PieChart,
-    },
-    {
-      name: "Travel",
-      url: "#",
-      icon: Map,
     },
   ],
 }
@@ -100,7 +88,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+        <NavProjects items={data.navProjects} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
