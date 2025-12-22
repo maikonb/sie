@@ -41,7 +41,7 @@ export default function Page() {
     },
   })
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove } = useFieldArray<WorkPlanFormData, "specificObjectives">({
     control: form.control,
     name: "specificObjectives" as const,
   })
@@ -84,7 +84,7 @@ export default function Page() {
               planScope: data.planScope || "",
               planJustification: data.planJustification || "",
               generalObjective: data.generalObjective || "",
-              specificObjectives: data.specificObjectives || [],
+              specificObjectives: data.specificObjectives.map(so => ({value: so})) || [],
               methodology: data.methodology || "",
               responsibleUnit: data.responsibleUnit || "",
               ictManager: data.ictManager || "",
@@ -314,7 +314,7 @@ export default function Page() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <FormLabel>Objetivos Específicos</FormLabel>
-                  <Button type="button" variant="outline" size="sm" onClick={() => append("")}>
+                  <Button type="button" variant="outline" size="sm" onClick={() => append({value: ''})}>
                     <Plus className="h-4 w-4 mr-2" />
                     Adicionar
                   </Button>
@@ -323,7 +323,7 @@ export default function Page() {
                   <div key={field.id} className="flex gap-2">
                     <FormField
                       control={form.control}
-                      name={`specificObjectives.${index}`}
+                      name={`specificObjectives.${index}.value`}
                       render={({ field }) => (
                         <FormItem className="flex-1">
                           <FormControl>

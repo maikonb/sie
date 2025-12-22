@@ -114,11 +114,8 @@ export default function LegalInstrumentFillClient({ instance, projectSlug }: Leg
   }
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-4xl space-y-6">
+    <div className="container mx-auto py-8 px-4 max-w-6xl space-y-6">
       <div className="flex items-center gap-4 mb-6">
-        <Button variant="ghost" size="icon" onClick={() => router.back()}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
         <div className="flex-1">
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold">Preenchimento do Instrumento Jurídico</h1>

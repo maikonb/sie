@@ -86,7 +86,7 @@ export default function ProjectDetailsPage() {
   return (
     <PageShell>
       {/* Header */}
-      <PageHeader className="flex-col items-start gap-4 md:flex-row md:items-start md:justify-between border-b pb-6">
+      <PageHeader className="flex-col items-start gap-4 md:flex-row md:items-start md:justify-between border-b">
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-muted-foreground mb-2">
             <Button variant="ghost" size="sm" asChild className="-ml-3 h-8 px-2 text-muted-foreground hover:text-foreground">
@@ -115,7 +115,7 @@ export default function ProjectDetailsPage() {
       </PageHeader>
 
       {/* Content */}
-      <PageContent className="pt-8">
+      <PageContent>
         <Tabs defaultValue="overview" className="space-y-8">
           <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent">
             <TabsTrigger value="overview" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3">

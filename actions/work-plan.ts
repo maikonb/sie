@@ -36,11 +36,11 @@ export async function upsertWorkPlan(projectId: string, data: WorkPlanFormData) 
       create: {
         projectId,
         ...data,
-        specificObjectives: data.specificObjectives as any, // Cast to any for Json compatibility
+        specificObjectives: data.specificObjectives,
       },
       update: {
         ...data,
-        specificObjectives: data.specificObjectives as any,
+        specificObjectives: data.specificObjectives,
       },
     })
     return { success: true, data: workPlan }
