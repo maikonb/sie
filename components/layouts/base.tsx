@@ -1,6 +1,7 @@
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/providers/sidebar"
+import { ProjectProvider } from "../providers/project-context"
 
 export default function BaseLayout({
   children,
@@ -14,7 +15,9 @@ export default function BaseLayout({
         <div className="flex flex-1">
           <AppSidebar />
           <SidebarInset>
-            <div className="flex flex-1 flex-col">{children}</div>
+            <ProjectProvider>
+              <div className="flex flex-1 flex-col">{children}</div>
+            </ProjectProvider>
           </SidebarInset>
         </div>
       </SidebarProvider>

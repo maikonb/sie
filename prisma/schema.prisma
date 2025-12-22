@@ -72,8 +72,15 @@ model Project {
 
   status ProjectStatus @default(DRAFT)
 
+  // Approval tracking
+  submittedAt    DateTime?
+  approvedAt     DateTime?
+  approvedBy     String?
+  approver       User?        @relation("ProjectApprover", fields: [approvedBy], references: [id])
+  rejectionReason String?     @db.Text
+
   userId String
-  user   User   @relation(fields: [userId], references: [id])
+  user   User   @relation("ProjectCreator", fields: [userId], references: [id])
 
   workPlan WorkPlan?
 
@@ -83,6 +90,9 @@ model Project {
   legalInstruments ProjectLegalInstrument[]
 
   @@index([userId])
+  @@index([approvedBy])
+  @@index([status])
+  @@index([submittedAt])
 }
 
 model WorkPlan {
@@ -194,7 +204,8 @@ model User {
   institution   String?
   firstAccess   Boolean   @default(true)
 
-  projects Project[]
+  createdProjects  Project[] @relation("ProjectCreator")
+  approvedProjects Project[] @relation("ProjectApprover")
 
   accounts  Account[]
   userRoles UserRole[]

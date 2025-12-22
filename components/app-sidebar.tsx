@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Frame, LifeBuoy, Send, Settings2, SquareTerminal } from "lucide-react"
+import { Frame, LifeBuoy, Send, Settings2, SquareTerminal, CheckCircle2 } from "lucide-react"
 
 import { NavMain } from "@/components/navs/main"
 import { NavProjects } from "@/components/navs/projects"
@@ -22,9 +22,14 @@ const data: Record<string, NavItem[]> = {
       icon: SquareTerminal,
     },
     {
-      title: "Configurações",
+      title: "Gerenciamento",
       icon: Settings2,
       items: [
+        {
+          title: "Aprovação de Projetos",
+          url: "/admin/projetos",
+          permissionSlug: "projects.approve",
+        },
         {
           title: "Instrumentos Jurídicos",
           url: "/admin/legal-instruments",
@@ -39,7 +44,7 @@ const data: Record<string, NavItem[]> = {
       transforms: [
         {
           permission: "projects.view.all",
-          changes: { title: "Projetos" },
+          changes: { title: "Projetos", icon: CheckCircle2 },
         },
       ],
     },

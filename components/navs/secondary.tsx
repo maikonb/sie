@@ -70,7 +70,7 @@ export function NavSecondary({
                   {(item as any).items?.length ? (
                     <>
                       <CollapsibleTrigger asChild>
-                        <SidebarMenuAction className="data-[state=open]:rotate-90" size="sm">
+                        <SidebarMenuAction className="data-[state=open]:rotate-90">
                           <ChevronRight />
                           <span className="sr-only">Toggle</span>
                         </SidebarMenuAction>

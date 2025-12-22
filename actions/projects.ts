@@ -304,3 +304,175 @@ export async function getProjectViewerContext(slug: string): Promise<ProjectView
     allowActions: isOwner || !!isResourceMember,
   }
 }
+
+export async function submitProjectForApproval(slug: string) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) throw new Error("Unauthorized")
+
+  const project = await prisma.project.findUnique({
+    where: { slug },
+    include: {
+      legalInstruments: {
+        include: {
+          legalInstrumentInstance: {
+            select: { status: true },
+          },
+        },
+      },
+      workPlan: true,
+    },
+  })
+
+  if (!project) throw new Error("Project not found")
+  if (project.userId !== session.user.id) {
+    throw new Error("Unauthorized - only project creator can submit for approval")
+  }
+
+  // Validate that project is in DRAFT status
+  if (project.status !== "DRAFT") {
+    throw new Error("Project has already been submitted for approval")
+  }
+
+  // Validate dependencies
+  if (!project.legalInstruments || project.legalInstruments.length === 0) {
+    throw new Error("Project must have at least one legal instrument before submission")
+  }
+
+  const hasPendingInstruments = project.legalInstruments.some((li) => {
+    const status = li.legalInstrumentInstance?.status || "DRAFT"
+    return status === "DRAFT"
+  })
+
+  if (hasPendingInstruments) {
+    throw new Error("All legal instruments must be completed before submission")
+  }
+
+  if (!project.workPlan) {
+    throw new Error("Project must have a work plan before submission")
+  }
+
+  return prisma.project.update({
+    where: { slug },
+    data: {
+      status: "IN_ANALYSIS",
+      submittedAt: new Date(),
+    },
+  })
+}
+
+export async function approveProject(slug: string) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) throw new Error("Unauthorized")
+
+  // Verify approver has permission
+  await PermissionsService.authorize(session.user.id, { slug: "projects.approve" })
+
+  const project = await prisma.project.findUnique({
+    where: { slug },
+    select: { id: true, status: true },
+  })
+
+  if (!project) throw new Error("Project not found")
+
+  if (project.status !== "IN_ANALYSIS") {
+    throw new Error("Only projects in analysis can be approved")
+  }
+
+  return prisma.project.update({
+    where: { slug },
+    data: {
+      status: "APPROVED",
+      approvedAt: new Date(),
+      approvedBy: session.user.id,
+    },
+  })
+}
+
+export async function rejectProject(slug: string, reason: string) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) throw new Error("Unauthorized")
+
+  // Verify approver has permission
+  await PermissionsService.authorize(session.user.id, { slug: "projects.approve" })
+
+  if (!reason || reason.trim().length === 0) {
+    throw new Error("Rejection reason is required")
+  }
+
+  const project = await prisma.project.findUnique({
+    where: { slug },
+    select: { id: true, status: true },
+  })
+
+  if (!project) throw new Error("Project not found")
+
+  if (project.status !== "IN_ANALYSIS") {
+    throw new Error("Only projects in analysis can be rejected")
+  }
+
+  return prisma.project.update({
+    where: { slug },
+    data: {
+      status: "REJECTED",
+      rejectionReason: reason,
+    },
+  })
+}
+
+export async function getProjectsForApproval() {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) throw new Error("Unauthorized")
+
+  // Verify approver has permission
+  await PermissionsService.authorize(session.user.id, { slug: "projects.approve" })
+
+  return prisma.project.findMany({
+    where: {
+      status: "IN_ANALYSIS",
+    },
+    include: {
+      user: {
+        select: {
+          name: true,
+          email: true,
+          color: true,
+          imageFile: true,
+        },
+      },
+      legalInstruments: {
+        include: {
+          legalInstrument: true,
+          legalInstrumentInstance: {
+            select: { status: true, type: true },
+          },
+        },
+      },
+      workPlan: {
+        select: { id: true },
+      },
+    },
+    orderBy: { submittedAt: "desc" },
+  })
+}
+
+export async function getProjectApprovalStats() {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) throw new Error("Unauthorized")
+
+  // Verify approver has permission
+  await PermissionsService.authorize(session.user.id, { slug: "projects.approve" })
+
+  const [inAnalysis, approved, rejected, total] = await Promise.all([
+    prisma.project.count({ where: { status: "IN_ANALYSIS" } }),
+    prisma.project.count({ where: { status: "APPROVED" } }),
+    prisma.project.count({ where: { status: "REJECTED" } }),
+    prisma.project.count(),
+  ])
+
+  return {
+    inAnalysis,
+    approved,
+    rejected,
+    total,
+  }
+}

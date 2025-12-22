@@ -2,11 +2,12 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowLeft, Calendar, FileText, Plus, Edit, Scale, Download, Eye, CheckCircle2, AlertCircle } from "lucide-react"
+import { ArrowLeft, Calendar, FileText, Plus, Edit, Scale, Download, Eye, CheckCircle2, AlertCircle, SendHorizontal, Loader2 } from "lucide-react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { useProject } from "@/components/providers/project-context"
@@ -16,10 +17,15 @@ import { PageContent, PageHeader, PageHeaderHeading, PageShell } from "@/compone
 import { ProjectEditSheet } from "@/components/projects/project-edit-sheet"
 import { DependencyCard } from "@/components/projects/dependency-card"
 import { UserAvatar } from "@/components/user-avatar"
+import { submitProjectForApproval } from "@/actions/projects"
+import { toast } from "sonner"
 
 export default function ProjectDetailsPage() {
+  const router = useRouter()
   const { project, dependences, loading, view } = useProject()
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
 
   if (loading) {
     return (
@@ -43,6 +49,29 @@ export default function ProjectDetailsPage() {
 
   // Calculate dependencies
   const missingDependencies = []
+
+  const hasWorkPlan = !!workPlan
+  const hasLegalInstruments = legalInstruments.length > 0
+  const hasPendingInstruments = hasLegalInstruments && legalInstruments.some((li) => {
+    const status = li.legalInstrumentInstance?.status || "DRAFT"
+    return status === "DRAFT"
+  })
+
+  const canSubmit = view?.allowActions && hasWorkPlan && hasLegalInstruments && !hasPendingInstruments && project.status === "DRAFT"
+
+  const handleSubmit = async () => {
+    try {
+      setIsSubmitting(true)
+      await submitProjectForApproval(project.slug!)
+      toast.success("Projeto enviado para análise!")
+      router.refresh()
+    } catch (error: any) {
+      console.error(error)
+      toast.error(error?.message || "Erro ao enviar projeto")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   // 1. Work Plan Dependency
   if (!workPlan) {
@@ -103,9 +132,32 @@ export default function ProjectDetailsPage() {
               Criado em {format(new Date(project.createdAt), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
             </span>
             <span className="hidden md:inline">•</span>
-            <Badge variant="outline" className="font-normal">
-              Em Andamento
+            <Badge variant="outline" className={cn("font-normal", {
+              "bg-muted text-muted-foreground": project.status === "DRAFT",
+              "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400": project.status === "IN_ANALYSIS",
+              "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400": project.status === "APPROVED",
+              "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400": project.status === "REJECTED",
+            })}>
+              {project.status === "DRAFT" && "Em Elaboração"}
+              {project.status === "IN_ANALYSIS" && "Em Análise"}
+              {project.status === "APPROVED" && "Aprovado"}
+              {project.status === "REJECTED" && "Rejeitado"}
             </Badge>
+            {project.approvedAt && (
+              <>
+                <span className="hidden md:inline">•</span>
+                <span className="flex items-center gap-1">
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  Aprovado em {format(new Date(project.approvedAt), "dd/MM/yyyy", { locale: ptBR })}
+                </span>
+              </>
+            )}
+            {project.status === "REJECTED" && project.rejectionReason && (
+              <>
+                <span className="hidden md:inline">•</span>
+                <span className="text-red-600 dark:text-red-400">Motivo: {project.rejectionReason}</span>
+              </>
+            )}
             {view?.mode !== "owner" && project.user && (
               <>
                 <span className="hidden md:inline">•</span>
@@ -117,10 +169,28 @@ export default function ProjectDetailsPage() {
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {view?.allowActions && project.status === "DRAFT" && (
+            <Button 
+              onClick={handleSubmit} 
+              disabled={isSubmitting || !canSubmit}
+              variant="default"
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando...
+                </>
+              ) : (
+                <>
+                  <SendHorizontal className="mr-2 h-4 w-4" /> Enviar para Análise
+                </>
+              )}
+            </Button>
+          )}
           {view?.allowActions && (
             <Button onClick={() => setIsEditSheetOpen(true)}>
-            <Edit className="mr-2 h-4 w-4" /> Editar Detalhes
+              <Edit className="mr-2 h-4 w-4" /> Editar Detalhes
             </Button>
           )}
         </div>
@@ -144,7 +214,7 @@ export default function ProjectDetailsPage() {
           <TabsContent value="overview" className="space-y-8 animate-in fade-in-50 duration-300">
             <div className="grid gap-8 md:grid-cols-3">
               {/* Main Info */}
-              <div className={cn("space-y-8", missingDependencies.length > 0 ? "md:col-span-2" : "md:col-span-3")}>
+              <div className={cn("space-y-8", missingDependencies.length > 0 || (view?.allowActions && project.status === "DRAFT") ? "md:col-span-2" : "md:col-span-3")}>
                 <section className="space-y-3">
                   <h3 className="text-lg font-semibold flex items-center gap-2">
                     <FileText className="h-5 w-5 text-primary" /> Objetivos
@@ -163,21 +233,40 @@ export default function ProjectDetailsPage() {
                 </section>
               </div>
 
-              {/* Dependencies Sidebar */}
-              {missingDependencies.length > 0 && (
+              {/* Sidebar */}
+              {(missingDependencies.length > 0 || (view?.allowActions && project.status === "DRAFT")) && (
                 <div className="space-y-4">
-                  <div className="flex items-center gap-2 font-medium text-orange-600 dark:text-orange-400 mb-2">
-                    <AlertCircle className="h-5 w-5" />
-                    Pendências do Projeto
-                  </div>
-                  {missingDependencies.map((dep) => (
-                    <DependencyCard key={dep.id} title={dep.label} description={dep.description} icon={dep.icon} actionLabel={dep.action} actionLink={dep.link} variant="warning" readOnly={!view?.allowActions} />
-                  ))}
+                  {missingDependencies.length > 0 && (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2 font-medium text-orange-600 dark:text-orange-400">
+                        <AlertCircle className="h-5 w-5" />
+                        Pendências do Projeto
+                      </div>
+                      {missingDependencies.map((dep) => (
+                        <DependencyCard key={dep.id} title={dep.label} description={dep.description} icon={dep.icon} actionLabel={dep.action} actionLink={dep.link} variant="warning" readOnly={!view?.allowActions} />
+                      ))}
+                    </div>
+                  )}
+
+                  {!missingDependencies.length && view?.allowActions && project.status === "DRAFT" && (
+                    <Card className="border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950/20">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start gap-3">
+                          <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 shrink-0 mt-0.5" />
+                          <div>
+                            <CardTitle className="text-base text-green-900 dark:text-green-300">Pronto para Submissão</CardTitle>
+                            <CardDescription className="text-green-700 dark:text-green-400 mt-1">
+                              Todas as dependências foram atendidas. Você pode enviar o projeto para análise.
+                            </CardDescription>
+                          </div>
+                        </div>
+                      </CardHeader>
+                    </Card>
+                  )}
                 </div>
               )}
             </div>
           </TabsContent>
-
           <TabsContent value="workplan" className="animate-in fade-in-50 duration-300">
             {workPlan ? (
               <div className="space-y-6">
