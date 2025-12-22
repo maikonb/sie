@@ -86,7 +86,7 @@ export function NavUser({
                 <CreditCard />
                 Billing
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push("/conta/notificacoes")}>
                 <Bell />
                 Notifications
               </DropdownMenuItem>

@@ -47,12 +47,12 @@ const data: Record<string, NavItem[]> = {
   navSecondary: [
     {
       title: "Suporte",
-      url: "#",
+      url: "/conta/suporte",
       icon: LifeBuoy,
     },
     {
       title: "Feedback",
-      url: "#",
+      url: "/conta/feedback",
       icon: Send,
     },
   ],
