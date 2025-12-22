@@ -15,12 +15,12 @@ export interface BaseNavItem {
 
 export interface NavItemWithUrl extends BaseNavItem {
   url: string
-  items?: never
+  items?: NavItemChild[]
 }
 
 export interface NavItemWithChildren extends BaseNavItem {
+  url?: string
   items: NavItemChild[]
-  url?: never
 }
 
 export interface NavItemChild {

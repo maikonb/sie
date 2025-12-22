@@ -1,6 +1,8 @@
 import * as React from "react"
+import { ChevronRight } from "lucide-react"
 
-import { SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/providers/sidebar"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuAction, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem } from "@/components/providers/sidebar"
 import PermissionGuard from "@/components/permissions/permission-guard"
 import useManyCan from "@/hooks/use-many-can"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -46,18 +48,53 @@ export function NavSecondary({
       <SidebarGroupContent>
         <SidebarMenu>
           {visibleItems.map(({ item }) => (
-            <SidebarMenuItem key={item.title}>
-              <PermissionGuard permission={item.permissionSlug} canMap={canMap}>
-                {item.url ? (
-                  <SidebarMenuButton asChild size="sm">
-                    <a href={item.url}>
-                      {item.icon && <item.icon />}
-                      <span>{item.title}</span>
-                    </a>
-                  </SidebarMenuButton>
-                ) : null}
-              </PermissionGuard>
-            </SidebarMenuItem>
+            <Collapsible key={item.title} asChild defaultOpen={(item as any).isActive}>
+              <SidebarMenuItem>
+                <PermissionGuard permission={item.permissionSlug} canMap={canMap}>
+                  {item.url ? (
+                    <SidebarMenuButton asChild size="sm" tooltip={item.title}>
+                      <a href={item.url}>
+                        {item.icon && <item.icon />}
+                        <span>{item.title}</span>
+                      </a>
+                    </SidebarMenuButton>
+                  ) : (
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton size="sm" tooltip={item.title}>
+                        {item.icon && <item.icon />}
+                        <span>{item.title}</span>
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                  )}
+
+                  {(item as any).items?.length ? (
+                    <>
+                      <CollapsibleTrigger asChild>
+                        <SidebarMenuAction className="data-[state=open]:rotate-90" size="sm">
+                          <ChevronRight />
+                          <span className="sr-only">Toggle</span>
+                        </SidebarMenuAction>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <SidebarMenuSub>
+                          {(item as any).items?.map((subItem: any) => (
+                            <SidebarMenuSubItem key={subItem.title}>
+                              <PermissionGuard permission={subItem.permissionSlug} canMap={canMap}>
+                                <SidebarMenuSubButton asChild size="sm">
+                                  <a href={subItem.url}>
+                                    <span>{subItem.title}</span>
+                                  </a>
+                                </SidebarMenuSubButton>
+                              </PermissionGuard>
+                            </SidebarMenuSubItem>
+                          ))}
+                        </SidebarMenuSub>
+                      </CollapsibleContent>
+                    </>
+                  ) : null}
+                </PermissionGuard>
+              </SidebarMenuItem>
+            </Collapsible>
           ))}
         </SidebarMenu>
       </SidebarGroupContent>

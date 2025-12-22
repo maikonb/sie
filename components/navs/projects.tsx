@@ -1,9 +1,10 @@
 "use client"
 
-import { MoreHorizontal, Share, Trash2 } from "lucide-react"
+import { ChevronRight, MoreHorizontal, Share, Trash2 } from "lucide-react"
 
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuAction, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/providers/sidebar"
+import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuAction, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem, useSidebar } from "@/components/providers/sidebar"
 import PermissionGuard from "@/components/permissions/permission-guard"
 import useManyCan from "@/hooks/use-many-can"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -49,39 +50,76 @@ export function NavProjects({
       <SidebarGroupLabel>Projects</SidebarGroupLabel>
       <SidebarMenu>
         {visibleItems.map(({ item }) => (
-          <SidebarMenuItem key={item.title}>
-            <PermissionGuard permission={item.permissionSlug} canMap={canMap}>
-              {item.url ? (
-                <>
-                  <SidebarMenuButton asChild>
-                    <a href={item.url}>
+          <Collapsible key={item.title} asChild defaultOpen={(item as any).isActive}>
+            <SidebarMenuItem>
+              <PermissionGuard permission={item.permissionSlug} canMap={canMap}>
+                {item.url ? (
+                  <>
+                    <SidebarMenuButton asChild tooltip={item.title}>
+                      <a href={item.url}>
+                        {item.icon && <item.icon />}
+                        <span>{item.title}</span>
+                      </a>
+                    </SidebarMenuButton>
+                    {!(item as any).items?.length ? (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <SidebarMenuAction showOnHover>
+                            <MoreHorizontal />
+                            <span className="sr-only">More</span>
+                          </SidebarMenuAction>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-48" side={isMobile ? "bottom" : "right"} align={isMobile ? "end" : "start"}>
+                          <DropdownMenuItem>
+                            <Share className="text-muted-foreground" />
+                            <span>Share Project</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem>
+                            <Trash2 className="text-muted-foreground" />
+                            <span>Delete Project</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    ) : null}
+                  </>
+                ) : (
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton tooltip={item.title}>
                       {item.icon && <item.icon />}
                       <span>{item.title}</span>
-                    </a>
-                  </SidebarMenuButton>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <SidebarMenuAction showOnHover>
-                        <MoreHorizontal />
-                        <span className="sr-only">More</span>
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                )}
+
+                {(item as any).items?.length ? (
+                  <>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuAction className="data-[state=open]:rotate-90">
+                        <ChevronRight />
+                        <span className="sr-only">Toggle</span>
                       </SidebarMenuAction>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-48" side={isMobile ? "bottom" : "right"} align={isMobile ? "end" : "start"}>
-                      <DropdownMenuItem>
-                        <Share className="text-muted-foreground" />
-                        <span>Share Project</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem>
-                        <Trash2 className="text-muted-foreground" />
-                        <span>Delete Project</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </>
-              ) : null}
-            </PermissionGuard>
-          </SidebarMenuItem>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        {(item as any).items?.map((subItem: any) => (
+                          <SidebarMenuSubItem key={subItem.title}>
+                            <PermissionGuard permission={subItem.permissionSlug} canMap={canMap}>
+                              <SidebarMenuSubButton asChild>
+                                <a href={subItem.url}>
+                                  <span>{subItem.title}</span>
+                                </a>
+                              </SidebarMenuSubButton>
+                            </PermissionGuard>
+                          </SidebarMenuSubItem>
+                        ))}
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </>
+                ) : null}
+              </PermissionGuard>
+            </SidebarMenuItem>
+          </Collapsible>
         ))}
       </SidebarMenu>
     </SidebarGroup>

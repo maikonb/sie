@@ -62,14 +62,12 @@ export function NavMain({
 
                   {(item as any).items?.length ? (
                     <>
-                      {item.url && (
-                        <CollapsibleTrigger asChild>
-                          <SidebarMenuAction className="data-[state=open]:rotate-90">
-                            <ChevronRight />
-                            <span className="sr-only">Toggle</span>
-                          </SidebarMenuAction>
-                        </CollapsibleTrigger>
-                      )}
+                      <CollapsibleTrigger asChild>
+                        <SidebarMenuAction className="data-[state=open]:rotate-90">
+                          <ChevronRight />
+                          <span className="sr-only">Toggle</span>
+                        </SidebarMenuAction>
+                      </CollapsibleTrigger>
                       <CollapsibleContent>
                         <SidebarMenuSub>
                           {(item as any).items?.map((subItem: any) => (
