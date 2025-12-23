@@ -1,6 +1,10 @@
 import nodemailer from "nodemailer"
 import { EmailTemplateKey, EmailTemplateVars } from "../emails/types"
 import { otpTemplate } from "../emails/templates/otp"
+import { projectSubmittedTemplate } from "../emails/templates/project-submitted"
+import { projectApprovedTemplate } from "../emails/templates/project-approved"
+import { projectRejectedTemplate } from "../emails/templates/project-rejected"
+import { prisma } from "@/lib/config/db"
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST!,
@@ -17,6 +21,9 @@ const transporter = nodemailer.createTransport({
 
 const TEMPLATES = {
   OTP: otpTemplate,
+  PROJECT_SUBMITTED: projectSubmittedTemplate,
+  PROJECT_APPROVED: projectApprovedTemplate,
+  PROJECT_REJECTED: projectRejectedTemplate,
 }
 
 function replaceVariables(template: string, vars: Record<string, string>): string {
@@ -70,4 +77,53 @@ export async function sendOtpEmail(to: string, code: string) {
   } else {
     await sendByTemplate("OTP", { code }, to)
   }
+}
+
+// Helpers: Notifications for project workflow
+export async function getEmailsByPermissionSlug(slug: string): Promise<string[]> {
+  const users = await prisma.user.findMany({
+    where: {
+      userRoles: {
+        some: {
+          role: {
+            rolePermissions: {
+              some: {
+                permission: { slug },
+              },
+            },
+          },
+        },
+      },
+    },
+    select: { email: true },
+  })
+  return users.map((u) => u.email!).filter(Boolean)
+}
+
+export async function notifyAdminsOfNewSubmission(project: { id: string; title: string; slug: string; user: { name?: string | null } }) {
+  const emails = await getEmailsByPermissionSlug("projects.approve")
+  if (!emails.length) return
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.APP_URL ?? "http://localhost:3000"
+  const reviewUrl = `${baseUrl}/admin/projetos/${project.slug}/review`
+  await Promise.all(
+    emails.map((to) =>
+      sendByTemplate("PROJECT_SUBMITTED", { projectTitle: project.title, submitterName: project.user.name ?? "Usuário" , reviewUrl }, to)
+    )
+  )
+}
+
+export async function notifyUserOfApproval(project: { title: string; slug: string; user: { email?: string | null } }, approver: { name?: string | null }) {
+  const to = project.user.email
+  if (!to) return
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.APP_URL ?? "http://localhost:3000"
+  const projectUrl = `${baseUrl}/projetos/${project.slug}`
+  await sendByTemplate("PROJECT_APPROVED", { projectTitle: project.title, approverName: approver.name ?? "Administrador", projectUrl }, to)
+}
+
+export async function notifyUserOfRejection(project: { title: string; slug: string; user: { email?: string | null } }, reason: string, approver: { name?: string | null }) {
+  const to = project.user.email
+  if (!to) return
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.APP_URL ?? "http://localhost:3000"
+  const projectUrl = `${baseUrl}/projetos/${project.slug}`
+  await sendByTemplate("PROJECT_REJECTED", { projectTitle: project.title, approverName: approver.name ?? "Administrador", reason, projectUrl }, to)
 }

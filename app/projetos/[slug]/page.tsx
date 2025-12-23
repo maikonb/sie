@@ -198,6 +198,41 @@ export default function ProjectDetailsPage() {
 
       {/* Content */}
       <PageContent>
+        {/* Timeline / Histórico */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Histórico</CardTitle>
+            <CardDescription>Registro de ações do projeto</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {!Array.isArray((project as any).audits) || !(project as any).audits.length ? (
+              <div className="text-sm text-muted-foreground">Nenhuma ação registrada ainda.</div>
+            ) : (
+              <div className="space-y-3">
+                {(project as any).audits.map((a: any) => (
+                  <div key={a.id} className="flex items-center gap-3 text-sm">
+                    <div className="shrink-0 w-2 h-2 rounded-full bg-muted" />
+                    <div className="flex-1">
+                      <div className="font-medium">
+                        {a.action === "SUBMITTED" && "Enviado para análise"}
+                        {a.action === "APPROVED" && "Aprovado"}
+                        {a.action === "REJECTED" && "Rejeitado"}
+                        {!["SUBMITTED","APPROVED","REJECTED"].includes(a.action) && a.action}
+                      </div>
+                      <div className="text-muted-foreground">
+                        {a.user?.name ? `por ${a.user.name}` : null}
+                        {a.createdAt ? ` • ${format(new Date(a.createdAt), "dd/MM/yyyy HH:mm", { locale: ptBR })}` : null}
+                      </div>
+                      {a.changeDetails?.reason && (
+                        <div className="text-red-600 dark:text-red-400">Motivo: {a.changeDetails.reason}</div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
         <Tabs defaultValue="overview" className="space-y-8">
           <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent">
             <TabsTrigger value="overview" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3">

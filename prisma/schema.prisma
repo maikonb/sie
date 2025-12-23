@@ -88,6 +88,7 @@ model Project {
   updatedAt DateTime @updatedAt
 
   legalInstruments ProjectLegalInstrument[]
+  audits           ProjectAudit[]
 
   @@index([userId])
   @@index([approvedBy])
@@ -206,6 +207,7 @@ model User {
 
   createdProjects  Project[] @relation("ProjectCreator")
   approvedProjects Project[] @relation("ProjectApprover")
+  auditLogs        ProjectAudit[] @relation("AuditChangedBy")
 
   accounts  Account[]
   userRoles UserRole[]
@@ -415,4 +417,17 @@ model SystemDefaults {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model ProjectAudit {
+  id           String   @id @default(uuid())
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  action       String
+  changedBy    String
+  user         User     @relation("AuditChangedBy", fields: [changedBy], references: [id])
+  changeDetails Json?
+  createdAt    DateTime @default(now())
+
+  @@index([projectId])
 }

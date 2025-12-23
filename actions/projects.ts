@@ -7,6 +7,8 @@ import { authOptions } from "@/lib/config/auth"
 import { APP_ERRORS } from "@/lib/errors"
 import { Prisma, ResourceMembersType } from "@prisma/client"
 import PermissionsService from "@/lib/services/permissions"
+import { notifyAdminsOfNewSubmission, notifyUserOfApproval, notifyUserOfRejection } from "@/lib/services/email"
+import { logProjectAction } from "@/lib/services/audit"
 
 const projectWithRelations = Prisma.validator<Prisma.ProjectDefaultArgs>()({
   include: {
@@ -29,6 +31,11 @@ const projectWithRelations = Prisma.validator<Prisma.ProjectDefaultArgs>()({
       },
     },
     workPlan: true,
+    audits: {
+      include: {
+        user: { select: { name: true } },
+      },
+    },
   },
 })
 
@@ -63,6 +70,11 @@ export async function getProjectBySlug(slug: string) {
         },
       },
       workPlan: true,
+      audits: {
+        include: {
+          user: { select: { name: true } },
+        },
+      },
     },
   })
 
@@ -351,13 +363,29 @@ export async function submitProjectForApproval(slug: string) {
     throw new Error("Project must have a work plan before submission")
   }
 
-  return prisma.project.update({
+  const updated = await prisma.project.update({
     where: { slug },
     data: {
       status: "IN_ANALYSIS",
       submittedAt: new Date(),
     },
   })
+
+  // Notify approvers and log audit
+  try {
+    const full = await prisma.project.findUnique({
+      where: { slug },
+      include: { user: { select: { name: true } } },
+    })
+    if (full) {
+      await notifyAdminsOfNewSubmission({ id: full.id, title: full.title, slug: full.slug!, user: { name: full.user?.name } })
+      await logProjectAction(full.id, "SUBMITTED", session.user.id, { fromStatus: project.status, toStatus: "IN_ANALYSIS" })
+    }
+  } catch (e) {
+    console.error("notify/log submitProjectForApproval error", e)
+  }
+
+  return updated
 }
 
 export async function approveProject(slug: string) {
@@ -378,7 +406,7 @@ export async function approveProject(slug: string) {
     throw new Error("Only projects in analysis can be approved")
   }
 
-  return prisma.project.update({
+  const updated = await prisma.project.update({
     where: { slug },
     data: {
       status: "APPROVED",
@@ -386,6 +414,22 @@ export async function approveProject(slug: string) {
       approvedBy: session.user.id,
     },
   })
+
+  // Notify user and log audit
+  try {
+    const full = await prisma.project.findUnique({
+      where: { slug },
+      include: { user: { select: { email: true } } },
+    })
+    if (full) {
+      await notifyUserOfApproval({ title: full.title, slug: full.slug!, user: { email: full.user?.email } }, { name: session.user.name })
+      await logProjectAction(full.id, "APPROVED", session.user.id, { toStatus: "APPROVED" })
+    }
+  } catch (e) {
+    console.error("notify/log approveProject error", e)
+  }
+
+  return updated
 }
 
 export async function rejectProject(slug: string, reason: string) {
@@ -410,13 +454,29 @@ export async function rejectProject(slug: string, reason: string) {
     throw new Error("Only projects in analysis can be rejected")
   }
 
-  return prisma.project.update({
+  const updated = await prisma.project.update({
     where: { slug },
     data: {
       status: "REJECTED",
       rejectionReason: reason,
     },
   })
+
+  // Notify user and log audit
+  try {
+    const full = await prisma.project.findUnique({
+      where: { slug },
+      include: { user: { select: { email: true } } },
+    })
+    if (full) {
+      await notifyUserOfRejection({ title: full.title, slug: full.slug!, user: { email: full.user?.email } }, reason, { name: session.user.name })
+      await logProjectAction(full.id, "REJECTED", session.user.id, { reason, toStatus: "REJECTED" })
+    }
+  } catch (e) {
+    console.error("notify/log rejectProject error", e)
+  }
+
+  return updated
 }
 
 export async function getProjectsForApproval() {
