@@ -23,7 +23,7 @@ export default async function ProjectsApprovalPage() {
     return notFound()
   }
 
-  const pendingProjects = projects.filter((p) => p.status === "IN_ANALYSIS")
+  const pendingProjects = projects.filter((p) => p.status === "PENDING_REVIEW" || p.status === "UNDER_REVIEW")
 
   return (
     <PageShell>
@@ -44,7 +44,7 @@ export default async function ProjectsApprovalPage() {
                 <Clock className="h-4 w-4 text-yellow-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stats.inAnalysis}</div>
+                <div className="text-2xl font-bold">{stats.inReview}</div>
                 <p className="text-xs text-muted-foreground">projetos aguardando análise</p>
               </CardContent>
             </Card>
@@ -154,17 +154,16 @@ export default async function ProjectsApprovalPage() {
                                 <Badge
                                   variant="outline"
                                   className={
-                                    li.legalInstrumentInstance?.status === "SENT_FOR_ANALYSIS"
-                                      ? "bg-blue-500/10 text-blue-600 border-blue-200"
-                                      : li.legalInstrumentInstance?.status === "APPROVED"
-                                        ? "bg-green-500/10 text-green-600 border-green-200"
+                                    li.legalInstrumentInstance?.status === "FILLED"
+                                      ? "bg-green-500/10 text-green-600 border-green-200"
+                                      : li.legalInstrumentInstance?.status === "PARTIAL"
+                                        ? "bg-yellow-500/10 text-yellow-600 border-yellow-200"
                                         : "bg-muted text-muted-foreground"
                                   }
                                 >
-                                  {li.legalInstrumentInstance?.status === "SENT_FOR_ANALYSIS" && "Em Análise"}
-                                  {li.legalInstrumentInstance?.status === "APPROVED" && "Aprovado"}
-                                  {li.legalInstrumentInstance?.status === "REJECTED" && "Rejeitado"}
-                                  {li.legalInstrumentInstance?.status === "DRAFT" && "Rascunho"}
+                                  {li.legalInstrumentInstance?.status === "FILLED" && "Preenchido"}
+                                  {li.legalInstrumentInstance?.status === "PARTIAL" && "Parcial"}
+                                  {li.legalInstrumentInstance?.status === "PENDING" && "Pendente"}
                                 </Badge>
                               </div>
                             ))}

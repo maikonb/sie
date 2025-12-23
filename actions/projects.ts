@@ -351,12 +351,12 @@ export async function submitProjectForApproval(slug: string) {
   }
 
   const hasPendingInstruments = project.legalInstruments.some((li) => {
-    const status = li.legalInstrumentInstance?.status || "DRAFT"
-    return status === "DRAFT"
+    const status = li.legalInstrumentInstance?.status || "PENDING"
+    return status !== "FILLED"
   })
 
   if (hasPendingInstruments) {
-    throw new Error("All legal instruments must be completed before submission")
+    throw new Error("All legal instruments must be filled before submission")
   }
 
   if (!project.workPlan) {
@@ -366,7 +366,7 @@ export async function submitProjectForApproval(slug: string) {
   const updated = await prisma.project.update({
     where: { slug },
     data: {
-      status: "IN_ANALYSIS",
+      status: "PENDING_REVIEW",
       submittedAt: new Date(),
     },
   })
@@ -379,10 +379,50 @@ export async function submitProjectForApproval(slug: string) {
     })
     if (full) {
       await notifyAdminsOfNewSubmission({ id: full.id, title: full.title, slug: full.slug!, user: { name: full.user?.name } })
-      await logProjectAction(full.id, "SUBMITTED", session.user.id, { fromStatus: project.status, toStatus: "IN_ANALYSIS" })
+      await logProjectAction(full.id, "SUBMITTED", session.user.id, { fromStatus: project.status, toStatus: "PENDING_REVIEW" })
     }
   } catch (e) {
     console.error("notify/log submitProjectForApproval error", e)
+  }
+
+  return updated
+}
+
+export async function startProjectReview(slug: string) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) throw new Error("Unauthorized")
+
+  // Verify reviewer has permission
+  await PermissionsService.authorize(session.user.id, { slug: "projects.approve" })
+
+  const project = await prisma.project.findUnique({
+    where: { slug },
+    select: { id: true, status: true },
+  })
+
+  if (!project) throw new Error("Project not found")
+
+  if (project.status !== "PENDING_REVIEW") {
+    throw new Error("Only projects pending review can be started")
+  }
+
+  const updated = await prisma.project.update({
+    where: { slug },
+    data: {
+      status: "UNDER_REVIEW",
+      reviewStartedAt: new Date(),
+      reviewStartedBy: session.user.id,
+    },
+  })
+
+  // Log audit
+  try {
+    await logProjectAction(project.id, "REVIEW_STARTED", session.user.id, { 
+      fromStatus: "PENDING_REVIEW", 
+      toStatus: "UNDER_REVIEW" 
+    })
+  } catch (e) {
+    console.error("log startProjectReview error", e)
   }
 
   return updated
@@ -402,8 +442,8 @@ export async function approveProject(slug: string) {
 
   if (!project) throw new Error("Project not found")
 
-  if (project.status !== "IN_ANALYSIS") {
-    throw new Error("Only projects in analysis can be approved")
+  if (project.status !== "UNDER_REVIEW") {
+    throw new Error("Only projects under review can be approved")
   }
 
   const updated = await prisma.project.update({
@@ -450,8 +490,8 @@ export async function rejectProject(slug: string, reason: string) {
 
   if (!project) throw new Error("Project not found")
 
-  if (project.status !== "IN_ANALYSIS") {
-    throw new Error("Only projects in analysis can be rejected")
+  if (project.status !== "UNDER_REVIEW") {
+    throw new Error("Only projects under review can be rejected")
   }
 
   const updated = await prisma.project.update({
@@ -488,7 +528,7 @@ export async function getProjectsForApproval() {
 
   return prisma.project.findMany({
     where: {
-      status: "IN_ANALYSIS",
+      status: { in: ["PENDING_REVIEW", "UNDER_REVIEW"] },
     },
     include: {
       user: {
@@ -522,15 +562,18 @@ export async function getProjectApprovalStats() {
   // Verify approver has permission
   await PermissionsService.authorize(session.user.id, { slug: "projects.approve" })
 
-  const [inAnalysis, approved, rejected, total] = await Promise.all([
-    prisma.project.count({ where: { status: "IN_ANALYSIS" } }),
+  const [pendingReview, underReview, approved, rejected, total] = await Promise.all([
+    prisma.project.count({ where: { status: "PENDING_REVIEW" } }),
+    prisma.project.count({ where: { status: "UNDER_REVIEW" } }),
     prisma.project.count({ where: { status: "APPROVED" } }),
     prisma.project.count({ where: { status: "REJECTED" } }),
     prisma.project.count(),
   ])
 
   return {
-    inAnalysis,
+    pendingReview,
+    underReview,
+    inReview: pendingReview + underReview,
     approved,
     rejected,
     total,

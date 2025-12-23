@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { LegalInstrumentInstance } from "@prisma/client"
-import { Save, Loader2, ArrowLeft, Send } from "lucide-react"
+import { Save, Loader2, ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -14,7 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 
-import { saveLegalInstrumentAnswers, sendForAnalysis } from "@/actions/legal-instruments"
+import { saveLegalInstrumentAnswers } from "@/actions/legal-instruments"
 
 type FieldSpec = {
   id: string
@@ -40,13 +40,12 @@ export default function LegalInstrumentFillClient({ instance, projectSlug }: Leg
   const router = useRouter()
   const [answers, setAnswers] = useState<any>(instance.answers || {})
   const [saving, setSaving] = useState(false)
-  const [sending, setSending] = useState(false)
 
   const fields = (instance.fieldsJson as unknown as FieldSpec[]) || []
-  const isDraft = instance.status === "DRAFT"
+  const isEditable = instance.status !== "FILLED"
 
   const handleChange = (id: string, value: any) => {
-    if (!isDraft) return
+    if (!isEditable) return
     setAnswers((prev: any) => ({ ...prev, [id]: value }))
   }
 
@@ -62,7 +61,8 @@ export default function LegalInstrumentFillClient({ instance, projectSlug }: Leg
     setSaving(true)
     try {
       await saveLegalInstrumentAnswers(instance.id, answers)
-      toast.success("Dados salvos com sucesso!")
+      toast.success("Dados salvos com sucesso! O status será atualizado automaticamente.")
+      router.push(`/projetos/${projectSlug}`)
       router.refresh()
     } catch (error) {
       console.error(error)
@@ -72,42 +72,14 @@ export default function LegalInstrumentFillClient({ instance, projectSlug }: Leg
     }
   }
 
-  const handleSendForAnalysis = async () => {
-    // Basic validation
-    for (const field of fields) {
-      if (field.required && !answers[field.id]) {
-        toast.error(`O campo "${field.label}" é obrigatório.`)
-        return
-      }
-    }
-
-    setSending(true)
-    try {
-      // Ensure saved first
-      await saveLegalInstrumentAnswers(instance.id, answers)
-
-      await sendForAnalysis(instance.id)
-      toast.success("Enviado para análise com sucesso!")
-      router.push(`/projetos/${projectSlug}`)
-      router.refresh()
-    } catch (error) {
-      console.error(error)
-      toast.error("Erro ao enviar para análise.")
-    } finally {
-      setSending(false)
-    }
-  }
-
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "DRAFT":
-        return <Badge variant="secondary">Rascunho</Badge>
-      case "SENT_FOR_ANALYSIS":
-        return <Badge className="bg-blue-500 hover:bg-blue-600">Em Análise</Badge>
-      case "APPROVED":
-        return <Badge className="bg-green-500 hover:bg-green-600">Aprovado</Badge>
-      case "REJECTED":
-        return <Badge variant="destructive">Rejeitado</Badge>
+      case "PENDING":
+        return <Badge variant="secondary">Pendente</Badge>
+      case "PARTIAL":
+        return <Badge className="bg-yellow-500 hover:bg-yellow-600">Parcial</Badge>
+      case "FILLED":
+        return <Badge className="bg-green-500 hover:bg-green-600">Preenchido</Badge>
       default:
         return <Badge variant="outline">{status}</Badge>
     }
@@ -141,13 +113,13 @@ export default function LegalInstrumentFillClient({ instance, projectSlug }: Leg
               </Label>
 
               {field.type === "textarea" ? (
-                <Textarea id={field.id} value={answers[field.id] || ""} onChange={(e) => handleChange(field.id, e.target.value)} placeholder={`Digite ${field.label.toLowerCase()}...`} className="min-h-[100px]" disabled={!isDraft} />
+                <Textarea id={field.id} value={answers[field.id] || ""} onChange={(e) => handleChange(field.id, e.target.value)} placeholder={`Digite ${field.label.toLowerCase()}...`} className="min-h-[100px]" disabled={!isEditable} />
               ) : field.type === "date" ? (
-                <Input id={field.id} type="date" value={answers[field.id] || ""} onChange={(e) => handleChange(field.id, e.target.value)} disabled={!isDraft} />
+                <Input id={field.id} type="date" value={answers[field.id] || ""} onChange={(e) => handleChange(field.id, e.target.value)} disabled={!isEditable} />
               ) : field.type === "number" || field.type === "currency" ? (
-                <Input id={field.id} type="number" step={field.type === "currency" ? "0.01" : "1"} value={answers[field.id] || ""} onChange={(e) => handleChange(field.id, e.target.value)} placeholder={field.type === "currency" ? "0,00" : ""} disabled={!isDraft} />
+                <Input id={field.id} type="number" step={field.type === "currency" ? "0.01" : "1"} value={answers[field.id] || ""} onChange={(e) => handleChange(field.id, e.target.value)} placeholder={field.type === "currency" ? "0,00" : ""} disabled={!isEditable} />
               ) : (
-                <Input id={field.id} type={field.type === "email" ? "email" : "text"} value={answers[field.id] || ""} onChange={(e) => handleChange(field.id, e.target.value)} placeholder={`Digite ${field.label.toLowerCase()}...`} disabled={!isDraft} />
+                <Input id={field.id} type={field.type === "email" ? "email" : "text"} value={answers[field.id] || ""} onChange={(e) => handleChange(field.id, e.target.value)} placeholder={`Digite ${field.label.toLowerCase()}...`} disabled={!isEditable} />
               )}
             </div>
           ))}
@@ -158,35 +130,20 @@ export default function LegalInstrumentFillClient({ instance, projectSlug }: Leg
             <Button variant="outline" onClick={() => router.back()}>
               Voltar
             </Button>
-            {isDraft && (
-              <>
-                <Button onClick={handleSave} disabled={saving || sending} variant="secondary">
-                  {saving ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Salvando...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="mr-2 h-4 w-4" />
-                      Salvar Rascunho
-                    </>
-                  )}
-                </Button>
-                <Button onClick={handleSendForAnalysis} disabled={saving || sending}>
-                  {sending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Enviando...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="mr-2 h-4 w-4" />
-                      Enviar para Análise
-                    </>
-                  )}
-                </Button>
-              </>
+            {isEditable && (
+              <Button onClick={handleSave} disabled={saving} variant="default">
+                {saving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Salvando...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    Salvar
+                  </>
+                )}
+              </Button>
             )}
           </div>
         </CardContent>

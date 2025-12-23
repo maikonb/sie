@@ -13,6 +13,7 @@ import { ptBR } from "date-fns/locale"
 import { useProject } from "@/components/providers/project-context"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { PageContent, PageHeader, PageHeaderHeading, PageShell } from "@/components/shell"
 import { ProjectEditSheet } from "@/components/projects/project-edit-sheet"
 import { DependencyCard } from "@/components/projects/dependency-card"
@@ -59,6 +60,15 @@ export default function ProjectDetailsPage() {
 
   const canSubmit = view?.allowActions && hasWorkPlan && hasLegalInstruments && !hasPendingInstruments && project.status === "DRAFT"
 
+  // Mensagem de feedback para botão desabilitado
+  const getSubmitDisabledReason = () => {
+    if (project.status !== "DRAFT") return "Projeto já foi enviado"
+    if (!hasWorkPlan) return "É necessário criar o Plano de Trabalho"
+    if (!hasLegalInstruments) return "É necessário selecionar um Instrumento Jurídico"
+    if (hasPendingInstruments) return "É necessário preencher completamente o Instrumento Jurídico"
+    return null
+  }
+
   const handleSubmit = async () => {
     try {
       setIsSubmitting(true)
@@ -96,9 +106,9 @@ export default function ProjectDetailsPage() {
       icon: Scale,
     })
   } else {
-    const pendingInstruments = legalInstruments.filter((li) => {
-      const status = li.legalInstrumentInstance?.status || "DRAFT"
-      return status === "DRAFT"
+    const pendingInstruments = project.legalInstruments.filter((li) => {
+      const status = li.legalInstrumentInstance?.status || "PENDING"
+      return status !== "FILLED"
     })
 
     pendingInstruments.forEach((li) => {
@@ -134,12 +144,14 @@ export default function ProjectDetailsPage() {
             <span className="hidden md:inline">•</span>
             <Badge variant="outline" className={cn("font-normal", {
               "bg-muted text-muted-foreground": project.status === "DRAFT",
-              "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400": project.status === "IN_ANALYSIS",
+              "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400": project.status === "PENDING_REVIEW",
+              "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400": project.status === "UNDER_REVIEW",
               "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400": project.status === "APPROVED",
               "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400": project.status === "REJECTED",
             })}>
               {project.status === "DRAFT" && "Em Elaboração"}
-              {project.status === "IN_ANALYSIS" && "Em Análise"}
+              {project.status === "PENDING_REVIEW" && "Aguardando análise"}
+              {project.status === "UNDER_REVIEW" && "Em análise"}
               {project.status === "APPROVED" && "Aprovado"}
               {project.status === "REJECTED" && "Rejeitado"}
             </Badge>
@@ -171,22 +183,35 @@ export default function ProjectDetailsPage() {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {view?.allowActions && project.status === "DRAFT" && (
-            <Button 
-              onClick={handleSubmit} 
-              disabled={isSubmitting || !canSubmit}
-              variant="default"
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando...
-                </>
-              ) : (
-                <>
-                  <SendHorizontal className="mr-2 h-4 w-4" /> Enviar para Análise
-                </>
-              )}
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div>
+                    <Button 
+                      onClick={handleSubmit} 
+                      disabled={isSubmitting || !canSubmit}
+                      variant="default"
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando...
+                        </>
+                      ) : (
+                        <>
+                          <SendHorizontal className="mr-2 h-4 w-4" /> Enviar para Análise
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </TooltipTrigger>
+                {!canSubmit && getSubmitDisabledReason() && (
+                  <TooltipContent>
+                    <p className="text-sm">{getSubmitDisabledReason()}</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
           )}
           {view?.allowActions && (
             <Button onClick={() => setIsEditSheetOpen(true)}>
@@ -198,45 +223,13 @@ export default function ProjectDetailsPage() {
 
       {/* Content */}
       <PageContent>
-        {/* Timeline / Histórico */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Histórico</CardTitle>
-            <CardDescription>Registro de ações do projeto</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {!Array.isArray((project as any).audits) || !(project as any).audits.length ? (
-              <div className="text-sm text-muted-foreground">Nenhuma ação registrada ainda.</div>
-            ) : (
-              <div className="space-y-3">
-                {(project as any).audits.map((a: any) => (
-                  <div key={a.id} className="flex items-center gap-3 text-sm">
-                    <div className="shrink-0 w-2 h-2 rounded-full bg-muted" />
-                    <div className="flex-1">
-                      <div className="font-medium">
-                        {a.action === "SUBMITTED" && "Enviado para análise"}
-                        {a.action === "APPROVED" && "Aprovado"}
-                        {a.action === "REJECTED" && "Rejeitado"}
-                        {!["SUBMITTED","APPROVED","REJECTED"].includes(a.action) && a.action}
-                      </div>
-                      <div className="text-muted-foreground">
-                        {a.user?.name ? `por ${a.user.name}` : null}
-                        {a.createdAt ? ` • ${format(new Date(a.createdAt), "dd/MM/yyyy HH:mm", { locale: ptBR })}` : null}
-                      </div>
-                      {a.changeDetails?.reason && (
-                        <div className="text-red-600 dark:text-red-400">Motivo: {a.changeDetails.reason}</div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
         <Tabs defaultValue="overview" className="space-y-8">
           <TabsList className="w-full justify-start border-b rounded-none h-auto p-0 bg-transparent">
             <TabsTrigger value="overview" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3">
               Visão Geral
+            </TabsTrigger>
+            <TabsTrigger value="history" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3">
+              Histórico
             </TabsTrigger>
             <TabsTrigger value="workplan" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3">
               Plano de Trabalho
@@ -247,6 +240,56 @@ export default function ProjectDetailsPage() {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-8 animate-in fade-in-50 duration-300">
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Status do projeto</CardTitle>
+                  <CardDescription>Progresso e datas principais</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm text-muted-foreground">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant="outline" className={cn("font-normal", {
+                      "bg-muted text-muted-foreground": project.status === "DRAFT",
+                      "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400": project.status === "PENDING_REVIEW",
+                      "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400": project.status === "UNDER_REVIEW",
+                      "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400": project.status === "APPROVED",
+                      "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400": project.status === "REJECTED",
+                    })}>
+                      {project.status === "DRAFT" && "Em elaboração"}
+                      {project.status === "PENDING_REVIEW" && "Aguardando análise"}
+                      {project.status === "UNDER_REVIEW" && "Em análise"}
+                      {project.status === "APPROVED" && "Aprovado"}
+                      {project.status === "REJECTED" && "Rejeitado"}
+                    </Badge>
+                    {project.submittedAt && <span>• Enviado em {format(new Date(project.submittedAt), "dd/MM/yyyy", { locale: ptBR })}</span>}
+                  </div>
+                  {project.approvedAt && (
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      <span>Aprovado em {format(new Date(project.approvedAt), "dd/MM/yyyy", { locale: ptBR })}</span>
+                    </div>
+                  )}
+                  {project.status === "REJECTED" && project.rejectionReason && (
+                    <div className="text-red-600 dark:text-red-400">Motivo: {project.rejectionReason}</div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Proponente</CardTitle>
+                  <CardDescription>Responsável pelo projeto</CardDescription>
+                </CardHeader>
+                <CardContent className="flex items-center gap-3 text-sm">
+                  <UserAvatar size="sm" preview={{ name: project.user?.name, image: project.user?.imageFile?.url, color: project.user?.color }} />
+                  <div className="space-y-1">
+                    <div className="font-medium">{project.user?.name ?? "Usuário"}</div>
+                    {project.user?.email && <div className="text-muted-foreground">{project.user.email}</div>}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
             <div className="grid gap-8 md:grid-cols-3">
               {/* Main Info */}
               <div className={cn("space-y-8", missingDependencies.length > 0 || (view?.allowActions && project.status === "DRAFT") ? "md:col-span-2" : "md:col-span-3")}>
@@ -301,6 +344,42 @@ export default function ProjectDetailsPage() {
                 </div>
               )}
             </div>
+          </TabsContent>
+          <TabsContent value="history" className="animate-in fade-in-50 duration-300">
+            <Card>
+              <CardHeader>
+                <CardTitle>Histórico</CardTitle>
+                <CardDescription>Registro de ações do projeto</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {!Array.isArray((project as any).audits) || !(project as any).audits.length ? (
+                  <div className="text-sm text-muted-foreground">Nenhuma ação registrada ainda.</div>
+                ) : (
+                  <div className="space-y-3">
+                    {(project as any).audits.map((a: any) => (
+                      <div key={a.id} className="flex items-center gap-3 text-sm">
+                        <div className="shrink-0 w-2 h-2 rounded-full bg-muted" />
+                        <div className="flex-1">
+                          <div className="font-medium">
+                            {a.action === "SUBMITTED" && "Enviado para análise"}
+                            {a.action === "APPROVED" && "Aprovado"}
+                            {a.action === "REJECTED" && "Rejeitado"}
+                            {!["SUBMITTED","APPROVED","REJECTED"].includes(a.action) && a.action}
+                          </div>
+                          <div className="text-muted-foreground">
+                            {a.user?.name ? `por ${a.user.name}` : null}
+                            {a.createdAt ? ` • ${format(new Date(a.createdAt), "dd/MM/yyyy HH:mm", { locale: ptBR })}` : null}
+                          </div>
+                          {a.changeDetails?.reason && (
+                            <div className="text-red-600 dark:text-red-400">Motivo: {a.changeDetails.reason}</div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
           <TabsContent value="workplan" className="animate-in fade-in-50 duration-300">
             {workPlan ? (

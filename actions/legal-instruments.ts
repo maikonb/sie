@@ -103,17 +103,38 @@ export async function saveLegalInstrumentAnswers(instanceId: string, answers: an
 
   let answerFileId = undefined
 
+  // Determine status based on answers completeness
+  const fields = (instance.fieldsJson as any[]) || []
+  const requiredFields = fields.filter((f) => f.required)
+  const allRequiredFilled = requiredFields.every((f) => {
+    const val = answers[f.id]
+    return val !== undefined && val !== null && String(val).trim() !== ""
+  })
+
+  // Check if any fields have been filled
+  const anyFieldFilled = fields.some((f) => {
+    const val = answers[f.id]
+    return val !== undefined && val !== null && String(val).trim() !== ""
+  })
+
+  let newStatus: LegalInstrumentStatus
+  if (allRequiredFilled) {
+    newStatus = LegalInstrumentStatus.FILLED
+  } else if (anyFieldFilled) {
+    newStatus = LegalInstrumentStatus.PARTIAL
+  } else {
+    newStatus = LegalInstrumentStatus.PENDING
+  }
+
   // If we have a template file, generate the filled version
-  if (instance.file) {
+  if (instance.file && allRequiredFilled) {
     try {
       // Get template content
       const fileStream = await fileService.getFileStream(instance.file.key)
       if (fileStream.Body) {
         let content = await fileStream.Body.transformToString()
-        const fields = (instance.fieldsJson as any[]) || []
 
         // Replace placeholders
-        // answers keys are field IDs now
         for (const field of fields) {
           const answerValue = answers[field.id]
           if (answerValue !== undefined && answerValue !== null) {
@@ -126,14 +147,13 @@ export async function saveLegalInstrumentAnswers(instanceId: string, answers: an
         const newFile = await fileService.uploadFile(
           content,
           newFilename,
-          "text/plain", // Assuming text/plain for now as we only support text templates in preview
+          "text/plain",
           "legal-instruments/filled"
         )
         answerFileId = newFile.id
       }
     } catch (error) {
       console.error("Error generating filled file:", error)
-      // We continue even if file generation fails, just saving answers
     }
   }
 
@@ -142,6 +162,7 @@ export async function saveLegalInstrumentAnswers(instanceId: string, answers: an
     data: {
       answers,
       answerFileId,
+      status: newStatus,
     },
   })
 }
@@ -162,38 +183,4 @@ export async function checkExistingLegalInstrument(projectSlug: string) {
   })
 
   return { exists: !!existing }
-}
-
-export async function sendForAnalysis(instanceId: string) {
-  const session = await getAuthSession()
-  if (!session?.user?.id) throw new Error("Unauthorized")
-
-  const instance = await prisma.legalInstrumentInstance.findUnique({
-    where: { id: instanceId },
-  })
-
-  if (!instance) throw new Error("Instance not found")
-
-  // Update instance status
-  await prisma.legalInstrumentInstance.update({
-    where: { id: instanceId },
-    data: {
-      status: LegalInstrumentStatus.SENT_FOR_ANALYSIS,
-    } as any,
-  })
-
-  // Update project status
-  const relation = await prisma.projectLegalInstrument.findUnique({
-    where: { legalInstrumentInstanceId: instanceId },
-    select: { projectId: true },
-  })
-
-  if (relation) {
-    await prisma.project.update({
-      where: { id: relation.projectId },
-      data: { status: ProjectStatus.IN_ANALYSIS },
-    })
-  }
-
-  return { success: true }
 }

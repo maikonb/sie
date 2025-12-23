@@ -57,7 +57,8 @@ enum ResourceMembersType {
 
 enum ProjectStatus {
   DRAFT
-  IN_ANALYSIS
+  PENDING_REVIEW
+  UNDER_REVIEW
   APPROVED
   REJECTED
 }
@@ -73,11 +74,14 @@ model Project {
   status ProjectStatus @default(DRAFT)
 
   // Approval tracking
-  submittedAt    DateTime?
-  approvedAt     DateTime?
-  approvedBy     String?
-  approver       User?        @relation("ProjectApprover", fields: [approvedBy], references: [id])
-  rejectionReason String?     @db.Text
+  submittedAt      DateTime?
+  reviewStartedAt  DateTime?
+  reviewStartedBy  String?
+  reviewer         User?     @relation("ProjectReviewer", fields: [reviewStartedBy], references: [id])
+  approvedAt       DateTime?
+  approvedBy       String?
+  approver         User?     @relation("ProjectApprover", fields: [approvedBy], references: [id])
+  rejectionReason  String?   @db.Text
 
   userId String
   user   User   @relation("ProjectCreator", fields: [userId], references: [id])
@@ -92,6 +96,7 @@ model Project {
 
   @@index([userId])
   @@index([approvedBy])
+  @@index([reviewStartedBy])
   @@index([status])
   @@index([submittedAt])
 }
@@ -206,6 +211,7 @@ model User {
   firstAccess   Boolean   @default(true)
 
   createdProjects  Project[] @relation("ProjectCreator")
+  reviewedProjects Project[] @relation("ProjectReviewer")
   approvedProjects Project[] @relation("ProjectApprover")
   auditLogs        ProjectAudit[] @relation("AuditChangedBy")
 
@@ -288,10 +294,9 @@ model LegalInstrument {
 }
 
 enum LegalInstrumentStatus {
-  DRAFT
-  SENT_FOR_ANALYSIS
-  APPROVED
-  REJECTED
+  PENDING
+  PARTIAL
+  FILLED
 }
 
 model LegalInstrumentInstance {
@@ -300,7 +305,7 @@ model LegalInstrumentInstance {
   type                           LegalInstrumentType
   answers                        Json?
   project_classification_answers Json?                 @db.JsonB
-  status                         LegalInstrumentStatus @default(DRAFT)
+  status                         LegalInstrumentStatus @default(PENDING)
 
   fileId String
   file   File   @relation(fields: [fileId], references: [id])

@@ -12,7 +12,7 @@ import { ArrowLeft, Calendar, FileText, CheckCircle2, XCircle, AlertCircle, Load
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { toast } from "sonner"
-import { approveProject, rejectProject } from "@/actions/projects"
+import { approveProject, rejectProject, startProjectReview } from "@/actions/projects"
 import { useProject } from "@/components/providers/project-context"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -26,6 +26,7 @@ export default function ProjectReviewPage() {
 
   const [isApproving, setIsApproving] = useState(false)
   const [isRejecting, setIsRejecting] = useState(false)
+  const [isStartingReview, setIsStartingReview] = useState(false)
   const [rejectReason, setRejectReason] = useState("")
   const [showRejectDialog, setShowRejectDialog] = useState(false)
 
@@ -42,6 +43,20 @@ export default function ProjectReviewPage() {
 
   const workPlan = project.workPlan
   const legalInstruments = (project.legalInstruments as any[]) || []
+
+  const handleStartReview = async () => {
+    try {
+      setIsStartingReview(true)
+      await startProjectReview(slug)
+      toast.success("Análise iniciada com sucesso!")
+      router.refresh()
+    } catch (error: any) {
+      console.error(error)
+      toast.error(error?.message || "Erro ao iniciar análise")
+    } finally {
+      setIsStartingReview(false)
+    }
+  }
 
   const handleApprove = async () => {
     try {
@@ -81,7 +96,8 @@ export default function ProjectReviewPage() {
 
   const statusColor = {
     DRAFT: "bg-muted text-muted-foreground",
-    IN_ANALYSIS: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+    PENDING_REVIEW: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+    UNDER_REVIEW: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
     APPROVED: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
     REJECTED: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
   }
@@ -107,7 +123,8 @@ export default function ProjectReviewPage() {
                 Enviado em {format(new Date(project.submittedAt || project.createdAt), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
               </span>
               <Badge variant="outline" className={statusColor[project.status as keyof typeof statusColor]}>
-                {project.status === "IN_ANALYSIS" && "Em Análise"}
+                {project.status === "PENDING_REVIEW" && "Aguardando Análise"}
+                {project.status === "UNDER_REVIEW" && "Em Análise"}
                 {project.status === "APPROVED" && "Aprovado"}
                 {project.status === "REJECTED" && "Rejeitado"}
               </Badge>
@@ -116,55 +133,73 @@ export default function ProjectReviewPage() {
 
           {/* Action Buttons */}
           <div className="flex gap-2">
-            <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
-              <DialogTrigger asChild>
-                <Button variant="destructive" size="lg">
-                  <XCircle className="mr-2 h-4 w-4" /> Rejeitar
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Rejeitar Projeto</DialogTitle>
-                  <DialogDescription>Forneça um motivo claro para a rejeição do projeto.</DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <Textarea
-                    placeholder="Motivo da rejeição..."
-                    value={rejectReason}
-                    onChange={(e) => setRejectReason(e.target.value)}
-                    className="min-h-[120px]"
-                  />
-                  <div className="flex gap-2 justify-end">
-                    <Button variant="outline" onClick={() => setShowRejectDialog(false)}>
-                      Cancelar
-                    </Button>
-                    <Button variant="destructive" onClick={handleReject} disabled={isRejecting || !rejectReason.trim()}>
-                      {isRejecting ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Rejeitando...
-                        </>
-                      ) : (
-                        <>
-                          <XCircle className="mr-2 h-4 w-4" /> Confirmar Rejeição
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
+            {project.status === "PENDING_REVIEW" && (
+              <Button onClick={handleStartReview} disabled={isStartingReview} size="lg" className="bg-blue-600 hover:bg-blue-700">
+                {isStartingReview ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Iniciando...
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle className="mr-2 h-4 w-4" /> Iniciar Análise
+                  </>
+                )}
+              </Button>
+            )}
 
-            <Button onClick={handleApprove} disabled={isApproving} size="lg" className="bg-green-600 hover:bg-green-700">
-              {isApproving ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Aprovando...
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="mr-2 h-4 w-4" /> Aprovar
-                </>
-              )}
-            </Button>
+            {project.status === "UNDER_REVIEW" && (
+              <>
+                <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
+                  <DialogTrigger asChild>
+                    <Button variant="destructive" size="lg">
+                      <XCircle className="mr-2 h-4 w-4" /> Rejeitar
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Rejeitar Projeto</DialogTitle>
+                      <DialogDescription>Forneça um motivo claro para a rejeição do projeto.</DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <Textarea
+                        placeholder="Motivo da rejeição..."
+                        value={rejectReason}
+                        onChange={(e) => setRejectReason(e.target.value)}
+                        className="min-h-[120px]"
+                      />
+                      <div className="flex gap-2 justify-end">
+                        <Button variant="outline" onClick={() => setShowRejectDialog(false)}>
+                          Cancelar
+                        </Button>
+                        <Button variant="destructive" onClick={handleReject} disabled={isRejecting || !rejectReason.trim()}>
+                          {isRejecting ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Rejeitando...
+                            </>
+                          ) : (
+                            <>
+                              <XCircle className="mr-2 h-4 w-4" /> Confirmar Rejeição
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+
+                <Button onClick={handleApprove} disabled={isApproving} size="lg" className="bg-green-600 hover:bg-green-700">
+                  {isApproving ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Aprovando...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="mr-2 h-4 w-4" /> Aprovar
+                    </>
+                  )}
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </div>
