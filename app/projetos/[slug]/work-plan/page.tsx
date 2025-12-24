@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { toast } from "sonner"
+import { notify } from "@/lib/notifications"
 import { Loader2, Plus, Trash2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -53,7 +53,7 @@ export default function Page() {
     try {
       const result = await upsertWorkPlan(project.id, data)
       if (result.success) {
-        toast.success("Plano de trabalho salvo com sucesso!")
+        notify.success("Plano de trabalho salvo com sucesso!")
 
         const next = searchParams.get("next")
         if (next) {
@@ -63,10 +63,10 @@ export default function Page() {
 
         route.push(`/projetos/${project.slug}/`)
       } else {
-        toast.error(result.error || "Erro ao salvar")
+        notify.error(result.error || "Erro ao salvar")
       }
     } catch (error) {
-      toast.error("Erro inesperado ao salvar")
+      notify.error("Erro inesperado ao salvar")
     } finally {
       setSaving(false)
     }
@@ -96,7 +96,7 @@ export default function Page() {
             })
           }
         } catch (error) {
-          toast.error("Erro ao carregar plano de trabalho")
+          notify.error("Erro ao carregar plano de trabalho")
         } finally {
           setLoading(false)
         }

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { LegalInstrument } from "@prisma/client"
 import { Loader2, Plus, Trash2, Save, FileText, Upload, AlertCircle, HelpCircle, GripVertical } from "lucide-react"
-import { toast } from "sonner"
+import { notify } from "@/lib/notifications"
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core"
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
@@ -160,12 +160,10 @@ export default function EditLegalInstrumentClient({ instrument }: EditLegalInstr
       const pres = await generatePresignedUrl(file.name, file.type, "legal-instruments")
       await fetch(pres.url, { method: "PUT", body: file, headers: { "Content-Type": file.type } })
       setFileKey(pres.key)
-      toast.success("Arquivo enviado com sucesso", {
-        description: "Salve as alterações para vincular o novo arquivo ao instrumento.",
-      })
+      notify.success("Arquivo enviado com sucesso", "Salve as alterações para vincular o novo arquivo ao instrumento.")
     } catch (err) {
       console.error(err)
-      toast.error("Falha ao enviar arquivo")
+      notify.error("Falha ao enviar arquivo")
     } finally {
       setUploading(false)
     }
@@ -176,10 +174,10 @@ export default function EditLegalInstrumentClient({ instrument }: EditLegalInstr
       const payload: { fieldsJson: FieldSpec[]; fileKey?: string } = { fieldsJson: fields }
       if (fileKey) payload.fileKey = fileKey
       await updateLegalInstrument(instrument.id, payload)
-      toast.success("Alterações salvas com sucesso")
+      notify.success("Alterações salvas com sucesso")
     } catch (err) {
       console.error(err)
-      toast.error("Erro ao salvar alterações")
+      notify.error("Erro ao salvar alterações")
     }
   }
 

@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { LegalInstrumentInstance, LegalInstrumentStatus } from "@prisma/client"
 import { Save, Loader2, ArrowLeft } from "lucide-react"
-import { toast } from "sonner"
+import { notify } from "@/lib/notifications"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -48,7 +48,7 @@ export default function LegalInstrumentFillClient({ instance, projectSlug }: Leg
     // Basic validation
     for (const field of fields) {
       if (field.required && !answers[field.id]) {
-        toast.error(`O campo "${field.label}" é obrigatório.`)
+        notify.error(`O campo "${field.label}" é obrigatório.`)
         return
       }
     }
@@ -56,12 +56,12 @@ export default function LegalInstrumentFillClient({ instance, projectSlug }: Leg
     setSaving(true)
     try {
       await saveLegalInstrumentAnswers(instance.id, answers)
-      toast.success("Dados salvos com sucesso! O status será atualizado automaticamente.")
+      notify.success("Dados salvos com sucesso! O status será atualizado automaticamente.")
       router.push(`/projetos/${projectSlug}`)
       router.refresh()
     } catch (error) {
       console.error(error)
-      toast.error("Erro ao salvar dados.")
+      notify.error("Erro ao salvar dados.")
     } finally {
       setSaving(false)
     }

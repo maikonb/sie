@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Calendar, FileText, CheckCircle2, XCircle, AlertCircle, Loader2 } from "lucide-react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { toast } from "sonner"
+import { notify } from "@/lib/notifications"
 import { approveProject, rejectProject, startProjectReview } from "@/actions/projects"
 import { useProject } from "@/components/providers/project"
 import { Textarea } from "@/components/ui/textarea"
@@ -62,11 +62,11 @@ export default function ProjectReviewPage() {
     try {
       setIsStartingReview(true)
       await startProjectReview(slug)
-      toast.success("Análise iniciada com sucesso!")
+      notify.success("Análise iniciada com sucesso!")
       router.refresh()
     } catch (error: unknown) {
       console.error(error)
-      toast.error(getErrorMessage(error) ?? "Erro ao iniciar análise")
+      notify.error(getErrorMessage(error) ?? "Erro ao iniciar análise")
     } finally {
       setIsStartingReview(false)
     }
@@ -76,12 +76,12 @@ export default function ProjectReviewPage() {
     try {
       setIsApproving(true)
       await approveProject(slug)
-      toast.success("Projeto aprovado com sucesso!")
+      notify.success("Projeto aprovado com sucesso!")
       router.push("/admin/projetos")
       router.refresh()
     } catch (error: unknown) {
       console.error(error)
-      toast.error(getErrorMessage(error) ?? "Erro ao aprovar projeto")
+      notify.error(getErrorMessage(error) ?? "Erro ao aprovar projeto")
     } finally {
       setIsApproving(false)
     }
@@ -89,19 +89,19 @@ export default function ProjectReviewPage() {
 
   const handleReject = async () => {
     if (!rejectReason.trim()) {
-      toast.error("Motivo da rejeição é obrigatório")
+      notify.error("Motivo da rejeição é obrigatório")
       return
     }
 
     try {
       setIsRejecting(true)
       await rejectProject(slug, rejectReason)
-      toast.success("Projeto rejeitado")
+      notify.success("Projeto rejeitado")
       router.push("/admin/projetos")
       router.refresh()
     } catch (error: unknown) {
       console.error(error)
-      toast.error(getErrorMessage(error) ?? "Erro ao rejeitar projeto")
+      notify.error(getErrorMessage(error) ?? "Erro ao rejeitar projeto")
     } finally {
       setIsRejecting(false)
       setShowRejectDialog(false)

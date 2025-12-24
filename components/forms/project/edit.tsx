@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { useState } from "react"
 import { Project } from "@prisma/client"
 import { updateProject } from "@/actions/projects"
-import { toast } from "sonner"
+import { notify } from "@/lib/notifications"
 import { Loader2 } from "lucide-react"
 
 interface EditProjectFormProps {
@@ -25,12 +25,12 @@ export function EditProjectForm({ project }: EditProjectFormProps) {
     setLoading(true)
     try {
       await updateProject(project.slug!, formData)
-      toast.success("Projeto atualizado com sucesso!")
+      notify.success("Projeto atualizado com sucesso!")
       router.push(`/projetos/${project.slug}`)
       router.refresh()
     } catch (error) {
       console.error(error)
-      toast.error("Erro ao atualizar projeto.")
+      notify.error("Erro ao atualizar projeto.")
     } finally {
       setLoading(false)
     }

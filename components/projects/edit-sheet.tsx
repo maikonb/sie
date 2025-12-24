@@ -10,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { updateProject } from "@/actions/projects"
-import { toast } from "sonner"
+import { notify } from "@/lib/notifications"
 import { useRouter } from "next/navigation"
 
 const projectSchema = z.object({
@@ -58,12 +58,12 @@ export function ProjectEditSheet({ project, open, onOpenChange }: ProjectEditShe
       formData.append("abrangencia", data.scope)
 
       await updateProject(project.slug, formData)
-      toast.success("Projeto atualizado com sucesso!")
+      notify.success("Projeto atualizado com sucesso!")
       onOpenChange(false)
       router.refresh()
     } catch (error) {
       console.error(error)
-      toast.error("Erro ao atualizar projeto.")
+      notify.error("Erro ao atualizar projeto.")
     } finally {
       setIsSubmitting(false)
     }

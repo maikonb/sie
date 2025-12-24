@@ -20,7 +20,7 @@ import { DependencyCard } from "@/components/projects/dependency-card"
 import { UserAvatar } from "@/components/user-avatar"
 import { ProjectStatus, LegalInstrumentStatus } from "@prisma/client"
 import { submitProjectForApproval } from "@/actions/projects"
-import { toast } from "sonner"
+import { notify } from "@/lib/notifications"
 import type { LucideIcon } from "lucide-react"
 import type { ProjectDependences } from "@/components/providers/project"
 
@@ -100,11 +100,11 @@ export default function ProjectDetailsPage() {
     try {
       setIsSubmitting(true)
       await submitProjectForApproval(project.slug!)
-      toast.success("Projeto enviado para análise!")
+      notify.success("Projeto enviado para análise!")
       router.refresh()
     } catch (error: unknown) {
       console.error(error)
-      toast.error(getErrorMessage(error) ?? "Erro ao enviar projeto")
+      notify.error(getErrorMessage(error) ?? "Erro ao enviar projeto")
     } finally {
       setIsSubmitting(false)
     }
