@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { LegalInstrumentInstance } from "@prisma/client"
+import { LegalInstrumentInstance, LegalInstrumentStatus } from "@prisma/client"
 import { Save, Loader2, ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
 
@@ -42,7 +42,7 @@ export default function LegalInstrumentFillClient({ instance, projectSlug }: Leg
   const [saving, setSaving] = useState(false)
 
   const fields = (instance.fieldsJson as unknown as FieldSpec[]) || []
-  const isEditable = instance.status !== "FILLED"
+  const isEditable = instance.status !== LegalInstrumentStatus.FILLED
 
   const handleChange = (id: string, value: any) => {
     if (!isEditable) return

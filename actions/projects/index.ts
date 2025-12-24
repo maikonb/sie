@@ -5,7 +5,7 @@ import { generateUniqueSlug } from "@/lib/utils/slug"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/config/auth"
 import { APP_ERRORS } from "@/lib/errors"
-import { Prisma, ResourceMembersType, Project, LegalInstrumentInstance } from "@prisma/client"
+import { ResourceMembersType, Project, LegalInstrumentInstance, ProjectStatus, LegalInstrumentStatus } from "@prisma/client"
 import PermissionsService from "@/lib/services/permissions"
 import { notifyAdminsOfNewSubmission, notifyUserOfApproval, notifyUserOfRejection } from "@/lib/services/email"
 import { logProjectAction } from "@/lib/services/audit"
@@ -273,7 +273,7 @@ export async function submitProjectForApproval(slug: string): Promise<Project> {
   }
 
   // Validate that project is in DRAFT status
-  if (project.status !== "DRAFT") {
+  if (project.status !== ProjectStatus.DRAFT) {
     throw new Error("Project has already been submitted for approval")
   }
 
@@ -283,8 +283,8 @@ export async function submitProjectForApproval(slug: string): Promise<Project> {
   }
 
   const hasPendingInstruments = project.legalInstruments.some((li) => {
-    const status = li.legalInstrumentInstance?.status || "PENDING"
-    return status !== "FILLED"
+    const status = li.legalInstrumentInstance?.status || LegalInstrumentStatus.PENDING
+    return status !== LegalInstrumentStatus.FILLED
   })
 
   if (hasPendingInstruments) {
@@ -334,7 +334,7 @@ export async function startProjectReview(slug: string): Promise<Project> {
 
   if (!project) throw new Error("Project not found")
 
-  if (project.status !== "PENDING_REVIEW") {
+  if (project.status !== ProjectStatus.PENDING_REVIEW) {
     throw new Error("Only projects pending review can be started")
   }
 
@@ -374,7 +374,7 @@ export async function approveProject(slug: string): Promise<Project> {
 
   if (!project) throw new Error("Project not found")
 
-  if (project.status !== "UNDER_REVIEW") {
+  if (project.status !== ProjectStatus.UNDER_REVIEW) {
     throw new Error("Only projects under review can be approved")
   }
 
@@ -422,7 +422,7 @@ export async function rejectProject(slug: string, reason: string): Promise<Proje
 
   if (!project) throw new Error("Project not found")
 
-  if (project.status !== "UNDER_REVIEW") {
+  if (project.status !== ProjectStatus.UNDER_REVIEW) {
     throw new Error("Only projects under review can be rejected")
   }
 

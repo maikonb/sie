@@ -18,6 +18,7 @@ import { PageContent, PageHeader, PageHeaderHeading, PageShell } from "@/compone
 import { ProjectEditSheet } from "@/components/projects/project-edit-sheet"
 import { DependencyCard } from "@/components/projects/dependency-card"
 import { UserAvatar } from "@/components/user-avatar"
+import { ProjectStatus, LegalInstrumentStatus } from "@prisma/client"
 import { submitProjectForApproval } from "@/actions/projects"
 import { toast } from "sonner"
 
@@ -54,15 +55,15 @@ export default function ProjectDetailsPage() {
   const hasWorkPlan = !!workPlan
   const hasLegalInstruments = legalInstruments.length > 0
   const hasPendingInstruments = hasLegalInstruments && legalInstruments.some((li) => {
-    const status = li.legalInstrumentInstance?.status || "DRAFT"
-    return status === "DRAFT"
+    const status = li.legalInstrumentInstance?.status || LegalInstrumentStatus.PENDING
+    return status !== LegalInstrumentStatus.FILLED
   })
 
-  const canSubmit = view?.allowActions && hasWorkPlan && hasLegalInstruments && !hasPendingInstruments && project.status === "DRAFT"
+  const canSubmit = view?.allowActions && hasWorkPlan && hasLegalInstruments && !hasPendingInstruments && project.status === ProjectStatus.DRAFT
 
   // Mensagem de feedback para botão desabilitado
   const getSubmitDisabledReason = () => {
-    if (project.status !== "DRAFT") return "Projeto já foi enviado"
+    if (project.status !== ProjectStatus.DRAFT) return "Projeto já foi enviado"
     if (!hasWorkPlan) return "É necessário criar o Plano de Trabalho"
     if (!hasLegalInstruments) return "É necessário selecionar um Instrumento Jurídico"
     if (hasPendingInstruments) return "É necessário preencher completamente o Instrumento Jurídico"
@@ -108,7 +109,7 @@ export default function ProjectDetailsPage() {
   } else {
     const pendingInstruments = project.legalInstruments.filter((li) => {
       const status = li.legalInstrumentInstance?.status || "PENDING"
-      return status !== "FILLED"
+      return status !== LegalInstrumentStatus.FILLED
     })
 
     pendingInstruments.forEach((li) => {
@@ -143,17 +144,17 @@ export default function ProjectDetailsPage() {
             </span>
             <span className="hidden md:inline">•</span>
             <Badge variant="outline" className={cn("font-normal", {
-              "bg-muted text-muted-foreground": project.status === "DRAFT",
-              "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400": project.status === "PENDING_REVIEW",
-              "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400": project.status === "UNDER_REVIEW",
-              "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400": project.status === "APPROVED",
-              "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400": project.status === "REJECTED",
+              "bg-muted text-muted-foreground": project.status === ProjectStatus.DRAFT,
+              "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400": project.status === ProjectStatus.PENDING_REVIEW,
+              "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400": project.status === ProjectStatus.UNDER_REVIEW,
+              "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400": project.status === ProjectStatus.APPROVED,
+              "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400": project.status === ProjectStatus.REJECTED,
             })}>
-              {project.status === "DRAFT" && "Em Elaboração"}
-              {project.status === "PENDING_REVIEW" && "Aguardando análise"}
-              {project.status === "UNDER_REVIEW" && "Em análise"}
-              {project.status === "APPROVED" && "Aprovado"}
-              {project.status === "REJECTED" && "Rejeitado"}
+              {project.status === ProjectStatus.DRAFT && "Em Elaboração"}
+              {project.status === ProjectStatus.PENDING_REVIEW && "Aguardando análise"}
+              {project.status === ProjectStatus.UNDER_REVIEW && "Em análise"}
+              {project.status === ProjectStatus.APPROVED && "Aprovado"}
+              {project.status === ProjectStatus.REJECTED && "Rejeitado"}
             </Badge>
             {project.approvedAt && (
               <>
@@ -164,7 +165,7 @@ export default function ProjectDetailsPage() {
                 </span>
               </>
             )}
-            {project.status === "REJECTED" && project.rejectionReason && (
+            {project.status === ProjectStatus.REJECTED && project.rejectionReason && (
               <>
                 <span className="hidden md:inline">•</span>
                 <span className="text-red-600 dark:text-red-400">Motivo: {project.rejectionReason}</span>
@@ -182,7 +183,7 @@ export default function ProjectDetailsPage() {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          {view?.allowActions && project.status === "DRAFT" && (
+          {view?.allowActions && project.status === ProjectStatus.DRAFT && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -249,17 +250,17 @@ export default function ProjectDetailsPage() {
                 <CardContent className="space-y-2 text-sm text-muted-foreground">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant="outline" className={cn("font-normal", {
-                      "bg-muted text-muted-foreground": project.status === "DRAFT",
-                      "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400": project.status === "PENDING_REVIEW",
-                      "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400": project.status === "UNDER_REVIEW",
-                      "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400": project.status === "APPROVED",
-                      "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400": project.status === "REJECTED",
+                      "bg-muted text-muted-foreground": project.status === ProjectStatus.DRAFT,
+                      "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400": project.status === ProjectStatus.PENDING_REVIEW,
+                      "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400": project.status === ProjectStatus.UNDER_REVIEW,
+                      "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400": project.status === ProjectStatus.APPROVED,
+                      "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400": project.status === ProjectStatus.REJECTED,
                     })}>
-                      {project.status === "DRAFT" && "Em elaboração"}
-                      {project.status === "PENDING_REVIEW" && "Aguardando análise"}
-                      {project.status === "UNDER_REVIEW" && "Em análise"}
-                      {project.status === "APPROVED" && "Aprovado"}
-                      {project.status === "REJECTED" && "Rejeitado"}
+                      {project.status === ProjectStatus.DRAFT && "Em elaboração"}
+                      {project.status === ProjectStatus.PENDING_REVIEW && "Aguardando análise"}
+                      {project.status === ProjectStatus.UNDER_REVIEW && "Em análise"}
+                      {project.status === ProjectStatus.APPROVED && "Aprovado"}
+                      {project.status === ProjectStatus.REJECTED && "Rejeitado"}
                     </Badge>
                     {project.submittedAt && <span>• Enviado em {format(new Date(project.submittedAt), "dd/MM/yyyy", { locale: ptBR })}</span>}
                   </div>
@@ -269,7 +270,7 @@ export default function ProjectDetailsPage() {
                       <span>Aprovado em {format(new Date(project.approvedAt), "dd/MM/yyyy", { locale: ptBR })}</span>
                     </div>
                   )}
-                  {project.status === "REJECTED" && project.rejectionReason && (
+                  {project.status === ProjectStatus.REJECTED && project.rejectionReason && (
                     <div className="text-red-600 dark:text-red-400">Motivo: {project.rejectionReason}</div>
                   )}
                 </CardContent>
@@ -292,7 +293,7 @@ export default function ProjectDetailsPage() {
 
             <div className="grid gap-8 md:grid-cols-3">
               {/* Main Info */}
-              <div className={cn("space-y-8", missingDependencies.length > 0 || (view?.allowActions && project.status === "DRAFT") ? "md:col-span-2" : "md:col-span-3")}>
+              <div className={cn("space-y-8", missingDependencies.length > 0 || (view?.allowActions && project.status === ProjectStatus.DRAFT) ? "md:col-span-2" : "md:col-span-3")}>
                 <section className="space-y-3">
                   <h3 className="text-lg font-semibold flex items-center gap-2">
                     <FileText className="h-5 w-5 text-primary" /> Objetivos
@@ -312,7 +313,7 @@ export default function ProjectDetailsPage() {
               </div>
 
               {/* Sidebar */}
-              {(missingDependencies.length > 0 || (view?.allowActions && project.status === "DRAFT")) && (
+              {(missingDependencies.length > 0 || (view?.allowActions && project.status === ProjectStatus.DRAFT)) && (
                 <div className="space-y-4">
                   {missingDependencies.length > 0 && (
                     <div className="space-y-4">
@@ -326,7 +327,7 @@ export default function ProjectDetailsPage() {
                     </div>
                   )}
 
-                  {!missingDependencies.length && view?.allowActions && project.status === "DRAFT" && (
+                  {!missingDependencies.length && view?.allowActions && project.status === ProjectStatus.DRAFT && (
                     <Card className="border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-950/20">
                       <CardHeader className="pb-3">
                         <div className="flex items-start gap-3">
@@ -507,8 +508,8 @@ export default function ProjectDetailsPage() {
                   const instance = li.legalInstrumentInstance
                   const instrument = li.legalInstrument
                   const hasAnswerFile = instance?.answerFile
-                  const status = instance?.status || "DRAFT"
-                  const isFilled = status !== "DRAFT"
+                  const status = instance?.status || LegalInstrumentStatus.PENDING
+                  const isFilled = status !== LegalInstrumentStatus.PENDING
 
                   return (
                     <div className="grid gap-6 md:grid-cols-3">
@@ -519,11 +520,11 @@ export default function ProjectDetailsPage() {
                               <Scale className="h-5 w-5" />
                               {instrument.name}
                             </CardTitle>
-                            <Badge variant={status === "APPROVED" ? "default" : "secondary"} className={cn("px-3 py-1 text-sm", status === "SENT_FOR_ANALYSIS" && "bg-blue-500 hover:bg-blue-600", status === "APPROVED" && "bg-green-500 hover:bg-green-600", status === "REJECTED" && "bg-red-500 hover:bg-red-600")}>
+                            <Badge variant={status === LegalInstrumentStatus.FILLED ? "default" : "secondary"} className={cn("px-3 py-1 text-sm", status === "SENT_FOR_ANALYSIS" && "bg-blue-500 hover:bg-blue-600", status === LegalInstrumentStatus.FILLED && "bg-green-500 hover:bg-green-600", status === "REJECTED" && "bg-red-500 hover:bg-red-600")}>
                               {status === "SENT_FOR_ANALYSIS" && "Em Análise"}
-                              {status === "APPROVED" && "Aprovado"}
+                              {status === LegalInstrumentStatus.FILLED && "Aprovado"}
                               {status === "REJECTED" && "Rejeitado"}
-                              {status === "DRAFT" && "Rascunho"}
+                              {status === LegalInstrumentStatus.PENDING && "Rascunho"}
                             </Badge>
                           </div>
                           <CardDescription className="text-base mt-2">{instrument.description}</CardDescription>
@@ -589,8 +590,8 @@ export default function ProjectDetailsPage() {
                               <CardTitle className="text-base">Ações</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-3">
-                              <Button className="w-full" variant={status === "DRAFT" ? "default" : "secondary"} asChild>
-                                <Link href={`/projetos/${project.slug}/legal-instrument/fill`}>{status === "DRAFT" ? (isFilled ? "Editar Respostas" : "Preencher Formulário") : "Visualizar Respostas"}</Link>
+                              <Button className="w-full" variant={status === LegalInstrumentStatus.PENDING ? "default" : "secondary"} asChild>
+                                <Link href={`/projetos/${project.slug}/legal-instrument/fill`}>{status === LegalInstrumentStatus.PENDING ? (isFilled ? "Editar Respostas" : "Preencher Formulário") : "Visualizar Respostas"}</Link>
                               </Button>
 
                               {hasAnswerFile && (

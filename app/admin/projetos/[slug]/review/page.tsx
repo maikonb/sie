@@ -17,6 +17,7 @@ import { useProject } from "@/components/providers/project-context"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { UserAvatar } from "@/components/user-avatar"
+import { ProjectStatus } from "@prisma/client"
 
 export default function ProjectReviewPage() {
   const params = useParams()
@@ -123,17 +124,17 @@ export default function ProjectReviewPage() {
                 Enviado em {format(new Date(project.submittedAt || project.createdAt), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
               </span>
               <Badge variant="outline" className={statusColor[project.status as keyof typeof statusColor]}>
-                {project.status === "PENDING_REVIEW" && "Aguardando Análise"}
-                {project.status === "UNDER_REVIEW" && "Em Análise"}
-                {project.status === "APPROVED" && "Aprovado"}
-                {project.status === "REJECTED" && "Rejeitado"}
+                {project.status === ProjectStatus.PENDING_REVIEW && "Aguardando Análise"}
+                {project.status === ProjectStatus.UNDER_REVIEW && "Em Análise"}
+                {project.status === ProjectStatus.APPROVED && "Aprovado"}
+                {project.status === ProjectStatus.REJECTED && "Rejeitado"}
               </Badge>
             </div>
           </div>
 
           {/* Action Buttons */}
           <div className="flex gap-2">
-            {project.status === "PENDING_REVIEW" && (
+            {project.status === ProjectStatus.PENDING_REVIEW && (
               <Button onClick={handleStartReview} disabled={isStartingReview} size="lg" className="bg-blue-600 hover:bg-blue-700">
                 {isStartingReview ? (
                   <>
@@ -147,7 +148,7 @@ export default function ProjectReviewPage() {
               </Button>
             )}
 
-            {project.status === "UNDER_REVIEW" && (
+            {project.status === ProjectStatus.UNDER_REVIEW && (
               <>
                 <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
                   <DialogTrigger asChild>

@@ -4,6 +4,7 @@ import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { CheckCircle2, Clock, XCircle, BarChart3, ArrowRight } from "lucide-react"
 import Link from "next/link"
+import { ProjectStatus, LegalInstrumentStatus } from "@prisma/client"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -23,7 +24,7 @@ export default async function ProjectsApprovalPage() {
     return notFound()
   }
 
-  const pendingProjects = projects.filter((p) => p.status === "PENDING_REVIEW" || p.status === "UNDER_REVIEW")
+  const pendingProjects = projects.filter((p) => p.status === ProjectStatus.PENDING_REVIEW || p.status === ProjectStatus.UNDER_REVIEW)
 
   return (
     <PageShell>
@@ -154,16 +155,16 @@ export default async function ProjectsApprovalPage() {
                                 <Badge
                                   variant="outline"
                                   className={
-                                    li.legalInstrumentInstance?.status === "FILLED"
+                                    li.legalInstrumentInstance?.status === LegalInstrumentStatus.FILLED
                                       ? "bg-green-500/10 text-green-600 border-green-200"
-                                      : li.legalInstrumentInstance?.status === "PARTIAL"
+                                      : li.legalInstrumentInstance?.status === LegalInstrumentStatus.PARTIAL
                                         ? "bg-yellow-500/10 text-yellow-600 border-yellow-200"
                                         : "bg-muted text-muted-foreground"
                                   }
                                 >
-                                  {li.legalInstrumentInstance?.status === "FILLED" && "Preenchido"}
-                                  {li.legalInstrumentInstance?.status === "PARTIAL" && "Parcial"}
-                                  {li.legalInstrumentInstance?.status === "PENDING" && "Pendente"}
+                                  {li.legalInstrumentInstance?.status === LegalInstrumentStatus.FILLED && "Preenchido"}
+                                  {li.legalInstrumentInstance?.status === LegalInstrumentStatus.PARTIAL && "Parcial"}
+                                  {li.legalInstrumentInstance?.status === LegalInstrumentStatus.PENDING && "Pendente"}
                                 </Badge>
                               </div>
                             ))}
