@@ -6,9 +6,11 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/config/auth"
 import { APP_ERRORS } from "@/lib/errors"
 import { ResourceMembersType, Project, LegalInstrumentInstance, ProjectStatus, LegalInstrumentStatus } from "@prisma/client"
+import { Prisma } from "@prisma/client"
 import PermissionsService from "@/lib/services/permissions"
 import { notifyAdminsOfNewSubmission, notifyUserOfApproval, notifyUserOfRejection } from "@/lib/services/email"
 import { logProjectAction } from "@/lib/services/audit"
+import type { ProjectClassificationResult } from "@/types/legal-instrument"
 import {
   projectWithRelationsValidator,
   projectWithBasicRelationsValidator,
@@ -89,7 +91,7 @@ export async function createProject(formData: FormData): Promise<Project> {
   })
 }
 
-export async function createLegalInstrument(slug: string, result: any): Promise<CreateLegalInstrumentResult> {
+export async function createLegalInstrument(slug: string, result: ProjectClassificationResult): Promise<CreateLegalInstrumentResult> {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.email) return { success: false, error: "Unauthorized" }
@@ -105,7 +107,7 @@ export async function createLegalInstrument(slug: string, result: any): Promise<
         const instance = await prismaTx.legalInstrumentInstance.create({
           data: {
             type: result.type,
-            fieldsJson: legalInstrument.fieldsJson as any,
+            fieldsJson: legalInstrument.fieldsJson as unknown as Prisma.InputJsonValue,
             project_classification_answers: result.history,
             fileId: legalInstrument.fileId,
           },

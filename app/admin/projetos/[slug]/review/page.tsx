@@ -19,6 +19,19 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { UserAvatar } from "@/components/user-avatar"
 import { ProjectStatus } from "@prisma/client"
 
+const getErrorMessage = (error: unknown): string | undefined => {
+  if (error instanceof Error) return error.message
+  if (typeof error === "object" && error && "message" in error) {
+    const message = (error as { message?: unknown }).message
+    return typeof message === "string" ? message : undefined
+  }
+  return undefined
+}
+
+const isPlainObject = (value: unknown): value is Record<string, unknown> => {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+}
+
 export default function ProjectReviewPage() {
   const params = useParams()
   const router = useRouter()
@@ -43,7 +56,7 @@ export default function ProjectReviewPage() {
   if (!project) return null
 
   const workPlan = project.workPlan
-  const legalInstruments = (project.legalInstruments as any[]) || []
+  const legalInstruments = project.legalInstruments
 
   const handleStartReview = async () => {
     try {
@@ -51,9 +64,9 @@ export default function ProjectReviewPage() {
       await startProjectReview(slug)
       toast.success("Análise iniciada com sucesso!")
       router.refresh()
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error)
-      toast.error(error?.message || "Erro ao iniciar análise")
+      toast.error(getErrorMessage(error) ?? "Erro ao iniciar análise")
     } finally {
       setIsStartingReview(false)
     }
@@ -66,9 +79,9 @@ export default function ProjectReviewPage() {
       toast.success("Projeto aprovado com sucesso!")
       router.push("/admin/projetos")
       router.refresh()
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error)
-      toast.error(error?.message || "Erro ao aprovar projeto")
+      toast.error(getErrorMessage(error) ?? "Erro ao aprovar projeto")
     } finally {
       setIsApproving(false)
     }
@@ -86,9 +99,9 @@ export default function ProjectReviewPage() {
       toast.success("Projeto rejeitado")
       router.push("/admin/projetos")
       router.refresh()
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error)
-      toast.error(error?.message || "Erro ao rejeitar projeto")
+      toast.error(getErrorMessage(error) ?? "Erro ao rejeitar projeto")
     } finally {
       setIsRejecting(false)
       setShowRejectDialog(false)
@@ -390,7 +403,8 @@ export default function ProjectReviewPage() {
                       <div className="space-y-3">
                         <h4 className="font-medium text-sm">Respostas Preenchidas</h4>
                         <div className="space-y-2 text-sm">
-                          {Object.entries(li.legalInstrumentInstance.answers).map(([key, value]: [string, any]) => (
+                          {isPlainObject(li.legalInstrumentInstance.answers) &&
+                            Object.entries(li.legalInstrumentInstance.answers).map(([key, value]) => (
                             <div key={key} className="p-2 bg-muted/30 rounded">
                               <p className="font-medium text-xs text-muted-foreground uppercase">{key}</p>
                               <p className="text-foreground">{String(value)}</p>

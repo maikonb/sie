@@ -1,4 +1,5 @@
 import { Prisma, Project } from "@prisma/client"
+import type { ProjectClassificationAnswer } from "@/types/legal-instrument"
 
 // ============================================================================
 // VALIDATORS - Using Prisma.validator for type-safe database queries
@@ -147,7 +148,7 @@ export interface CreateLegalInstrumentInput {
   slug: string
   result: {
     type: string
-    history?: any
+    history?: ProjectClassificationAnswer[]
   }
 }
 

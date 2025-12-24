@@ -27,17 +27,17 @@ export class ApiClient {
     return response.data
   }
 
-  public async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  public async post<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
     const response: AxiosResponse<T> = await this.api.post(url, data, config)
     return response.data
   }
 
-  public async put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  public async put<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
     const response: AxiosResponse<T> = await this.api.put(url, data, config)
     return response.data
   }
 
-  public async patch<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  public async patch<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
     const response: AxiosResponse<T> = await this.api.patch(url, data, config)
     return response.data
   }

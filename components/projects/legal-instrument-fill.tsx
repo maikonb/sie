@@ -16,14 +16,9 @@ import { Badge } from "@/components/ui/badge"
 
 import { saveLegalInstrumentAnswers } from "@/actions/legal-instruments"
 
-type FieldSpec = {
-  id: string
-  name: string
-  label: string
-  type: string
-  required?: boolean
-  options?: string[]
-}
+import type { LegalInstrumentAnswers, LegalInstrumentFieldSpec, LegalInstrumentAnswerValue } from "@/types/legal-instrument"
+
+type FieldSpec = LegalInstrumentFieldSpec
 
 interface LegalInstrumentFillClientProps {
   instance: LegalInstrumentInstance & {
@@ -38,15 +33,15 @@ interface LegalInstrumentFillClientProps {
 
 export default function LegalInstrumentFillClient({ instance, projectSlug }: LegalInstrumentFillClientProps) {
   const router = useRouter()
-  const [answers, setAnswers] = useState<any>(instance.answers || {})
+  const [answers, setAnswers] = useState<LegalInstrumentAnswers>((instance.answers as unknown as LegalInstrumentAnswers) || {})
   const [saving, setSaving] = useState(false)
 
   const fields = (instance.fieldsJson as unknown as FieldSpec[]) || []
   const isEditable = instance.status !== LegalInstrumentStatus.FILLED
 
-  const handleChange = (id: string, value: any) => {
+  const handleChange = (id: string, value: LegalInstrumentAnswerValue) => {
     if (!isEditable) return
-    setAnswers((prev: any) => ({ ...prev, [id]: value }))
+    setAnswers((prev) => ({ ...prev, [id]: value }))
   }
 
   const handleSave = async () => {

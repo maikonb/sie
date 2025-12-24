@@ -2,13 +2,21 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react"
 import { useParams, useRouter } from "next/navigation"
+import axios from "axios"
 import { getProjectBySlug, getProjectViewerContext } from "@/actions/projects"
 import type { GetProjectBySlugResponse, ProjectViewerContext } from "@/actions/projects/types"
+
+type ProjectData = NonNullable<GetProjectBySlugResponse>
+
+export type ProjectDependences = {
+  "work-plan": ProjectData["workPlan"] | null
+  "legal-instrument": ProjectData["legalInstruments"] | null
+}
 
 interface ProjectContextType {
   project: GetProjectBySlugResponse
   loading: boolean
-  dependences: Record<string, any>
+  dependences: ProjectDependences
   view: ProjectViewerContext | null
   refetch: () => Promise<void>
 }
@@ -20,7 +28,10 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
   const router = useRouter()
   const [project, setProject] = useState<GetProjectBySlugResponse>(null)
   const [loading, setLoading] = useState(true)
-  const [dependences, setDependences] = useState({})
+  const [dependences, setDependences] = useState<ProjectDependences>({
+    "work-plan": null,
+    "legal-instrument": null,
+  })
   const [view, setView] = useState<ProjectViewerContext | null>(null)
 
   const fetchProject = async () => {
@@ -38,9 +49,9 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         "work-plan": data?.workPlan || null,
         "legal-instrument": data?.legalInstruments || null,
       })
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to fetch project:", error)
-      if (error.response?.status === 404) router.push("/404")
+      if (axios.isAxiosError(error) && error.response?.status === 404) router.push("/404")
     } finally {
       setLoading(false)
     }

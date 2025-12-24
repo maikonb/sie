@@ -41,7 +41,7 @@ export function NavMain({
       ) : (
         <SidebarMenu>
           {visibleItems.map(({ item }) => (
-            <Collapsible key={item.title} asChild defaultOpen={(item as any).isActive}>
+            <Collapsible key={item.title} asChild defaultOpen={item.isActive}>
               <SidebarMenuItem>
                 <PermissionGuard permission={item.permissionSlug} canMap={canMap}>
                   {item.url ? (
@@ -60,7 +60,7 @@ export function NavMain({
                     </CollapsibleTrigger>
                   )}
 
-                  {(item as any).items?.length ? (
+                  {item.items?.length ? (
                     <>
                       <CollapsibleTrigger asChild>
                         <SidebarMenuAction className="data-[state=open]:rotate-90">
@@ -70,7 +70,7 @@ export function NavMain({
                       </CollapsibleTrigger>
                       <CollapsibleContent>
                         <SidebarMenuSub>
-                          {(item as any).items?.map((subItem: any) => (
+                          {item.items.map((subItem) => (
                             <SidebarMenuSubItem key={subItem.title}>
                               <PermissionGuard permission={subItem.permissionSlug} canMap={canMap}>
                                 <SidebarMenuSubButton asChild>

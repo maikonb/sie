@@ -5,6 +5,8 @@ import PermissionsService from "@/lib/services/permissions"
 import { getAuthSession } from "@/lib/api-utils"
 import { fileService } from "@/lib/services/file"
 import { LegalInstrumentStatus } from "@prisma/client"
+import { Prisma } from "@prisma/client"
+import type { LegalInstrumentAnswers, LegalInstrumentFieldSpec, LegalInstrumentAnswerValue } from "@/types/legal-instrument"
 import {
   legalInstrumentListValidator,
   legalInstrumentWithFileValidator,
@@ -16,6 +18,11 @@ import {
   SaveLegalInstrumentAnswersResponse,
   CheckExistingLegalInstrumentResponse,
 } from "./types"
+
+export type UpdateLegalInstrumentPayload = {
+  fileKey?: string
+  fieldsJson?: LegalInstrumentFieldSpec[]
+}
 
 export async function getLegalInstruments(): Promise<GetLegalInstrumentsResponse> {
   const session = await getAuthSession()
@@ -40,7 +47,7 @@ export async function getLegalInstrumentById(id: string): Promise<GetLegalInstru
   })
 }
 
-export async function updateLegalInstrument(id: string, data: any): Promise<UpdateLegalInstrumentResponse> {
+export async function updateLegalInstrument(id: string, data: UpdateLegalInstrumentPayload): Promise<UpdateLegalInstrumentResponse> {
   const session = await getAuthSession()
   if (!session?.user?.id) throw new Error("Unauthorized")
 
@@ -52,9 +59,9 @@ export async function updateLegalInstrument(id: string, data: any): Promise<Upda
     fileRecord = await fileService.createFileFromS3(data.fileKey)
   }
 
-  const updateData: any = {}
-  if (data.fieldsJson) updateData.fieldsJson = data.fieldsJson
-  if (fileRecord) updateData.fileId = fileRecord.id
+  const updateData: Prisma.LegalInstrumentUpdateInput = {}
+  if (data.fieldsJson) updateData.fieldsJson = data.fieldsJson as unknown as Prisma.InputJsonValue
+  if (fileRecord) updateData.file = { connect: { id: fileRecord.id } }
 
   return prisma.legalInstrument.update({
     where: { id },
@@ -65,8 +72,8 @@ export async function updateLegalInstrument(id: string, data: any): Promise<Upda
 
 export async function previewLegalInstrument(
   id: string,
-  fieldsJson: any[],
-  sampleValues: any
+  fieldsJson: LegalInstrumentFieldSpec[],
+  sampleValues: Record<string, LegalInstrumentAnswerValue>
 ): Promise<PreviewLegalInstrumentResponse> {
   const session = await getAuthSession()
   if (!session?.user?.id) throw new Error("Unauthorized")
@@ -93,7 +100,7 @@ export async function previewLegalInstrument(
   }
 
   const sample = sampleValues || {}
-  const fields = fieldsJson || (li.fieldsJson as any[]) || []
+  const fields = fieldsJson || ((li.fieldsJson as unknown) as LegalInstrumentFieldSpec[]) || []
 
   let preview = text
   for (const f of fields) {
@@ -107,7 +114,7 @@ export async function previewLegalInstrument(
 
 export async function saveLegalInstrumentAnswers(
   instanceId: string,
-  answers: any
+  answers: LegalInstrumentAnswers
 ): Promise<SaveLegalInstrumentAnswersResponse> {
   const session = await getAuthSession()
   if (!session?.user?.id) throw new Error("Unauthorized")
@@ -123,7 +130,7 @@ export async function saveLegalInstrumentAnswers(
   let answerFileId = undefined
 
   // Determine status based on answers completeness
-  const fields = (instance.fieldsJson as any[]) || []
+  const fields = ((instance.fieldsJson as unknown) as LegalInstrumentFieldSpec[]) || []
   const requiredFields = fields.filter((f) => f.required)
   const allRequiredFilled = requiredFields.every((f) => {
     const val = answers[f.id]

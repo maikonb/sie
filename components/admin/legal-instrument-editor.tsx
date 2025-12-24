@@ -19,14 +19,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { updateLegalInstrument } from "@/actions/legal-instruments"
 import { generatePresignedUrl } from "@/actions/storage"
 
-type FieldSpec = {
-  id: string
-  name: string
-  label: string
-  type: string
-  required?: boolean
-  options?: string[]
-}
+import type { LegalInstrumentFieldSpec } from "@/types/legal-instrument"
+
+type FieldSpec = LegalInstrumentFieldSpec
 
 interface EditLegalInstrumentClientProps {
   instrument: LegalInstrument
@@ -68,7 +63,7 @@ function SortableRow({ field, index, updateField, removeField }: { field: FieldS
       </div>
 
       <div>
-        <select className="flex h-9 w-full items-center justify-between rounded-md border border-transparent bg-transparent px-3 py-1 text-sm shadow-none ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring focus:bg-background focus:border-input hover:border-input disabled:cursor-not-allowed disabled:opacity-50 transition-all cursor-pointer" value={field.type} onChange={(e) => updateField(index, { type: e.target.value })}>
+        <select className="flex h-9 w-full items-center justify-between rounded-md border border-transparent bg-transparent px-3 py-1 text-sm shadow-none ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring focus:bg-background focus:border-input hover:border-input disabled:cursor-not-allowed disabled:opacity-50 transition-all cursor-pointer" value={field.type} onChange={(e) => updateField(index, { type: e.target.value as FieldSpec["type"] })}>
           {FIELD_TYPES.map((t) => (
             <option key={t.value} value={t.value}>
               {t.label}
@@ -178,7 +173,7 @@ export default function EditLegalInstrumentClient({ instrument }: EditLegalInstr
 
   async function onSave() {
     try {
-      const payload: any = { fieldsJson: fields }
+      const payload: { fieldsJson: FieldSpec[]; fileKey?: string } = { fieldsJson: fields }
       if (fileKey) payload.fileKey = fileKey
       await updateLegalInstrument(instrument.id, payload)
       toast.success("Alterações salvas com sucesso")

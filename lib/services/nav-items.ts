@@ -1,16 +1,33 @@
 import { type LucideIcon } from "lucide-react"
 
-export interface NavTransform {
+export interface NavTransform<TChanges extends object> {
   permission: string
   negate?: boolean
-  changes: Record<string, any>
+  changes: Partial<TChanges>
+}
+
+export type NavItemChanges = {
+  title?: string
+  icon?: LucideIcon
+  permissionSlug?: string
+  url?: string
+  items?: NavItemChild[]
+  isActive?: boolean
+}
+
+export type NavChildChanges = {
+  title?: string
+  url?: string
+  permissionSlug?: string
+  isActive?: boolean
 }
 
 export interface BaseNavItem {
   title: string
   icon?: LucideIcon
   permissionSlug?: string
-  transforms?: NavTransform[]
+  isActive?: boolean
+  transforms?: NavTransform<NavItemChanges>[]
 }
 
 export interface NavItemWithUrl extends BaseNavItem {
@@ -27,10 +44,15 @@ export interface NavItemChild {
   title: string
   url: string
   permissionSlug?: string
-  transforms?: NavTransform[]
+  isActive?: boolean
+  transforms?: NavTransform<NavChildChanges>[]
 }
 
 export type NavItem = NavItemWithUrl | NavItemWithChildren
+
+export function hasChildren(item: NavItem): item is NavItemWithChildren {
+  return Array.isArray(item.items)
+}
 
 /**
  * Extrai todas as permissões de um array de items para validação
@@ -39,7 +61,7 @@ export function extractPermissionSlugs(items: NavItem[]): string[] {
   const permissionSlugs = items.flatMap((item) => (item.permissionSlug ? [item.permissionSlug] : []))
 
   const childPermissions = items
-    .filter((item): item is NavItemWithChildren => !!(item as any).items)
+    .filter(hasChildren)
     .flatMap((item) => item.items.flatMap((child) => (child.permissionSlug ? [child.permissionSlug] : [])))
 
   return Array.from(new Set([...permissionSlugs, ...childPermissions]))
@@ -52,7 +74,7 @@ export function extractTransformPermissions(items: NavItem[]): string[] {
   const transforms = items.flatMap((item) => item.transforms?.map((t) => t.permission) || [])
 
   const childTransforms = items
-    .filter((item): item is NavItemWithChildren => !!(item as any).items)
+    .filter(hasChildren)
     .flatMap((item) => item.items.flatMap((child) => child.transforms?.map((t) => t.permission) || []))
 
   return Array.from(new Set([...transforms, ...childTransforms]))
@@ -62,20 +84,22 @@ export function extractTransformPermissions(items: NavItem[]): string[] {
  * Aplica transformações baseadas em permissões
  */
 export function applyTransforms(item: NavItem, canMap: Record<string, boolean>): NavItem {
-  let out: any = { ...item }
+  let out: NavItem = { ...item }
 
   if (item.transforms) {
     for (const transform of item.transforms) {
       const has = !!canMap[transform.permission]
       const apply = transform.negate ? !has : has
       if (apply) {
-        out = { ...out, ...transform.changes }
+        out = { ...out, ...transform.changes } as NavItem
       }
     }
   }
 
-  if ((item as any).items) {
-    out.items = (item as NavItemWithChildren).items.map((child) => {
+  if (hasChildren(item)) {
+    out = {
+      ...out,
+      items: item.items.map((child) => {
       let childOut = { ...child }
       if (child.transforms) {
         for (const transform of child.transforms) {
@@ -87,7 +111,8 @@ export function applyTransforms(item: NavItem, canMap: Record<string, boolean>):
         }
       }
       return childOut
-    })
+      }),
+    } as NavItem
   }
 
   return out
@@ -103,8 +128,8 @@ export function shouldRenderItem(item: NavItem, hasPermission: boolean): boolean
   }
 
   // Se é um item com children, verifica se há ao menos um filho com permissão
-  if ((item as any).items) {
-    const children = (item as NavItemWithChildren).items
+  if (hasChildren(item)) {
+    const children = item.items
     // Se não tem URL própria e todos os filhos estão sem permissão, não renderiza
     return children.some((child) => !child.permissionSlug || hasPermission)
   }
@@ -128,8 +153,8 @@ export function processNavItems(
       const hasPermission = !item.permissionSlug || !!canMap[item.permissionSlug]
 
       // Se é um grupo com children, filtra os filhos
-      if ((item as any).items) {
-        const visibleChildren = (item as NavItemWithChildren).items.filter(
+      if (hasChildren(item)) {
+        const visibleChildren = item.items.filter(
           (child) => !child.permissionSlug || !!canMap[child.permissionSlug]
         )
 

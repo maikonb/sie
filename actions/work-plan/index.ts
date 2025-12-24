@@ -20,8 +20,15 @@ export async function getWorkPlan(projectId: string): Promise<GetWorkPlanRespons
     // Parse specificObjectives robustly into string[]
     let specificObjectives: string[] = []
     if (workPlan.specificObjectives && Array.isArray(workPlan.specificObjectives)) {
-      specificObjectives = (workPlan.specificObjectives as any[])
-        .map((item) => (typeof item === "string" ? item : item?.value))
+      specificObjectives = workPlan.specificObjectives
+        .map((item) => {
+          if (typeof item === "string") return item
+          if (typeof item === "object" && item !== null && "value" in item) {
+            const maybeValue = (item as { value?: unknown }).value
+            return typeof maybeValue === "string" ? maybeValue : undefined
+          }
+          return undefined
+        })
         .filter((v): v is string => typeof v === "string" && v.length > 0)
     }
 

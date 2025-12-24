@@ -35,8 +35,9 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
       const res = await requestOtp(email)
       if (!res.success) throw new Error(res.error)
       router.push(`/auth/otp?email=${encodeURIComponent(email)}`)
-    } catch (error: any) {
-      notify.error(error.response?.data?.error || APP_ERRORS.AUTH_SEND_FAILED.code)
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error)
+      notify.error(message || APP_ERRORS.AUTH_SEND_FAILED.code)
     } finally {
       setIsLoading(false)
     }

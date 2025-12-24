@@ -6,6 +6,7 @@ import { fileService } from "@/lib/services/file"
 import { APP_ERRORS } from "@/lib/errors"
 import { sendOtpEmail } from "@/lib/services/email"
 import bcrypt from "bcryptjs"
+import { Prisma } from "@prisma/client"
 import {
   userValidator,
   UpdateFirstAccessResponse,
@@ -24,13 +25,13 @@ export async function updateFirstAccess(data: { username: string; imageKey?: str
     fileRecord = await fileService.createFileFromS3(data.imageKey)
   }
 
-  const updateData: any = {
+  const updateData: Prisma.UserUpdateInput = {
     name: data.username,
     firstAccess: false,
   }
 
   if (fileRecord) {
-    updateData.imageId = fileRecord.id
+    updateData.imageFile = { connect: { id: fileRecord.id } }
   }
 
   try {

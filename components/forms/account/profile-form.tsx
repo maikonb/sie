@@ -28,7 +28,15 @@ const profileFormSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>
 
-export function ProfileForm({ user }: { user: any }) {
+type AccountProfileUser = {
+  id: string
+  name: string
+  email: string
+  avatar: string
+  color: string
+}
+
+export function ProfileForm({ user }: { user: AccountProfileUser }) {
   const { update } = useSession()
   const [isLoading, setIsLoading] = useState(false)
   const [preview, setPreview] = useState(user.avatar)
@@ -119,7 +127,7 @@ export function ProfileForm({ user }: { user: any }) {
       })
 
       notify.success("Perfil atualizado com sucesso!")
-    } catch (error: any) {
+    } catch (error: unknown) {
       notify.error("Erro ao atualizar perfil")
       console.error(error)
     } finally {

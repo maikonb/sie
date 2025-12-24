@@ -68,8 +68,9 @@ export function OTPForm({ ...props }: React.ComponentProps<typeof Card>) {
       if (!res.success) throw new Error(res.error)
       notify.success("Código reenviado com sucesso!")
       setTimeLeft(25)
-    } catch (error: any) {
-      notify.error(error.response?.data?.error || APP_ERRORS.AUTH_SEND_FAILED.code)
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error)
+      notify.error(message || APP_ERRORS.AUTH_SEND_FAILED.code)
     }
   }
 

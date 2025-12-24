@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react"
 import Cropper from "react-easy-crop"
+import type { Area } from "react-easy-crop"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { getCroppedImg } from "@/lib/utils/image"
@@ -18,7 +19,7 @@ interface ImageCropperProps {
 export function ImageCropper({ imageSrc, open, onOpenChange, onCropComplete, aspectRatio = 1 }: ImageCropperProps) {
   const [crop, setCrop] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null)
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
   const onCropChange = (crop: { x: number; y: number }) => {
@@ -29,7 +30,7 @@ export function ImageCropper({ imageSrc, open, onOpenChange, onCropComplete, asp
     setZoom(zoom)
   }
 
-  const onCropCompleteCallback = useCallback((croppedArea: any, croppedAreaPixels: any) => {
+  const onCropCompleteCallback = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
     setCroppedAreaPixels(croppedAreaPixels)
   }, [])
 

@@ -1,4 +1,5 @@
 import { PrismaClient } from "../client"
+import type { User } from "@prisma/client"
 
 type UserSeed = {
   name: string
@@ -31,7 +32,7 @@ export async function seedTestUsers(prisma: PrismaClient) {
     },
   ]
 
-  const created: any[] = []
+  const created: User[] = []
 
   for (const s of seeds) {
     const { roleId } = (s.query ? await s.query(prisma) : { roleId: undefined }) || {}

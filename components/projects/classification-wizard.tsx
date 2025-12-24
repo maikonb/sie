@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button"
 import { CheckCircle2, RotateCcw, ArrowRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { LegalInstrumentType } from "@prisma/client"
+import type { ProjectClassificationAnswer, ProjectClassificationResult, ProjectClassificationSavedState } from "@/types/legal-instrument"
 
-const STATE_TO_PARTNERSHIP_TYPE: Record<string, string> = {
+const STATE_TO_PARTNERSHIP_TYPE: Record<string, LegalInstrumentType> = {
   result_pdi_agreement: LegalInstrumentType.PDI_AGREEMENT,
   result_service_contract: LegalInstrumentType.SERVICE_CONTRACT,
   result_appdi_private: LegalInstrumentType.APPDI_PRIVATE,
@@ -21,8 +22,8 @@ const STATE_TO_PARTNERSHIP_TYPE: Record<string, string> = {
 }
 
 interface ProjectClassificationWizardProps {
-  onComplete: (result: any) => void
-  initialState?: any
+  onComplete: (result: ProjectClassificationResult) => void
+  initialState?: ProjectClassificationSavedState
   onReset?: () => void
 }
 
@@ -33,11 +34,13 @@ export function ProjectClassificationWizard({ onComplete, initialState, onReset 
 
   const machine = useMemo(() => createProjectFlowMachine(), [])
   const [state, send] = useMachine(machine)
-  const [history, setHistory] = useState<{ question: string; answer: string }[]>([])
+  const [history, setHistory] = useState<ProjectClassificationAnswer[]>([])
 
   const currentStateValue = state.value as string
   const isFinal = Object.keys(STATE_TO_PARTNERSHIP_TYPE).includes(currentStateValue)
-  const currentStateNode = machine.states[currentStateValue as keyof typeof machine.states] as any
+  const currentStateNode = machine.states[currentStateValue as keyof typeof machine.states] as unknown as
+    | { meta?: { description?: string } }
+    | undefined
   const description = currentStateNode?.meta?.description || "Responda para continuar..."
 
   const handleAnswer = (answer: "YES" | "NO") => {
@@ -72,7 +75,7 @@ export function ProjectClassificationWizard({ onComplete, initialState, onReset 
   useEffect(() => {
     if (initialState && initialState.history && initialState.history.length > 0) {
       send({ type: "RESET" })
-      initialState.history.forEach((h: any) => {
+      initialState.history.forEach((h) => {
         send({ type: h.answer === "Sim" ? "ANSWER_YES" : "ANSWER_NO" })
       })
       setHistory(initialState.history)

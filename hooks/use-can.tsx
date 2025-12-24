@@ -24,9 +24,9 @@ export function useCan(input: CheckInput) {
         const result = await checkPermission(payload.slug, payload.referenceTable, payload.referenceId)
         if (!isMounted) return
         setCan(result.can)
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (!isMounted) return
-        setError(err?.message || String(err))
+        setError(err instanceof Error ? err.message : String(err))
         setCan(false)
       } finally {
         if (isMounted) setLoading(false)

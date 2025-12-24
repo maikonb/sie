@@ -19,7 +19,7 @@ const prodSeeds = [
   seedSystemDefaults // alweys last
 ]
 
-function chooseSeeds(arg: string): Array<(prisma: PrismaClient) => Promise<any>> {
+function chooseSeeds(arg: string): Array<(prisma: PrismaClient) => Promise<unknown>> {
   if (arg === "prod" || arg === "production") return prodSeeds
   return devSeeds
 }

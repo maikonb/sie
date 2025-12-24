@@ -21,6 +21,32 @@ import { UserAvatar } from "@/components/user-avatar"
 import { ProjectStatus, LegalInstrumentStatus } from "@prisma/client"
 import { submitProjectForApproval } from "@/actions/projects"
 import { toast } from "sonner"
+import type { LucideIcon } from "lucide-react"
+import type { ProjectDependences } from "@/components/providers/project"
+
+type MissingDependency = {
+  id: string
+  label: string
+  description: string
+  link: string
+  action: string
+  icon: LucideIcon
+}
+
+type ProjectLegalInstrumentRelation = NonNullable<ProjectDependences["legal-instrument"]>[number]
+
+const getErrorMessage = (error: unknown): string | undefined => {
+  if (error instanceof Error) return error.message
+  if (typeof error === "object" && error && "message" in error) {
+    const message = (error as { message?: unknown }).message
+    return typeof message === "string" ? message : undefined
+  }
+  return undefined
+}
+
+const isPlainObject = (value: unknown): value is Record<string, unknown> => {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+}
 
 export default function ProjectDetailsPage() {
   const router = useRouter()
@@ -47,10 +73,10 @@ export default function ProjectDetailsPage() {
   if (!project) return null
 
   const workPlan = dependences["work-plan"]
-  const legalInstruments = (dependences["legal-instrument"] as any[]) || []
+  const legalInstruments: ProjectLegalInstrumentRelation[] = dependences["legal-instrument"] ?? []
 
   // Calculate dependencies
-  const missingDependencies = []
+  const missingDependencies: MissingDependency[] = []
 
   const hasWorkPlan = !!workPlan
   const hasLegalInstruments = legalInstruments.length > 0
@@ -76,9 +102,9 @@ export default function ProjectDetailsPage() {
       await submitProjectForApproval(project.slug!)
       toast.success("Projeto enviado para análise!")
       router.refresh()
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error)
-      toast.error(error?.message || "Erro ao enviar projeto")
+      toast.error(getErrorMessage(error) ?? "Erro ao enviar projeto")
     } finally {
       setIsSubmitting(false)
     }
@@ -353,30 +379,33 @@ export default function ProjectDetailsPage() {
                 <CardDescription>Registro de ações do projeto</CardDescription>
               </CardHeader>
               <CardContent>
-                {!Array.isArray((project as any).audits) || !(project as any).audits.length ? (
+                {!project.audits.length ? (
                   <div className="text-sm text-muted-foreground">Nenhuma ação registrada ainda.</div>
                 ) : (
                   <div className="space-y-3">
-                    {(project as any).audits.map((a: any) => (
-                      <div key={a.id} className="flex items-center gap-3 text-sm">
-                        <div className="shrink-0 w-2 h-2 rounded-full bg-muted" />
-                        <div className="flex-1">
-                          <div className="font-medium">
-                            {a.action === "SUBMITTED" && "Enviado para análise"}
-                            {a.action === "APPROVED" && "Aprovado"}
-                            {a.action === "REJECTED" && "Rejeitado"}
-                            {!["SUBMITTED","APPROVED","REJECTED"].includes(a.action) && a.action}
+                    {project.audits.map((a) => {
+                      const reason =
+                        isPlainObject(a.changeDetails) && typeof a.changeDetails.reason === "string" ? a.changeDetails.reason : undefined
+
+                      return (
+                        <div key={a.id} className="flex items-center gap-3 text-sm">
+                          <div className="shrink-0 w-2 h-2 rounded-full bg-muted" />
+                          <div className="flex-1">
+                            <div className="font-medium">
+                              {a.action === "SUBMITTED" && "Enviado para análise"}
+                              {a.action === "APPROVED" && "Aprovado"}
+                              {a.action === "REJECTED" && "Rejeitado"}
+                              {!(["SUBMITTED", "APPROVED", "REJECTED"] as string[]).includes(a.action) && a.action}
+                            </div>
+                            <div className="text-muted-foreground">
+                              {a.user?.name ? `por ${a.user.name}` : null}
+                              {a.createdAt ? ` • ${format(new Date(a.createdAt), "dd/MM/yyyy HH:mm", { locale: ptBR })}` : null}
+                            </div>
+                            {reason && <div className="text-red-600 dark:text-red-400">Motivo: {reason}</div>}
                           </div>
-                          <div className="text-muted-foreground">
-                            {a.user?.name ? `por ${a.user.name}` : null}
-                            {a.createdAt ? ` • ${format(new Date(a.createdAt), "dd/MM/yyyy HH:mm", { locale: ptBR })}` : null}
-                          </div>
-                          {a.changeDetails?.reason && (
-                            <div className="text-red-600 dark:text-red-400">Motivo: {a.changeDetails.reason}</div>
-                          )}
                         </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 )}
               </CardContent>
@@ -507,7 +536,7 @@ export default function ProjectDetailsPage() {
                   const li = legalInstruments[0]
                   const instance = li.legalInstrumentInstance
                   const instrument = li.legalInstrument
-                  const hasAnswerFile = instance?.answerFile
+                  const answerFile = instance?.answerFile ?? null
                   const status = instance?.status || LegalInstrumentStatus.PENDING
                   const isFilled = status !== LegalInstrumentStatus.PENDING
 
@@ -520,10 +549,11 @@ export default function ProjectDetailsPage() {
                               <Scale className="h-5 w-5" />
                               {instrument.name}
                             </CardTitle>
-                            <Badge variant={status === LegalInstrumentStatus.FILLED ? "default" : "secondary"} className={cn("px-3 py-1 text-sm", status === "SENT_FOR_ANALYSIS" && "bg-blue-500 hover:bg-blue-600", status === LegalInstrumentStatus.FILLED && "bg-green-500 hover:bg-green-600", status === "REJECTED" && "bg-red-500 hover:bg-red-600")}>
-                              {status === "SENT_FOR_ANALYSIS" && "Em Análise"}
+                            <Badge
+                              variant={status === LegalInstrumentStatus.FILLED ? "default" : "secondary"}
+                              className={cn("px-3 py-1 text-sm", status === LegalInstrumentStatus.FILLED && "bg-green-500 hover:bg-green-600")}
+                            >
                               {status === LegalInstrumentStatus.FILLED && "Aprovado"}
-                              {status === "REJECTED" && "Rejeitado"}
                               {status === LegalInstrumentStatus.PENDING && "Rascunho"}
                             </Badge>
                           </div>
@@ -565,15 +595,15 @@ export default function ProjectDetailsPage() {
                             </div>
                           </div>
 
-                          {hasAnswerFile && (
+                          {answerFile && (
                             <div className="p-4 rounded-lg bg-muted/50 border">
                               <h4 className="font-medium mb-2 flex items-center gap-2">
                                 <FileText className="h-4 w-4" /> Documento Gerado
                               </h4>
                               <div className="flex items-center justify-between bg-background p-3 rounded border">
-                                <span className="text-sm truncate max-w-[200px] sm:max-w-md">{instance.answerFile.filename || "documento.pdf"}</span>
+                                <span className="text-sm truncate max-w-[200px] sm:max-w-md">{answerFile.filename || "documento.pdf"}</span>
                                 <Button size="sm" variant="ghost" asChild>
-                                  <Link href={instance.answerFile.url} target="_blank">
+                                  <Link href={answerFile.url} target="_blank">
                                     <Download className="h-4 w-4 mr-2" /> Baixar
                                   </Link>
                                 </Button>
@@ -594,9 +624,9 @@ export default function ProjectDetailsPage() {
                                 <Link href={`/projetos/${project.slug}/legal-instrument/fill`}>{status === LegalInstrumentStatus.PENDING ? (isFilled ? "Editar Respostas" : "Preencher Formulário") : "Visualizar Respostas"}</Link>
                               </Button>
 
-                              {hasAnswerFile && (
+                              {answerFile && (
                                 <Button className="w-full" variant="outline" asChild>
-                                  <Link href={instance.answerFile.url} target="_blank">
+                                  <Link href={answerFile.url} target="_blank">
                                     <Download className="mr-2 h-4 w-4" /> Download PDF
                                   </Link>
                                 </Button>

@@ -14,14 +14,10 @@ export const workPlanValidator = Prisma.validator<Prisma.WorkPlanDefaultArgs>()(
 // OUTPUT TYPES - Direct Prisma.validator payloads
 // ============================================================================
 
-/**
- * Response type for getWorkPlan
- */
-export interface GetWorkPlanResponse {
-  id: string
-  projectId: string
+export type WorkPlanModel = Prisma.WorkPlanGetPayload<typeof workPlanValidator>
+
+export type GetWorkPlanResponse = Omit<WorkPlanModel, "specificObjectives"> & {
   specificObjectives: string[]
-  [key: string]: any
 }
 
 /**

@@ -9,15 +9,16 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { createLegalInstrument } from "@/actions/projects"
 import { notify } from "@/lib/notifications"
 import { APP_ERRORS } from "@/lib/errors"
+import type { ProjectClassificationResult, ProjectClassificationSavedState } from "@/types/legal-instrument"
 
 export default function Page() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { project, loading } = useProject()
   const [mode, setMode] = useState<"start" | "wizard">("start")
-  const [initialState, setInitialState] = useState<any>(null)
+  const [initialState, setInitialState] = useState<ProjectClassificationSavedState | null>(null)
 
-  const handleComplete = async (res: any) => {
+  const handleComplete = async (res: ProjectClassificationResult) => {
     if (!project || !project.slug) return
 
     const result = await createLegalInstrument(project.slug, res)
@@ -43,7 +44,7 @@ export default function Page() {
     setMode("wizard")
   }
 
-  const handleResume = (savedState: any) => {
+  const handleResume = (savedState: ProjectClassificationSavedState) => {
     setInitialState(savedState)
     setMode("wizard")
   }
@@ -78,7 +79,7 @@ export default function Page() {
   return (
     <div className="h-full bg-linear-to-b from-background to-muted/20">
       <div className="container min-h-full mx-auto py-6 px-4 md:py-8 flex flex-col">
-        <div className="flex-1 flex flex-col h-full justify-center">{mode === "start" ? <ProjectClassificationStart projectSlug={project.slug!} onStart={handleStart} onResume={handleResume} /> : <ProjectClassificationWizard initialState={initialState} onReset={handleWizardReset} onComplete={handleComplete} />}</div>
+        <div className="flex-1 flex flex-col h-full justify-center">{mode === "start" ? <ProjectClassificationStart projectSlug={project.slug!} onStart={handleStart} onResume={handleResume} /> : <ProjectClassificationWizard initialState={initialState ?? undefined} onReset={handleWizardReset} onComplete={handleComplete} />}</div>
       </div>
     </div>
   )

@@ -1,4 +1,5 @@
 import { Prisma, LegalInstrument, LegalInstrumentInstance } from "@prisma/client"
+import type { LegalInstrumentAnswers, LegalInstrumentFieldSpec, LegalInstrumentAnswerValue } from "@/types/legal-instrument"
 
 // ============================================================================
 // VALIDATORS - Using Prisma.validator for type-safe database queries
@@ -91,7 +92,7 @@ export interface UpdateLegalInstrumentInput {
   id: string
   data: {
     fileKey?: string
-    fieldsJson?: any[]
+    fieldsJson?: LegalInstrumentFieldSpec[]
   }
 }
 
@@ -100,8 +101,8 @@ export interface UpdateLegalInstrumentInput {
  */
 export interface PreviewLegalInstrumentInput {
   id: string
-  fieldsJson: any[]
-  sampleValues: Record<string, any>
+  fieldsJson: LegalInstrumentFieldSpec[]
+  sampleValues: Record<string, LegalInstrumentAnswerValue>
 }
 
 /**
@@ -109,7 +110,7 @@ export interface PreviewLegalInstrumentInput {
  */
 export interface SaveLegalInstrumentAnswersInput {
   instanceId: string
-  answers: Record<string, any>
+  answers: LegalInstrumentAnswers
 }
 
 /**

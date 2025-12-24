@@ -9,26 +9,12 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { getAllProjects } from "@/actions/projects"
+import type { GetAllProjectsResponse } from "@/actions/projects/types"
 import useCan from "@/hooks/use-can"
 import { PageContent, PageHeader, PageHeaderDescription, PageHeaderHeading, PageShell } from "@/components/shell"
 
-interface Project {
-  id: number
-  slug?: string
-  title: string
-  updatedAt: Date
-  status?: "DRAFT" | "IN_ANALYSIS" | "APPROVED" | "REJECTED"
-  workPlan?: { id: string } | null
-  legalInstruments?: {
-    legalInstrumentInstance: {
-      status: "DRAFT" | "SENT_FOR_ANALYSIS" | "APPROVED" | "REJECTED"
-      type: string
-    }
-  }[]
-}
-
 export default function ProjectsPage() {
-  const [projects, setProjects] = useState<Project[]>([])
+  const [projects, setProjects] = useState<GetAllProjectsResponse>([])
   const [loading, setLoading] = useState(true)
   const { can: canCreate, loading: loadingCreate } = useCan("projects.create")
 
@@ -36,7 +22,7 @@ export default function ProjectsPage() {
     const fetchProjects = async () => {
       try {
         const data = await getAllProjects()
-        setProjects(data as any) // Type casting as quick fix, better to define proper types
+        setProjects(data)
       } catch (error) {
         console.error("Failed to fetch projects:", error)
       } finally {
@@ -94,14 +80,16 @@ export default function ProjectsPage() {
               const status = project.status || "DRAFT"
               const statusLabel = {
                 DRAFT: "Em Elaboração",
-                IN_ANALYSIS: "Em Análise",
+                PENDING_REVIEW: "Aguardando Revisão",
+                UNDER_REVIEW: "Em Revisão",
                 APPROVED: "Aprovado",
                 REJECTED: "Rejeitado",
               }[status]
 
               const statusColor = {
                 DRAFT: "bg-muted text-muted-foreground",
-                IN_ANALYSIS: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+                PENDING_REVIEW: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+                UNDER_REVIEW: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
                 APPROVED: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
                 REJECTED: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
               }[status]

@@ -50,7 +50,7 @@ export function NavProjects({
       <SidebarGroupLabel>Projects</SidebarGroupLabel>
       <SidebarMenu>
         {visibleItems.map(({ item }) => (
-          <Collapsible key={item.title} asChild defaultOpen={(item as any).isActive}>
+          <Collapsible key={item.title} asChild defaultOpen={item.isActive}>
             <SidebarMenuItem>
               <PermissionGuard permission={item.permissionSlug} canMap={canMap}>
                 {item.url ? (
@@ -61,7 +61,7 @@ export function NavProjects({
                         <span>{item.title}</span>
                       </a>
                     </SidebarMenuButton>
-                    {!(item as any).items?.length ? (
+                    {!item.items?.length ? (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <SidebarMenuAction showOnHover>
@@ -92,7 +92,7 @@ export function NavProjects({
                   </CollapsibleTrigger>
                 )}
 
-                {(item as any).items?.length ? (
+                {item.items?.length ? (
                   <>
                     <CollapsibleTrigger asChild>
                       <SidebarMenuAction className="data-[state=open]:rotate-90">
@@ -102,7 +102,7 @@ export function NavProjects({
                     </CollapsibleTrigger>
                     <CollapsibleContent>
                       <SidebarMenuSub>
-                        {(item as any).items?.map((subItem: any) => (
+                        {item.items.map((subItem) => (
                           <SidebarMenuSubItem key={subItem.title}>
                             <PermissionGuard permission={subItem.permissionSlug} canMap={canMap}>
                               <SidebarMenuSubButton asChild>

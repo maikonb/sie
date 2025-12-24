@@ -6,15 +6,16 @@ import { Button } from "@/components/ui/button"
 import { FileText, Play, RotateCcw, AlertTriangle, Bot, ShieldCheck, FileCheck, ArrowRight } from "lucide-react"
 import { checkExistingLegalInstrument } from "@/actions/legal-instruments"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import type { ProjectClassificationSavedState } from "@/types/legal-instrument"
 
 interface Props {
   projectSlug: string
   onStart: () => void
-  onResume: (savedState: any) => void
+  onResume: (savedState: ProjectClassificationSavedState) => void
 }
 
 export function ProjectClassificationStart({ projectSlug, onStart, onResume }: Props) {
-  const [savedState, setSavedState] = useState<any>(null)
+  const [savedState, setSavedState] = useState<ProjectClassificationSavedState | null>(null)
   const [hasExisting, setHasExisting] = useState(false)
   const [checking, setChecking] = useState(true)
   const searchParams = useSearchParams()
@@ -39,8 +40,10 @@ export function ProjectClassificationStart({ projectSlug, onStart, onResume }: P
     const saved = localStorage.getItem("legalInstrumentWizard")
     if (saved && !urlState) {
       try {
-        const parsed = JSON.parse(saved)
-        setSavedState(parsed)
+        const parsed: unknown = JSON.parse(saved)
+        if (typeof parsed === "object" && parsed !== null && "history" in parsed && Array.isArray((parsed as { history?: unknown }).history)) {
+          setSavedState(parsed as ProjectClassificationSavedState)
+        }
       } catch (e) {
         console.error("Failed to parse saved state", e)
       }

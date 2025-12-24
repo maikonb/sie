@@ -7,7 +7,8 @@
  */
 export interface GeneratePresignedUrlResponse {
   url: string
-  [key: string]: any
+  key: string
+  fileId: string
 }
 
 // ============================================================================
