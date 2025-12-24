@@ -1,7 +1,7 @@
 import { AppSidebar } from "@/components/app-sidebar"
-import { SiteHeader } from "@/components/site-header"
+import { SiteHeader } from "@/components/layouts/ui/header"
 import { SidebarInset, SidebarProvider } from "@/components/providers/sidebar"
-import { ProjectProvider } from "../providers/project-context"
+import { ProjectProvider } from "../providers/project"
 
 export default function BaseLayout({
   children,

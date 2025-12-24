@@ -13,14 +13,12 @@ type Props = {
 export function PermissionGuard({ permission, children, fallback = null, canMap }: Props) {
   if (!permission) return <>{children}</>
 
-  // Se canMap foi fornecido, usa diretamente (evita chamada redundante)
   if (canMap !== undefined) {
     const can = canMap[permission]
     if (!can) return <>{fallback}</>
     return <>{children}</>
   }
 
-  // Fallback para comportamento legado
   const { can, loading } = useCan(permission)
 
   if (loading) return <>{fallback}</>

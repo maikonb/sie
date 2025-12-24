@@ -39,21 +39,21 @@ export function UserAvatar({ size = "sm", preview, className }: UserAvatarProps)
     "3xl": "h-40 w-40 text-4xl rounded-4xl",
   }
 
-  const userImageDefault = user?.name
-    ? user.name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .substring(0, 2)
-        .toUpperCase()
-    : "?"
-
   const imageUrl = typeof preview === "string" ? preview : user?.image
   return (
     <Avatar className={cn(sizeClasses[size], className)}>
       <AvatarImage src={imageUrl || ""} alt={user?.name || "User"} className={cn(user?.color || "bg-muted")} />
       <AvatarFallback className={cn(sizeClasses[size], user?.color || "bg-muted", "text-white")}>
-        {userImageDefault}
+        {
+          user?.name
+          ? user.name
+              .split(" ")
+              .map((n) => n[0])
+              .join("")
+              .substring(0, 2)
+              .toUpperCase()
+          : "?"
+        }
       </AvatarFallback>
     </Avatar>
   )

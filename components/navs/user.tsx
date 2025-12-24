@@ -25,13 +25,6 @@ export function NavUser({
   const { isMobile } = useSidebar()
   const router = useRouter()
 
-  const userImageDefault = user.name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .substring(0, 2)
-    .toUpperCase()
-
   return (
     <SidebarMenu>
       <SidebarMenuItem>

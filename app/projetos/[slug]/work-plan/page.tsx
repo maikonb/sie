@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useProject } from "@/components/providers/project-context"
+import { useProject } from "@/components/providers/project"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useForm, useFieldArray } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"

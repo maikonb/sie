@@ -2,9 +2,9 @@
 
 import { useRouter, useSearchParams } from "next/navigation"
 import { useState } from "react"
-import ProjectClassificationStart from "@/components/projects/project-classification-start"
-import { ProjectClassificationWizard } from "@/components/projects/project-classification-wizard"
-import { useProject } from "@/components/providers/project-context"
+import ProjectClassificationStart from "@/components/projects/classification-start"
+import { ProjectClassificationWizard } from "@/components/projects/classification-wizard"
+import { useProject } from "@/components/providers/project"
 import { Skeleton } from "@/components/ui/skeleton"
 import { createLegalInstrument } from "@/actions/projects"
 import { notify } from "@/lib/notifications"

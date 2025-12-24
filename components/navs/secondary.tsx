@@ -3,7 +3,7 @@ import { ChevronRight } from "lucide-react"
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuAction, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem } from "@/components/providers/sidebar"
-import PermissionGuard from "@/components/permissions/permission-guard"
+import PermissionGuard from "@/components/permissions/guard"
 import useManyCan from "@/hooks/use-many-can"
 import { Skeleton } from "@/components/ui/skeleton"
 import { extractPermissionSlugs, extractTransformPermissions, processNavItems, type NavItem } from "@/lib/services/nav-items"
