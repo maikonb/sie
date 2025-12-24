@@ -5,77 +5,32 @@ import { generateUniqueSlug } from "@/lib/utils/slug"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/config/auth"
 import { APP_ERRORS } from "@/lib/errors"
-import { Prisma, ResourceMembersType } from "@prisma/client"
+import { Prisma, ResourceMembersType, Project, LegalInstrumentInstance } from "@prisma/client"
 import PermissionsService from "@/lib/services/permissions"
 import { notifyAdminsOfNewSubmission, notifyUserOfApproval, notifyUserOfRejection } from "@/lib/services/email"
 import { logProjectAction } from "@/lib/services/audit"
+import {
+  projectWithRelationsValidator,
+  projectWithBasicRelationsValidator,
+  projectsForApprovalValidator,
+  GetProjectBySlugResponse,
+  GetAllProjectsResponse,
+  GetProjectsForApprovalResponse,
+  CreateLegalInstrumentResult,
+  ProjectViewerContext,
+  GetProjectApprovalStatsResponse,
+} from "./types"
 
-const projectWithRelations = Prisma.validator<Prisma.ProjectDefaultArgs>()({
-  include: {
-    user: {
-      select: {
-        name: true,
-        email: true,
-        color: true,
-        imageFile: true,
-      },
-    },
-    legalInstruments: {
-      include: {
-        legalInstrument: true,
-        legalInstrumentInstance: {
-          include: {
-            answerFile: true,
-          },
-        },
-      },
-    },
-    workPlan: true,
-    audits: {
-      include: {
-        user: { select: { name: true } },
-      },
-    },
-  },
-})
-
-export type getProjectBySlugResponse = Prisma.ProjectGetPayload<typeof projectWithRelations> | null
-
-export async function getProjectBySlug(slug: string) {
+export async function getProjectBySlug(slug: string): Promise<GetProjectBySlugResponse> {
   const session = await getServerSession(authOptions)
 
   if (!session?.user?.email) {
     throw new Error("Unauthorized")
   }
 
-  const project: getProjectBySlugResponse = await prisma.project.findUnique({
+  const project: GetProjectBySlugResponse = await prisma.project.findUnique({
     where: { slug: slug },
-    include: {
-      user: {
-        select: {
-          name: true,
-          email: true,
-          color: true,
-          imageFile: true,
-        },
-      },
-      legalInstruments: {
-        include: {
-          legalInstrument: true,
-          legalInstrumentInstance: {
-            include: {
-              answerFile: true,
-            },
-          },
-        },
-      },
-      workPlan: true,
-      audits: {
-        include: {
-          user: { select: { name: true } },
-        },
-      },
-    },
+    ...projectWithRelationsValidator,
   })
 
   if (!project) {
@@ -105,7 +60,7 @@ export async function getProjectBySlug(slug: string) {
   return null
 }
 
-export async function createProject(formData: FormData) {
+export async function createProject(formData: FormData): Promise<Project> {
   const session = await getServerSession(authOptions)
   if (!session?.user?.email) throw new Error("Unauthorized")
 
@@ -134,7 +89,7 @@ export async function createProject(formData: FormData) {
   })
 }
 
-export async function createLegalInstrument(slug: string, result: any) {
+export async function createLegalInstrument(slug: string, result: any): Promise<CreateLegalInstrumentResult> {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.email) return { success: false, error: "Unauthorized" }
@@ -177,7 +132,7 @@ export async function createLegalInstrument(slug: string, result: any) {
   }
 }
 
-export async function getAllProjects() {
+export async function getAllProjects(): Promise<GetAllProjectsResponse> {
   const session = await getServerSession(authOptions)
   if (!session?.user?.email) return []
 
@@ -185,16 +140,7 @@ export async function getAllProjects() {
 
   if (canViewAll) {
     const projects = await prisma.project.findMany({
-      include: {
-        workPlan: { select: { id: true } },
-        legalInstruments: {
-          include: {
-            legalInstrumentInstance: {
-              select: { status: true, type: true },
-            },
-          },
-        },
-      },
+      ...projectWithBasicRelationsValidator,
       orderBy: { updatedAt: "desc" },
     })
 
@@ -203,23 +149,14 @@ export async function getAllProjects() {
 
   const projects = await prisma.project.findMany({
     where: { userId: session.user.id },
-    include: {
-      workPlan: { select: { id: true } },
-      legalInstruments: {
-        include: {
-          legalInstrumentInstance: {
-            select: { status: true, type: true },
-          },
-        },
-      },
-    },
+    ...projectWithBasicRelationsValidator,
     orderBy: { updatedAt: "desc" },
   })
 
   return projects
 }
 
-export async function getProjectLegalInstrument(slug: string) {
+export async function getProjectLegalInstrument(slug: string): Promise<LegalInstrumentInstance | null> {
   const session = await getServerSession(authOptions)
   if (!session?.user?.email) throw new Error("Unauthorized")
 
@@ -247,7 +184,7 @@ export async function getProjectLegalInstrument(slug: string) {
   return link.legalInstrumentInstance
 }
 
-export async function updateProject(slug: string, formData: FormData) {
+export async function updateProject(slug: string, formData: FormData): Promise<Project> {
   const session = await getServerSession(authOptions)
   if (!session?.user?.email) throw new Error("Unauthorized")
 
@@ -278,11 +215,6 @@ export async function updateProject(slug: string, formData: FormData) {
       scope: abrangencia,
     },
   })
-}
-
-export type ProjectViewerContext = {
-  mode: "owner" | "resource" | "approver" | "other"
-  allowActions: boolean
 }
 
 export async function getProjectViewerContext(slug: string): Promise<ProjectViewerContext> {
@@ -317,7 +249,7 @@ export async function getProjectViewerContext(slug: string): Promise<ProjectView
   }
 }
 
-export async function submitProjectForApproval(slug: string) {
+export async function submitProjectForApproval(slug: string): Promise<Project> {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) throw new Error("Unauthorized")
 
@@ -388,7 +320,7 @@ export async function submitProjectForApproval(slug: string) {
   return updated
 }
 
-export async function startProjectReview(slug: string) {
+export async function startProjectReview(slug: string): Promise<Project> {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) throw new Error("Unauthorized")
 
@@ -428,7 +360,7 @@ export async function startProjectReview(slug: string) {
   return updated
 }
 
-export async function approveProject(slug: string) {
+export async function approveProject(slug: string): Promise<Project> {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) throw new Error("Unauthorized")
 
@@ -472,7 +404,7 @@ export async function approveProject(slug: string) {
   return updated
 }
 
-export async function rejectProject(slug: string, reason: string) {
+export async function rejectProject(slug: string, reason: string): Promise<Project> {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) throw new Error("Unauthorized")
 
@@ -519,7 +451,7 @@ export async function rejectProject(slug: string, reason: string) {
   return updated
 }
 
-export async function getProjectsForApproval() {
+export async function getProjectsForApproval(): Promise<GetProjectsForApprovalResponse> {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) throw new Error("Unauthorized")
 
@@ -530,32 +462,12 @@ export async function getProjectsForApproval() {
     where: {
       status: { in: ["PENDING_REVIEW", "UNDER_REVIEW"] },
     },
-    include: {
-      user: {
-        select: {
-          name: true,
-          email: true,
-          color: true,
-          imageFile: true,
-        },
-      },
-      legalInstruments: {
-        include: {
-          legalInstrument: true,
-          legalInstrumentInstance: {
-            select: { status: true, type: true },
-          },
-        },
-      },
-      workPlan: {
-        select: { id: true },
-      },
-    },
+    ...projectsForApprovalValidator,
     orderBy: { submittedAt: "desc" },
   })
 }
 
-export async function getProjectApprovalStats() {
+export async function getProjectApprovalStats(): Promise<GetProjectApprovalStatsResponse> {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) throw new Error("Unauthorized")
 

@@ -2,10 +2,11 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { getProjectBySlug, getProjectBySlugResponse, getProjectViewerContext, type ProjectViewerContext } from "@/actions/projects"
+import { getProjectBySlug, getProjectViewerContext } from "@/actions/projects"
+import type { GetProjectBySlugResponse, ProjectViewerContext } from "@/actions/projects/types"
 
 interface ProjectContextType {
-  project: getProjectBySlugResponse
+  project: GetProjectBySlugResponse
   loading: boolean
   dependences: Record<string, any>
   view: ProjectViewerContext | null
@@ -17,7 +18,7 @@ const ProjectContext = createContext<ProjectContextType | undefined>(undefined)
 export function ProjectProvider({ children }: { children: ReactNode }) {
   const params: { slug: string } = useParams()
   const router = useRouter()
-  const [project, setProject] = useState<getProjectBySlugResponse>(null)
+  const [project, setProject] = useState<GetProjectBySlugResponse>(null)
   const [loading, setLoading] = useState(true)
   const [dependences, setDependences] = useState({})
   const [view, setView] = useState<ProjectViewerContext | null>(null)

@@ -2,11 +2,17 @@
 
 import { prisma } from "@/lib/config/db"
 import { type WorkPlanFormData } from "@/lib/schemas/work-plan"
+import {
+  workPlanValidator,
+  GetWorkPlanResponse,
+  UpsertWorkPlanResponse,
+} from "./types"
 
-export async function getWorkPlan(projectId: string) {
+export async function getWorkPlan(projectId: string): Promise<GetWorkPlanResponse | null> {
   try {
     const workPlan = await prisma.workPlan.findUnique({
       where: { projectId },
+      ...workPlanValidator,
     })
 
     if (!workPlan) return null
@@ -29,7 +35,7 @@ export async function getWorkPlan(projectId: string) {
   }
 }
 
-export async function upsertWorkPlan(projectId: string, data: WorkPlanFormData) {
+export async function upsertWorkPlan(projectId: string, data: WorkPlanFormData): Promise<UpsertWorkPlanResponse> {
   try {
     const workPlan = await prisma.workPlan.upsert({
       where: { projectId },
@@ -42,6 +48,7 @@ export async function upsertWorkPlan(projectId: string, data: WorkPlanFormData) 
         ...data,
         specificObjectives: data.specificObjectives,
       },
+      ...workPlanValidator,
     })
     return { success: true, data: workPlan }
   } catch (error) {

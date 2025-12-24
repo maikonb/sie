@@ -4,8 +4,18 @@ import prisma from "@/lib/config/db"
 import { getAuthSession } from "@/lib/api-utils"
 import { fileService } from "@/lib/services/file"
 import { APP_ERRORS } from "@/lib/errors"
+import { sendOtpEmail } from "@/lib/services/email"
+import bcrypt from "bcryptjs"
+import {
+  userValidator,
+  UpdateFirstAccessResponse,
+  UpdateUserResponse,
+  RequestEmailChangeResponse,
+  VerifyEmailChangeResponse,
+  RequestOtpResponse,
+} from "./types"
 
-export async function updateFirstAccess(data: { username: string; imageKey?: string }) {
+export async function updateFirstAccess(data: { username: string; imageKey?: string }): Promise<UpdateFirstAccessResponse> {
   const session = await getAuthSession()
   if (!session?.user?.id) throw new Error("Unauthorized")
 
@@ -36,7 +46,12 @@ export async function updateFirstAccess(data: { username: string; imageKey?: str
   }
 }
 
-export async function updateUser(data: { name: string; imageKey?: string; imageId?: string; color?: string }) {
+export async function updateUser(data: {
+  name: string
+  imageKey?: string
+  imageId?: string
+  color?: string
+}): Promise<UpdateUserResponse> {
   const session = await getAuthSession()
   if (!session?.user?.id) throw new Error("Unauthorized")
 
@@ -63,6 +78,7 @@ export async function updateUser(data: { name: string; imageKey?: string; imageI
       imageId: fileRecord?.id,
       color: data.color,
     },
+    ...userValidator,
   })
 
   if (fileRecord && currentUser?.imageId && currentUser.imageId !== fileRecord.id) {
@@ -72,10 +88,7 @@ export async function updateUser(data: { name: string; imageKey?: string; imageI
   return { success: true, user: updatedUser }
 }
 
-import { sendOtpEmail } from "@/lib/services/email"
-import bcrypt from "bcryptjs"
-
-export async function requestEmailChange(newEmail: string) {
+export async function requestEmailChange(newEmail: string): Promise<RequestEmailChangeResponse> {
   const session = await getAuthSession()
   if (!session?.user?.email) throw new Error("Unauthorized")
 
@@ -104,7 +117,7 @@ export async function requestEmailChange(newEmail: string) {
   return { success: true }
 }
 
-export async function verifyEmailChange(newEmail: string, code: string) {
+export async function verifyEmailChange(newEmail: string, code: string): Promise<VerifyEmailChangeResponse> {
   const session = await getAuthSession()
   if (!session?.user?.email) throw new Error("Unauthorized")
 
@@ -142,7 +155,7 @@ export async function verifyEmailChange(newEmail: string, code: string) {
   return { success: true }
 }
 
-export async function requestOtp(email: string) {
+export async function requestOtp(email: string): Promise<RequestOtpResponse> {
   const clean = (email ?? "").toLowerCase().trim()
   if (!clean.endsWith("@ufr.edu.br")) {
     return { success: false, error: APP_ERRORS.AUTH_INVALID_DOMAIN.code }

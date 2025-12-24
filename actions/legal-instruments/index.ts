@@ -4,20 +4,31 @@ import prisma from "@/lib/config/db"
 import PermissionsService from "@/lib/services/permissions"
 import { getAuthSession } from "@/lib/api-utils"
 import { fileService } from "@/lib/services/file"
-import { LegalInstrumentStatus, ProjectStatus } from "@prisma/client"
+import { LegalInstrumentStatus } from "@prisma/client"
+import {
+  legalInstrumentListValidator,
+  legalInstrumentWithFileValidator,
+  legalInstrumentInstanceWithFileValidator,
+  GetLegalInstrumentsResponse,
+  GetLegalInstrumentByIdResponse,
+  UpdateLegalInstrumentResponse,
+  PreviewLegalInstrumentResponse,
+  SaveLegalInstrumentAnswersResponse,
+  CheckExistingLegalInstrumentResponse,
+} from "./types"
 
-export async function getLegalInstruments() {
+export async function getLegalInstruments(): Promise<GetLegalInstrumentsResponse> {
   const session = await getAuthSession()
   if (!session?.user?.id) throw new Error("Unauthorized")
 
   await PermissionsService.authorize(session.user.id, { slug: "legal_instruments.manage" })
 
   return prisma.legalInstrument.findMany({
-    select: { id: true, name: true, description: true, fileId: true, createdAt: true },
+    ...legalInstrumentListValidator,
   })
 }
 
-export async function getLegalInstrumentById(id: string) {
+export async function getLegalInstrumentById(id: string): Promise<GetLegalInstrumentByIdResponse> {
   const session = await getAuthSession()
   if (!session?.user?.id) throw new Error("Unauthorized")
 
@@ -25,11 +36,11 @@ export async function getLegalInstrumentById(id: string) {
 
   return prisma.legalInstrument.findUnique({
     where: { id },
-    include: { file: true },
+    ...legalInstrumentWithFileValidator,
   })
 }
 
-export async function updateLegalInstrument(id: string, data: any) {
+export async function updateLegalInstrument(id: string, data: any): Promise<UpdateLegalInstrumentResponse> {
   const session = await getAuthSession()
   if (!session?.user?.id) throw new Error("Unauthorized")
 
@@ -48,10 +59,15 @@ export async function updateLegalInstrument(id: string, data: any) {
   return prisma.legalInstrument.update({
     where: { id },
     data: updateData,
+    ...legalInstrumentWithFileValidator,
   })
 }
 
-export async function previewLegalInstrument(id: string, fieldsJson: any[], sampleValues: any) {
+export async function previewLegalInstrument(
+  id: string,
+  fieldsJson: any[],
+  sampleValues: any
+): Promise<PreviewLegalInstrumentResponse> {
   const session = await getAuthSession()
   if (!session?.user?.id) throw new Error("Unauthorized")
 
@@ -89,7 +105,10 @@ export async function previewLegalInstrument(id: string, fieldsJson: any[], samp
   return { preview }
 }
 
-export async function saveLegalInstrumentAnswers(instanceId: string, answers: any) {
+export async function saveLegalInstrumentAnswers(
+  instanceId: string,
+  answers: any
+): Promise<SaveLegalInstrumentAnswersResponse> {
   const session = await getAuthSession()
   if (!session?.user?.id) throw new Error("Unauthorized")
 
@@ -164,10 +183,11 @@ export async function saveLegalInstrumentAnswers(instanceId: string, answers: an
       answerFileId,
       status: newStatus,
     },
+    ...legalInstrumentInstanceWithFileValidator,
   })
 }
 
-export async function checkExistingLegalInstrument(projectSlug: string) {
+export async function checkExistingLegalInstrument(projectSlug: string): Promise<CheckExistingLegalInstrumentResponse> {
   const session = await getAuthSession()
   if (!session?.user?.id) throw new Error("Unauthorized")
 
