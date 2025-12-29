@@ -170,15 +170,3 @@ export function processNavItems(
     })
     .filter(({ item, hasPermission }) => shouldRenderItem(item, hasPermission))
 }
-
-/**
- * Filtra itens de um grupo, removendo aqueles sem permissão de visualização
- * @deprecated Use processNavItems instead
- */
-export function filterVisibleItems(
-  items: NavItem[],
-  canMap: Record<string, boolean>,
-  childCanMap: Record<string, boolean>
-): { item: NavItem; hasPermission: boolean }[] {
-  return processNavItems(items, canMap)
-}

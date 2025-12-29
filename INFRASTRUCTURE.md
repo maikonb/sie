@@ -542,3 +542,10 @@ npm run dev
 ---
 
 **Última atualização**: 2025-12-24
+
+### Mudanças recentes (UI)
+
+- **Página 404 personalizada**: `app/not-found.tsx` — página amigável (sem imagem) que redireciona para `/auth/login` quando o usuário não está autenticado e para `/projetos` quando está autenticado.
+- **Componente de overlay de carregamento**: `components/ui/loading-overlay.tsx` — overlay reutilizável para indicar operações de longa duração no client.
+
+**Última atualização**: 2025-12-29
