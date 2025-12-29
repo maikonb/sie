@@ -19,7 +19,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 export default function Page() {
   const searchParams = useSearchParams()
   const route = useRouter()
-  const { project, loading: projectLoading } = useProject()
+  const { project, loading: projectLoading, refetch, updateWorkPlan } = useProject()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
@@ -54,7 +54,12 @@ export default function Page() {
       const result = await upsertWorkPlan(project.id, data)
       if (result.success) {
         notify.success("Plano de trabalho salvo com sucesso!")
-
+        // Update locally to avoid a heavy refetch and improve responsiveness
+        if (updateWorkPlan) {
+          updateWorkPlan(result.data || null)
+        } else {
+          await refetch()
+        }
         const next = searchParams.get("next")
         if (next) {
           route.push(`/projetos/${project.slug}/${next}`)
@@ -188,6 +193,15 @@ export default function Page() {
 
   return (
     <div className="max-w-5xl w-full mx-auto py-8 space-y-8">
+      {/* Full-screen saving overlay to indicate operation in progress */}
+      {saving && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+          <div className="rounded-md bg-card p-6 flex flex-col items-center gap-2">
+            <Loader2 className="h-6 w-6 animate-spin" />
+            <span className="text-sm">Salvando plano de trabalho...</span>
+          </div>
+        </div>
+      )}
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Plano de Trabalho</h1>
         <p className="text-muted-foreground mt-2">Defina os detalhes, objetivos e metodologia do projeto.</p>

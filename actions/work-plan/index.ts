@@ -7,6 +7,7 @@ import {
   GetWorkPlanResponse,
   UpsertWorkPlanResponse,
 } from "./types"
+import { revalidatePath } from "next/cache"
 
 export async function getWorkPlan(projectId: string): Promise<GetWorkPlanResponse | null> {
   try {

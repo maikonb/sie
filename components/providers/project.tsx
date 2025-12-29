@@ -19,6 +19,7 @@ interface ProjectContextType {
   dependences: ProjectDependences
   view: ProjectViewerContext | null
   refetch: () => Promise<void>
+  updateWorkPlan: (workPlan: ProjectData["workPlan"] | null) => void
 }
 
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined)
@@ -63,7 +64,19 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     }
   }, [params.slug, router])
 
-  return <ProjectContext.Provider value={{ project, dependences, loading, view, refetch: fetchProject }}>{children}</ProjectContext.Provider>
+  const updateWorkPlan = (workPlan: ProjectData["workPlan"] | null) => {
+    setDependences((prev) => ({ ...prev, "work-plan": workPlan }))
+    setProject((prev) => {
+      if (!prev) return prev
+      return { ...prev, workPlan }
+    })
+  }
+
+  return (
+    <ProjectContext.Provider value={{ project, dependences, loading, view, refetch: fetchProject, updateWorkPlan }}>
+      {children}
+    </ProjectContext.Provider>
+  )
 }
 
 export function useProject() {
