@@ -10,32 +10,43 @@ import { createLegalInstrument } from "@/actions/projects"
 import { notify } from "@/lib/notifications"
 import { APP_ERRORS } from "@/lib/errors"
 import type { ProjectClassificationResult, ProjectClassificationSavedState } from "@/types/legal-instrument"
+import LoadingOverlay from "@/components/ui/loading-overlay"
 
 export default function Page() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { project, loading } = useProject()
+  const { project, loading, updateLegalInstrument } = useProject()
+  const [saving, setSaving] = useState(false)
   const [mode, setMode] = useState<"start" | "wizard">("start")
   const [initialState, setInitialState] = useState<ProjectClassificationSavedState | null>(null)
 
   const handleComplete = async (res: ProjectClassificationResult) => {
     if (!project || !project.slug) return
+    setSaving(true)
+    try {
+      const result = await createLegalInstrument(project.slug, res)
 
-    const result = await createLegalInstrument(project.slug, res)
+      if (result.success) {
+        notify.success("Instrumento jurídico salvo com sucesso!")
 
-    if (result.success) {
-      notify.success("Instrumento jurídico salvo com sucesso!")
+        // Update local context with the created link if returned
+        if (result.created && updateLegalInstrument) {
+          updateLegalInstrument(result.created)
+        }
 
-      const next = searchParams.get("next")
-      if (next) {
-        router.push(`/projetos/${project.slug}/${next}`)
-        return
+        const next = searchParams.get("next")
+        if (next) {
+          router.push(`/projetos/${project.slug}/${next}`)
+          return
+        }
+
+        router.push(`/projetos/${project.slug}/`)
+      } else {
+        if (result.error) notify.error(result.error)
+        notify.error(APP_ERRORS.GENERIC_ERROR.code)
       }
-
-      router.push(`/projetos/${project.slug}/`)
-    } else {
-      if (result.error) notify.error(result.error)
-      notify.error(APP_ERRORS.GENERIC_ERROR.code)
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -77,10 +88,13 @@ export default function Page() {
   if (!project) return null
 
   return (
-    <div className="h-full bg-linear-to-b from-background to-muted/20">
-      <div className="container min-h-full mx-auto py-6 px-4 md:py-8 flex flex-col">
-        <div className="flex-1 flex flex-col h-full justify-center">{mode === "start" ? <ProjectClassificationStart projectSlug={project.slug!} onStart={handleStart} onResume={handleResume} /> : <ProjectClassificationWizard initialState={initialState ?? undefined} onReset={handleWizardReset} onComplete={handleComplete} />}</div>
+    <>
+      <LoadingOverlay open={saving} message="Criando instrumento jurídico..." />
+      <div className="h-full bg-linear-to-b from-background to-muted/20">
+        <div className="container min-h-full mx-auto py-6 px-4 md:py-8 flex flex-col">
+          <div className="flex-1 flex flex-col h-full justify-center">{mode === "start" ? <ProjectClassificationStart projectSlug={project.slug!} onStart={handleStart} onResume={handleResume} /> : <ProjectClassificationWizard initialState={initialState ?? undefined} onReset={handleWizardReset} onComplete={handleComplete} />}</div>
+        </div>
       </div>
-    </div>
+    </>
   )
 }

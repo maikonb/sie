@@ -102,7 +102,7 @@ export async function createLegalInstrument(slug: string, result: ProjectClassif
     const project = await prisma.project.findUnique({ where: { slug: slug }, include: { legalInstruments: true } })
     if (!project) return { success: false, error: APP_ERRORS.PROJECT_CREATE_LEGAL_INSTRUMENTS.code }
 
-    await prisma.$transaction(
+    const createdLink = await prisma.$transaction(
       async (prismaTx) => {
         const instance = await prismaTx.legalInstrumentInstance.create({
           data: {
@@ -113,13 +113,21 @@ export async function createLegalInstrument(slug: string, result: ProjectClassif
           },
         })
 
-        await prismaTx.projectLegalInstrument.create({
+        const link = await prismaTx.projectLegalInstrument.create({
           data: {
             projectId: project.id,
             legalInstrumentId: legalInstrument.id,
             legalInstrumentInstanceId: instance.id,
           },
+          include: {
+            legalInstrument: true,
+            legalInstrumentInstance: {
+              include: { answerFile: true, file: true },
+            },
+          },
         })
+
+        return link
       },
       {
         timeout: 10000,
@@ -127,7 +135,7 @@ export async function createLegalInstrument(slug: string, result: ProjectClassif
       }
     )
 
-    return { success: true, error: null }
+    return { success: true, error: null, created: createdLink }
   } catch (error) {
     console.error("Error creating legal instrument:", error)
     return { success: false, error: APP_ERRORS.GENERIC_ERROR.code }

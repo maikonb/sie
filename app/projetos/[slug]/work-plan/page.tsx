@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { notify } from "@/lib/notifications"
 import { Loader2, Plus, Trash2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import LoadingOverlay from "@/components/ui/loading-overlay"
 import { useRouter, useSearchParams } from "next/navigation"
 
 export default function Page() {
@@ -193,15 +194,7 @@ export default function Page() {
 
   return (
     <div className="max-w-5xl w-full mx-auto py-8 space-y-8">
-      {/* Full-screen saving overlay to indicate operation in progress */}
-      {saving && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-          <div className="rounded-md bg-card p-6 flex flex-col items-center gap-2">
-            <Loader2 className="h-6 w-6 animate-spin" />
-            <span className="text-sm">Salvando plano de trabalho...</span>
-          </div>
-        </div>
-      )}
+      <LoadingOverlay open={saving} message="Salvando plano de trabalho..." />
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Plano de Trabalho</h1>
         <p className="text-muted-foreground mt-2">Defina os detalhes, objetivos e metodologia do projeto.</p>

@@ -20,6 +20,7 @@ interface ProjectContextType {
   view: ProjectViewerContext | null
   refetch: () => Promise<void>
   updateWorkPlan: (workPlan: ProjectData["workPlan"] | null) => void
+  updateLegalInstrument: (link: ProjectData["legalInstruments"][number] | null) => void
 }
 
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined)
@@ -72,8 +73,25 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     })
   }
 
+  const updateLegalInstrument = (link: ProjectData["legalInstruments"][number] | null) => {
+    setDependences((prev) => {
+      const current = prev["legal-instrument"] || null
+      if (!link) return { ...prev, "legal-instrument": current }
+
+      const arr = Array.isArray(current) ? [...current] : []
+      arr.push(link)
+      return { ...prev, "legal-instrument": arr }
+    })
+
+    setProject((prev) => {
+      if (!prev) return prev
+      const current = prev.legalInstruments || []
+      return { ...prev, legalInstruments: [...current, link!] }
+    })
+  }
+
   return (
-    <ProjectContext.Provider value={{ project, dependences, loading, view, refetch: fetchProject, updateWorkPlan }}>
+    <ProjectContext.Provider value={{ project, dependences, loading, view, refetch: fetchProject, updateWorkPlan, updateLegalInstrument }}>
       {children}
     </ProjectContext.Provider>
   )

@@ -113,6 +113,8 @@ export type GetProjectsForApprovalResponse = Prisma.ProjectGetPayload<typeof pro
 export interface CreateLegalInstrumentResult {
   success: boolean
   error: string | null
+  // Optional created link payload (ProjectLegalInstrument with includes)
+  created?: any
 }
 
 /**
