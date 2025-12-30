@@ -75,6 +75,10 @@ export default function ProjectDetailsPage() {
   const workPlan = dependences["work-plan"]
   const legalInstruments: ProjectLegalInstrumentRelation[] = dependences["legal-instrument"] ?? []
 
+  const specificObjectives: any = workPlan?.specificObjectives
+  console.log("specificObjectives: ", specificObjectives);
+  console.log("workPlan: ", workPlan?.specificObjectives)
+
   // Calculate dependencies
   const missingDependencies: MissingDependency[] = []
 
@@ -267,56 +271,6 @@ export default function ProjectDetailsPage() {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-8 animate-in fade-in-50 duration-300">
-            <div className="grid gap-4 md:grid-cols-2">
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Status do projeto</CardTitle>
-                  <CardDescription>Progresso e datas principais</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-2 text-sm text-muted-foreground">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="outline" className={cn("font-normal", {
-                      "bg-muted text-muted-foreground": project.status === ProjectStatus.DRAFT,
-                      "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400": project.status === ProjectStatus.PENDING_REVIEW,
-                      "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400": project.status === ProjectStatus.UNDER_REVIEW,
-                      "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400": project.status === ProjectStatus.APPROVED,
-                      "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400": project.status === ProjectStatus.REJECTED,
-                    })}>
-                      {project.status === ProjectStatus.DRAFT && "Em elaboração"}
-                      {project.status === ProjectStatus.PENDING_REVIEW && "Aguardando análise"}
-                      {project.status === ProjectStatus.UNDER_REVIEW && "Em análise"}
-                      {project.status === ProjectStatus.APPROVED && "Aprovado"}
-                      {project.status === ProjectStatus.REJECTED && "Rejeitado"}
-                    </Badge>
-                    {project.submittedAt && <span>• Enviado em {format(new Date(project.submittedAt), "dd/MM/yyyy", { locale: ptBR })}</span>}
-                  </div>
-                  {project.approvedAt && (
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
-                      <span>Aprovado em {format(new Date(project.approvedAt), "dd/MM/yyyy", { locale: ptBR })}</span>
-                    </div>
-                  )}
-                  {project.status === ProjectStatus.REJECTED && project.rejectionReason && (
-                    <div className="text-red-600 dark:text-red-400">Motivo: {project.rejectionReason}</div>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Proponente</CardTitle>
-                  <CardDescription>Responsável pelo projeto</CardDescription>
-                </CardHeader>
-                <CardContent className="flex items-center gap-3 text-sm">
-                  <UserAvatar size="sm" preview={{ name: project.user?.name, image: project.user?.imageFile?.url, color: project.user?.color }} />
-                  <div className="space-y-1">
-                    <div className="font-medium">{project.user?.name ?? "Usuário"}</div>
-                    {project.user?.email && <div className="text-muted-foreground">{project.user.email}</div>}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
             <div className="grid gap-8 md:grid-cols-3">
               {/* Main Info */}
               <div className={cn("space-y-8", missingDependencies.length > 0 || (view?.allowActions && project.status === ProjectStatus.DRAFT) ? "md:col-span-2" : "md:col-span-3")}>
@@ -372,6 +326,7 @@ export default function ProjectDetailsPage() {
               )}
             </div>
           </TabsContent>
+
           <TabsContent value="history" className="animate-in fade-in-50 duration-300">
             <Card>
               <CardHeader>
@@ -411,6 +366,7 @@ export default function ProjectDetailsPage() {
               </CardContent>
             </Card>
           </TabsContent>
+          
           <TabsContent value="workplan" className="animate-in fade-in-50 duration-300">
             {workPlan ? (
               <div className="space-y-6">
@@ -418,7 +374,12 @@ export default function ProjectDetailsPage() {
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <div className="space-y-1">
                       <CardTitle>Plano de Trabalho</CardTitle>
-                      <CardDescription>Criado em {format(new Date(workPlan.createdAt), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</CardDescription>
+                      <CardDescription>
+                        Criado em {format(new Date(workPlan.createdAt), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                        {workPlan.updatedAt ? (
+                          <> • Atualizado em {format(new Date(workPlan.updatedAt), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</>
+                        ) : null}
+                      </CardDescription>
                     </div>
                     {view?.allowActions && (
                       <Button variant="outline" asChild>
@@ -430,47 +391,115 @@ export default function ProjectDetailsPage() {
                   </CardHeader>
                   <CardContent className="pt-6">
                     <div className="grid gap-6 md:grid-cols-2">
-                      <div className="space-y-4">
-                        <div className="p-4 rounded-lg border bg-muted/20">
-                          <h4 className="font-medium mb-2 flex items-center gap-2">
-                            <FileText className="h-4 w-4 text-primary" /> Objetivo Geral
-                          </h4>
-                          <p className="text-sm text-muted-foreground leading-relaxed">{workPlan.generalObjective}</p>
+                      <div className="space-y-6">
+                        <div className="rounded-lg border bg-muted/10">
+                          <div className="p-4 border-b">
+                            <h4 className="font-medium flex items-center gap-2">
+                              <FileText className="h-4 w-4 text-primary" /> Objetivos
+                            </h4>
+                          </div>
+                          <div className="p-4 space-y-4">
+                            <div className="space-y-1">
+                              <div className="text-xs font-medium text-muted-foreground">Objetivo Geral</div>
+                              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{workPlan.generalObjective}</p>
+                            </div>
+
+                            <div className="space-y-2">
+                              <div className="text-xs font-medium text-muted-foreground">Objetivos Específicos</div>
+                              {specificObjectives.length ? (
+                                <ol className="list-decimal pl-5 space-y-1 text-sm text-muted-foreground">
+                                  {specificObjectives.map((objective: any, idx: any) => (
+                                    <li key={`${idx}-${objective.value}`}>{objective.value}</li>
+                                  ))}
+                                </ol>
+                              ) : (
+                                <div className="text-sm text-muted-foreground">Não informado.</div>
+                              )}
+                            </div>
+                          </div>
                         </div>
 
-                        <div className="p-4 rounded-lg border bg-muted/20">
-                          <h4 className="font-medium mb-2 flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-primary" /> Vigência
-                          </h4>
-                          <p className="text-sm text-muted-foreground">
-                            {workPlan.validityStart ? format(new Date(workPlan.validityStart), "dd/MM/yyyy") : "Início não definido"}
-                            {" - "}
-                            {workPlan.validityEnd ? format(new Date(workPlan.validityEnd), "dd/MM/yyyy") : "Fim não definido"}
-                          </p>
+                        <div className="rounded-lg border bg-muted/10">
+                          <div className="p-4 border-b">
+                            <h4 className="font-medium flex items-center gap-2">
+                              <Calendar className="h-4 w-4 text-primary" /> Informações
+                            </h4>
+                          </div>
+                          <div className="p-4 space-y-4">
+                            <div className="space-y-1">
+                              <div className="text-xs font-medium text-muted-foreground">Vigência</div>
+                              <div className="text-sm">
+                                <span className="text-muted-foreground">
+                                  {workPlan.validityStart ? format(new Date(workPlan.validityStart), "dd/MM/yyyy") : "Início não definido"}
+                                  {" - "}
+                                  {workPlan.validityEnd ? format(new Date(workPlan.validityEnd), "dd/MM/yyyy") : "Fim não definido"}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="space-y-1">
+                              <div className="text-xs font-medium text-muted-foreground">Objeto</div>
+                              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{workPlan.object || "Não informado."}</p>
+                            </div>
+
+                            <div className="grid gap-3 sm:grid-cols-2">
+                              <div className="space-y-1">
+                                <div className="text-xs font-medium text-muted-foreground">Unidade Responsável</div>
+                                <div className="text-sm text-muted-foreground">{workPlan.responsibleUnit || "Não informado."}</div>
+                              </div>
+                              <div className="space-y-1">
+                                <div className="text-xs font-medium text-muted-foreground">Gestor da ICT</div>
+                                <div className="text-sm text-muted-foreground">{workPlan.ictManager || "Não informado."}</div>
+                              </div>
+                              <div className="space-y-1 sm:col-span-2">
+                                <div className="text-xs font-medium text-muted-foreground">Gestor do Parceiro</div>
+                                <div className="text-sm text-muted-foreground">{workPlan.partnerManager || "Não informado."}</div>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       </div>
 
-                      <div className="space-y-4">
-                        {workPlan.methodology && (
-                          <div className="space-y-2">
-                            <h4 className="font-medium text-sm">Metodologia</h4>
-                            <p className="text-sm text-muted-foreground line-clamp-3">{workPlan.methodology}</p>
+                      <div className="space-y-6">
+                        <div className="rounded-lg border bg-muted/10">
+                          <div className="p-4 border-b">
+                            <h4 className="font-medium">Diagnóstico e Escopo</h4>
                           </div>
-                        )}
+                          <div className="p-4 space-y-4">
+                            <div className="space-y-1">
+                              <div className="text-xs font-medium text-muted-foreground">Diagnóstico</div>
+                              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{workPlan.diagnosis || "Não informado."}</p>
+                            </div>
+                            <div className="space-y-1">
+                              <div className="text-xs font-medium text-muted-foreground">Justificativa</div>
+                              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{workPlan.planJustification || "Não informado."}</p>
+                            </div>
+                            <div className="space-y-1">
+                              <div className="text-xs font-medium text-muted-foreground">Abrangência</div>
+                              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{workPlan.planScope || "Não informado."}</p>
+                            </div>
+                          </div>
+                        </div>
 
-                        {workPlan.expectedResults && (
-                          <div className="space-y-2">
-                            <h4 className="font-medium text-sm">Resultados Esperados</h4>
-                            <p className="text-sm text-muted-foreground line-clamp-3">{workPlan.expectedResults}</p>
+                        <div className="rounded-lg border bg-muted/10">
+                          <div className="p-4 border-b">
+                            <h4 className="font-medium">Metodologia e Resultados</h4>
                           </div>
-                        )}
-
-                        {workPlan.monitoring && (
-                          <div className="space-y-2">
-                            <h4 className="font-medium text-sm">Monitoramento e Avaliação</h4>
-                            <p className="text-sm text-muted-foreground line-clamp-3">{workPlan.monitoring}</p>
+                          <div className="p-4 space-y-4">
+                            <div className="space-y-1">
+                              <div className="text-xs font-medium text-muted-foreground">Metodologia</div>
+                              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{workPlan.methodology || "Não informado."}</p>
+                            </div>
+                            <div className="space-y-1">
+                              <div className="text-xs font-medium text-muted-foreground">Resultados Esperados</div>
+                              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{workPlan.expectedResults || "Não informado."}</p>
+                            </div>
+                            <div className="space-y-1">
+                              <div className="text-xs font-medium text-muted-foreground">Monitoramento e Avaliação</div>
+                              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{workPlan.monitoring || "Não informado."}</p>
+                            </div>
                           </div>
-                        )}
+                        </div>
                       </div>
                     </div>
                   </CardContent>
