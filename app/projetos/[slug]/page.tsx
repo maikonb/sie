@@ -33,7 +33,7 @@ type MissingDependency = {
   icon: LucideIcon
 }
 
-type ProjectLegalInstrumentRelation = NonNullable<ProjectDependences["legal-instrument"]>[number]
+type ProjectLegalInstrumentInstance = NonNullable<ProjectDependences["legal-instrument"]>
 
 const getErrorMessage = (error: unknown): string | undefined => {
   if (error instanceof Error) return error.message
@@ -73,7 +73,7 @@ export default function ProjectDetailsPage() {
   if (!project) return null
 
   const workPlan = dependences["work-plan"]
-  const legalInstruments: ProjectLegalInstrumentRelation[] = dependences["legal-instrument"] ?? []
+  const legalInstrumentInstance: ProjectLegalInstrumentInstance | null = dependences["legal-instrument"] ?? null
 
   const specificObjectives: any = workPlan?.specificObjectives
   console.log("specificObjectives: ", specificObjectives);
@@ -83,20 +83,17 @@ export default function ProjectDetailsPage() {
   const missingDependencies: MissingDependency[] = []
 
   const hasWorkPlan = !!workPlan
-  const hasLegalInstruments = legalInstruments.length > 0
-  const hasPendingInstruments = hasLegalInstruments && legalInstruments.some((li) => {
-    const status = li.legalInstrumentInstance?.status || LegalInstrumentStatus.PENDING
-    return status !== LegalInstrumentStatus.FILLED
-  })
+  const hasLegalInstrument = !!legalInstrumentInstance
+  const hasPendingInstrument = hasLegalInstrument && (legalInstrumentInstance.status || LegalInstrumentStatus.PENDING) !== LegalInstrumentStatus.FILLED
 
-  const canSubmit = view?.allowActions && hasWorkPlan && hasLegalInstruments && !hasPendingInstruments && project.status === ProjectStatus.DRAFT
+  const canSubmit = view?.allowActions && hasWorkPlan && hasLegalInstrument && !hasPendingInstrument && project.status === ProjectStatus.DRAFT
 
   // Mensagem de feedback para botão desabilitado
   const getSubmitDisabledReason = () => {
     if (project.status !== ProjectStatus.DRAFT) return "Projeto já foi enviado"
     if (!hasWorkPlan) return "É necessário criar o Plano de Trabalho"
-    if (!hasLegalInstruments) return "É necessário selecionar um Instrumento Jurídico"
-    if (hasPendingInstruments) return "É necessário preencher completamente o Instrumento Jurídico"
+    if (!hasLegalInstrument) return "É necessário selecionar um Instrumento Jurídico"
+    if (hasPendingInstrument) return "É necessário preencher completamente o Instrumento Jurídico"
     return null
   }
 
@@ -127,31 +124,27 @@ export default function ProjectDetailsPage() {
   }
 
   // 2. Legal Instrument Dependency
-  if (legalInstruments.length === 0) {
+  if (!legalInstrumentInstance) {
     missingDependencies.push({
       id: "legal-instrument-select",
       label: "Instrumento Jurídico",
-      description: "Nenhum instrumento jurídico foi selecionado para este projeto.",
+      description: "Instrumento jurídico ainda não foi selecionado para este projeto.",
       link: `/projetos/${project.slug}/legal-instrument`,
       action: "Selecionar",
       icon: Scale,
     })
   } else {
-    const pendingInstruments = project.legalInstruments.filter((li) => {
-      const status = li.legalInstrumentInstance?.status || "PENDING"
-      return status !== LegalInstrumentStatus.FILLED
-    })
-
-    pendingInstruments.forEach((li) => {
+    if ((legalInstrumentInstance.status || LegalInstrumentStatus.PENDING) !== LegalInstrumentStatus.FILLED) {
+      const instrumentName = legalInstrumentInstance.legalInstrumentVersion.legalInstrument.name
       missingDependencies.push({
-        id: `legal-instrument-fill-${li.id}`,
-        label: `Preencher ${li.legalInstrument.name}`,
+        id: `legal-instrument-fill-${legalInstrumentInstance.id}`,
+        label: `Preencher ${instrumentName}`,
         description: "O instrumento jurídico precisa ser preenchido para gerar o documento.",
         link: `/projetos/${project.slug}/legal-instrument/fill`,
         action: "Preencher",
         icon: Scale,
       })
-    })
+    }
   }
 
   return (
@@ -558,16 +551,21 @@ export default function ProjectDetailsPage() {
           </TabsContent>
 
           <TabsContent value="legal-instrument" className="animate-in fade-in-50 duration-300">
-            {legalInstruments.length > 0 ? (
+            {legalInstrumentInstance ? (
               <div className="space-y-6">
-                {/* Since the relationship is effectively 1:1 for the UI, we take the first one */}
                 {(() => {
-                  const li = legalInstruments[0]
-                  const instance = li.legalInstrumentInstance
-                  const instrument = li.legalInstrument
-                  const answerFile = instance?.answerFile ?? null
-                  const status = instance?.status || LegalInstrumentStatus.PENDING
-                  const isFilled = status !== LegalInstrumentStatus.PENDING
+                  const instance = legalInstrumentInstance
+                  const instrument = instance.legalInstrumentVersion.legalInstrument
+                  const filledFile = instance.filledFile ?? null
+                  const status = instance.status || LegalInstrumentStatus.PENDING
+                  const isFilled = status === LegalInstrumentStatus.FILLED
+
+                  const actionLabel =
+                    status === LegalInstrumentStatus.FILLED
+                      ? "Visualizar Respostas"
+                      : status === LegalInstrumentStatus.PARTIAL
+                        ? "Editar Respostas"
+                        : "Preencher Formulário"
 
                   return (
                     <div className="grid gap-6 md:grid-cols-3">
@@ -583,6 +581,7 @@ export default function ProjectDetailsPage() {
                               className={cn("px-3 py-1 text-sm", status === LegalInstrumentStatus.FILLED && "bg-green-500 hover:bg-green-600")}
                             >
                               {status === LegalInstrumentStatus.FILLED && "Aprovado"}
+                              {status === LegalInstrumentStatus.PARTIAL && "Parcial"}
                               {status === LegalInstrumentStatus.PENDING && "Rascunho"}
                             </Badge>
                           </div>
@@ -592,7 +591,7 @@ export default function ProjectDetailsPage() {
                           <div className="grid gap-4 sm:grid-cols-2">
                             <div className="space-y-1">
                               <span className="text-sm font-medium text-muted-foreground">Tipo de Instrumento</span>
-                              <p className="font-medium">{instance.type || instrument.type}</p>
+                              <p className="font-medium">{instance.legalInstrumentVersion.type}</p>
                             </div>
                             <div className="space-y-1">
                               <span className="text-sm font-medium text-muted-foreground">Data de Criação</span>
@@ -624,15 +623,15 @@ export default function ProjectDetailsPage() {
                             </div>
                           </div>
 
-                          {answerFile && (
+                          {filledFile && (
                             <div className="p-4 rounded-lg bg-muted/50 border">
                               <h4 className="font-medium mb-2 flex items-center gap-2">
                                 <FileText className="h-4 w-4" /> Documento Gerado
                               </h4>
                               <div className="flex items-center justify-between bg-background p-3 rounded border">
-                                <span className="text-sm truncate max-w-[200px] sm:max-w-md">{answerFile.filename || "documento.pdf"}</span>
+                                <span className="text-sm truncate max-w-[200px] sm:max-w-md">{filledFile.filename || "documento.pdf"}</span>
                                 <Button size="sm" variant="ghost" asChild>
-                                  <Link href={answerFile.url} target="_blank">
+                                  <Link href={filledFile.url} target="_blank">
                                     <Download className="h-4 w-4 mr-2" /> Baixar
                                   </Link>
                                 </Button>
@@ -650,12 +649,12 @@ export default function ProjectDetailsPage() {
                             </CardHeader>
                             <CardContent className="space-y-3">
                               <Button className="w-full" variant={status === LegalInstrumentStatus.PENDING ? "default" : "secondary"} asChild>
-                                <Link href={`/projetos/${project.slug}/legal-instrument/fill`}>{status === LegalInstrumentStatus.PENDING ? (isFilled ? "Editar Respostas" : "Preencher Formulário") : "Visualizar Respostas"}</Link>
+                                <Link href={`/projetos/${project.slug}/legal-instrument/fill`}>{actionLabel}</Link>
                               </Button>
 
-                              {answerFile && (
+                              {filledFile && (
                                 <Button className="w-full" variant="outline" asChild>
-                                  <Link href={answerFile.url} target="_blank">
+                                  <Link href={filledFile.url} target="_blank">
                                     <Download className="mr-2 h-4 w-4" /> Download PDF
                                   </Link>
                                 </Button>
@@ -678,7 +677,7 @@ export default function ProjectDetailsPage() {
                 <div className="p-4 rounded-full bg-muted mb-4">
                   <Scale className="h-8 w-8 text-muted-foreground" />
                 </div>
-                <h3 className="text-lg font-semibold mb-2">Nenhum instrumento jurídico</h3>
+                <h3 className="text-lg font-semibold mb-2">Instrumento jurídico ainda não selecionado</h3>
                 <p className="text-muted-foreground max-w-sm text-center mb-6">Selecione um instrumento jurídico adequado para o seu projeto.</p>
                 {view?.allowActions && (
                   <Button asChild>

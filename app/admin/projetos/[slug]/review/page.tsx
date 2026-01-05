@@ -56,7 +56,7 @@ export default function ProjectReviewPage() {
   if (!project) return null
 
   const workPlan = project.workPlan
-  const legalInstruments = project.legalInstruments
+  const legalInstruments = project.legalInstrumentInstance ? [project.legalInstrumentInstance] : []
 
   const handleStartReview = async () => {
     try {
@@ -384,27 +384,27 @@ export default function ProjectReviewPage() {
                   <CardHeader>
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <CardTitle className="text-lg">{li.legalInstrument.name}</CardTitle>
-                        <CardDescription>{li.legalInstrument.description}</CardDescription>
+                        <CardTitle className="text-lg">{li.legalInstrumentVersion.legalInstrument.name}</CardTitle>
+                        <CardDescription>{li.legalInstrumentVersion.legalInstrument.description}</CardDescription>
                       </div>
                       <Badge variant="outline" className="whitespace-nowrap">
-                        {li.legalInstrumentInstance?.type || "N/A"}
+                        {li.legalInstrumentVersion.type || "N/A"}
                       </Badge>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="p-4 bg-muted/50 rounded-lg">
                       <p className="text-sm text-muted-foreground">
-                        <span className="font-medium">Status:</span> {li.legalInstrumentInstance?.status || "N/A"}
+                        <span className="font-medium">Status:</span> {li.status || "N/A"}
                       </p>
                     </div>
 
-                    {li.legalInstrumentInstance?.answers && Object.keys(li.legalInstrumentInstance.answers).length > 0 && (
+                    {li.answers && Object.keys(li.answers as Record<string, unknown>).length > 0 && (
                       <div className="space-y-3">
                         <h4 className="font-medium text-sm">Respostas Preenchidas</h4>
                         <div className="space-y-2 text-sm">
-                          {isPlainObject(li.legalInstrumentInstance.answers) &&
-                            Object.entries(li.legalInstrumentInstance.answers).map(([key, value]) => (
+                          {isPlainObject(li.answers) &&
+                            Object.entries(li.answers).map(([key, value]) => (
                             <div key={key} className="p-2 bg-muted/30 rounded">
                               <p className="font-medium text-xs text-muted-foreground uppercase">{key}</p>
                               <p className="text-foreground">{String(value)}</p>
@@ -421,7 +421,7 @@ export default function ProjectReviewPage() {
             <Card className="border-dashed">
               <CardContent className="flex flex-col items-center justify-center py-8">
                 <AlertCircle className="h-8 w-8 text-muted-foreground mb-2" />
-                <p className="text-muted-foreground">Nenhum instrumento jurídico foi associado</p>
+                <p className="text-muted-foreground">Instrumento jurídico ainda não associado</p>
               </CardContent>
             </Card>
           )}

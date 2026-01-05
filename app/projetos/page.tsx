@@ -76,7 +76,7 @@ export default function ProjectsPage() {
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {projects.map((project) => {
               const hasWorkPlan = !!project.workPlan
-              const legalInstrument = project.legalInstruments?.[0]?.legalInstrumentInstance
+              const legalInstrument = project.legalInstrumentInstance
               const status = project.status || "DRAFT"
               const statusLabel = {
                 DRAFT: "Em Elaboração",

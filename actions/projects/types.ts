@@ -22,12 +22,13 @@ export const projectWithRelationsValidator = Prisma.validator<Prisma.ProjectDefa
         imageFile: true,
       },
     },
-    legalInstruments: {
+    legalInstrumentInstance: {
       include: {
-        legalInstrument: true,
-        legalInstrumentInstance: {
+        filledFile: true,
+        legalInstrumentVersion: {
           include: {
-            answerFile: true,
+            legalInstrument: true,
+            templateFile: true,
           },
         },
       },
@@ -47,11 +48,10 @@ export const projectWithRelationsValidator = Prisma.validator<Prisma.ProjectDefa
 export const projectWithBasicRelationsValidator = Prisma.validator<Prisma.ProjectDefaultArgs>()({
   include: {
     workPlan: { select: { id: true } },
-    legalInstruments: {
-      include: {
-        legalInstrumentInstance: {
-          select: { status: true, type: true },
-        },
+    legalInstrumentInstance: {
+      select: {
+        status: true,
+        legalInstrumentVersion: { select: { type: true } },
       },
     },
   },
@@ -70,11 +70,14 @@ export const projectsForApprovalValidator = Prisma.validator<Prisma.ProjectDefau
         imageFile: true,
       },
     },
-    legalInstruments: {
-      include: {
-        legalInstrument: true,
-        legalInstrumentInstance: {
-          select: { status: true, type: true },
+    legalInstrumentInstance: {
+      select: {
+        status: true,
+        legalInstrumentVersion: {
+          select: {
+            type: true,
+            legalInstrument: { select: { name: true, description: true } },
+          },
         },
       },
     },

@@ -10,7 +10,7 @@ type ProjectData = NonNullable<GetProjectBySlugResponse>
 
 export type ProjectDependences = {
   "work-plan": ProjectData["workPlan"] | null
-  "legal-instrument": ProjectData["legalInstruments"] | null
+  "legal-instrument": ProjectData["legalInstrumentInstance"] | null
 }
 
 interface ProjectContextType {
@@ -20,7 +20,7 @@ interface ProjectContextType {
   view: ProjectViewerContext | null
   refetch: () => Promise<void>
   updateWorkPlan: (workPlan: ProjectData["workPlan"] | null) => void
-  updateLegalInstrument: (link: ProjectData["legalInstruments"][number] | null) => void
+  updateLegalInstrument: (instance: ProjectData["legalInstrumentInstance"] | null) => void
 }
 
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined)
@@ -49,7 +49,7 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       setView(viewer)
       setDependences({
         "work-plan": data?.workPlan || null,
-        "legal-instrument": data?.legalInstruments || null,
+        "legal-instrument": data?.legalInstrumentInstance || null,
       })
     } catch (error: unknown) {
       console.error("Failed to fetch project:", error)
@@ -73,20 +73,11 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     })
   }
 
-  const updateLegalInstrument = (link: ProjectData["legalInstruments"][number] | null) => {
-    setDependences((prev) => {
-      const current = prev["legal-instrument"] || null
-      if (!link) return { ...prev, "legal-instrument": current }
-
-      const arr = Array.isArray(current) ? [...current] : []
-      arr.push(link)
-      return { ...prev, "legal-instrument": arr }
-    })
-
+  const updateLegalInstrument = (instance: ProjectData["legalInstrumentInstance"] | null) => {
+    setDependences((prev) => ({ ...prev, "legal-instrument": instance }))
     setProject((prev) => {
       if (!prev) return prev
-      const current = prev.legalInstruments || []
-      return { ...prev, legalInstruments: [...current, link!] }
+      return { ...prev, legalInstrumentInstance: instance }
     })
   }
 

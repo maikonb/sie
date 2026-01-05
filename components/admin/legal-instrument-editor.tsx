@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { LegalInstrument } from "@prisma/client"
 import { Loader2, Plus, Trash2, Save, FileText, Upload, AlertCircle, HelpCircle, GripVertical } from "lucide-react"
 import { notify } from "@/lib/notifications"
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core"
@@ -18,13 +17,14 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 import { updateLegalInstrument } from "@/actions/legal-instruments"
 import { generatePresignedUrl } from "@/actions/storage"
+import type { GetLegalInstrumentByIdResponse } from "@/actions/legal-instruments/types"
 
 import type { LegalInstrumentFieldSpec } from "@/types/legal-instrument"
 
 type FieldSpec = LegalInstrumentFieldSpec
 
 interface EditLegalInstrumentClientProps {
-  instrument: LegalInstrument
+  instrument: NonNullable<GetLegalInstrumentByIdResponse>
 }
 
 const FIELD_TYPES = [
@@ -108,7 +108,7 @@ export default function EditLegalInstrumentClient({ instrument }: EditLegalInstr
 
   useEffect(() => {
     // Initialize fields with IDs if they don't have them
-    const initialFields = (instrument.fieldsJson as unknown as FieldSpec[]) || []
+    const initialFields = ((instrument.fieldsJson as unknown) as FieldSpec[]) || []
     const fieldsWithIds = initialFields.map((f) => ({
       ...f,
       id: f.id || `field_${Math.random().toString(36).substr(2, 9)}`,
@@ -228,10 +228,10 @@ export default function EditLegalInstrumentClient({ instrument }: EditLegalInstr
                       <FileText className="h-5 w-5 text-muted-foreground" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{instrument.fileId ? `Arquivo ID: ${instrument.fileId}` : "Nenhum arquivo vinculado"}</p>
+                      <p className="text-sm font-medium truncate">{instrument.templateFileId ? `Arquivo ID: ${instrument.templateFileId}` : "Nenhum arquivo vinculado"}</p>
                       <p className="text-xs text-muted-foreground">{instrument.updatedAt ? `Atualizado em ${new Date(instrument.updatedAt).toLocaleDateString()}` : "Sem data"}</p>
                     </div>
-                    {instrument.fileId && (
+                    {instrument.templateFileId && (
                       <Badge variant="secondary" className="bg-green-500/10 text-green-600 hover:bg-green-500/20 border-green-200">
                         Ativo
                       </Badge>

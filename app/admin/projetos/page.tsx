@@ -138,36 +138,34 @@ export default async function ProjectsApprovalPage() {
                             <span className={project.workPlan ? "text-foreground" : "text-muted-foreground"}>Plano de Trabalho</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm">
-                            <div className={`w-2 h-2 rounded-full ${project.legalInstruments?.length > 0 ? "bg-green-500" : "bg-red-500"}`}></div>
-                            <span className={project.legalInstruments?.length > 0 ? "text-foreground" : "text-muted-foreground"}>Instrumento Jurídico</span>
+                            <div className={`w-2 h-2 rounded-full ${project.legalInstrumentInstance ? "bg-green-500" : "bg-red-500"}`}></div>
+                            <span className={project.legalInstrumentInstance ? "text-foreground" : "text-muted-foreground"}>Instrumento Jurídico</span>
                           </div>
                         </div>
                       </div>
 
                       {/* Instruments List */}
-                      {project.legalInstruments && project.legalInstruments.length > 0 && (
+                      {project.legalInstrumentInstance && (
                         <div className="space-y-2">
                           <h4 className="text-xs font-semibold text-muted-foreground uppercase">Instrumentos</h4>
                           <div className="space-y-1">
-                            {project.legalInstruments.map((li) => (
-                              <div key={li.id} className="flex items-center justify-between text-xs">
-                                <span className="truncate">{li.legalInstrument.name}</span>
+                            <div className="flex items-center justify-between text-xs">
+                                <span className="truncate">{project.legalInstrumentInstance.legalInstrumentVersion.legalInstrument.name}</span>
                                 <Badge
                                   variant="outline"
                                   className={
-                                    li.legalInstrumentInstance?.status === LegalInstrumentStatus.FILLED
+                                    project.legalInstrumentInstance.status === LegalInstrumentStatus.FILLED
                                       ? "bg-green-500/10 text-green-600 border-green-200"
-                                      : li.legalInstrumentInstance?.status === LegalInstrumentStatus.PARTIAL
+                                      : project.legalInstrumentInstance.status === LegalInstrumentStatus.PARTIAL
                                         ? "bg-yellow-500/10 text-yellow-600 border-yellow-200"
                                         : "bg-muted text-muted-foreground"
                                   }
                                 >
-                                  {li.legalInstrumentInstance?.status === LegalInstrumentStatus.FILLED && "Preenchido"}
-                                  {li.legalInstrumentInstance?.status === LegalInstrumentStatus.PARTIAL && "Parcial"}
-                                  {li.legalInstrumentInstance?.status === LegalInstrumentStatus.PENDING && "Pendente"}
+                                  {project.legalInstrumentInstance.status === LegalInstrumentStatus.FILLED && "Preenchido"}
+                                  {project.legalInstrumentInstance.status === LegalInstrumentStatus.PARTIAL && "Parcial"}
+                                  {project.legalInstrumentInstance.status === LegalInstrumentStatus.PENDING && "Pendente"}
                                 </Badge>
                               </div>
-                            ))}
                           </div>
                         </div>
                       )}

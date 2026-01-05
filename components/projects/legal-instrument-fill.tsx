@@ -22,11 +22,13 @@ type FieldSpec = LegalInstrumentFieldSpec
 
 interface LegalInstrumentFillClientProps {
   instance: LegalInstrumentInstance & {
-    file?: {
-      url: string
-      key: string
-    } | null
-    status: string // Add status explicitly if not in LegalInstrumentInstance yet
+    legalInstrumentVersion: {
+      fieldsJson: unknown
+      templateFile: { url: string; key: string } | null
+      legalInstrument: { name: string; description: string }
+      type: string
+    }
+    filledFile?: { url: string; key: string } | null
   }
   projectSlug: string
 }
@@ -36,7 +38,7 @@ export default function LegalInstrumentFillClient({ instance, projectSlug }: Leg
   const [answers, setAnswers] = useState<LegalInstrumentAnswers>((instance.answers as unknown as LegalInstrumentAnswers) || {})
   const [saving, setSaving] = useState(false)
 
-  const fields = (instance.fieldsJson as unknown as FieldSpec[]) || []
+  const fields = (instance.legalInstrumentVersion.fieldsJson as unknown as FieldSpec[]) || []
   const isEditable = instance.status !== LegalInstrumentStatus.FILLED
 
   const handleChange = (id: string, value: LegalInstrumentAnswerValue) => {

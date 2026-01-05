@@ -1,4 +1,4 @@
-import { Prisma, LegalInstrument, LegalInstrumentInstance } from "@prisma/client"
+import { Prisma } from "@prisma/client"
 import type { LegalInstrumentAnswers, LegalInstrumentFieldSpec, LegalInstrumentAnswerValue } from "@/types/legal-instrument"
 
 // ============================================================================
@@ -6,20 +6,26 @@ import type { LegalInstrumentAnswers, LegalInstrumentFieldSpec, LegalInstrumentA
 // ============================================================================
 
 /**
- * Validator for LegalInstrument with file relation
+ * Validator for LegalInstrument with its current template attached.
  */
-export const legalInstrumentWithFileValidator = Prisma.validator<Prisma.LegalInstrumentDefaultArgs>()({
+export const legalInstrumentWithTemplateValidator = Prisma.validator<Prisma.LegalInstrumentDefaultArgs>()({
   include: {
-    file: true,
+    templateFile: true,
   },
 })
 
 /**
- * Validator for LegalInstrumentInstance with file relation
+ * Validator for LegalInstrumentInstance with version + template file and filled file.
  */
-export const legalInstrumentInstanceWithFileValidator = Prisma.validator<Prisma.LegalInstrumentInstanceDefaultArgs>()({
+export const legalInstrumentInstanceWithVersionValidator = Prisma.validator<Prisma.LegalInstrumentInstanceDefaultArgs>()({
   include: {
-    file: true,
+    filledFile: true,
+    legalInstrumentVersion: {
+      include: {
+        legalInstrument: true,
+        templateFile: true,
+      },
+    },
   },
 })
 
@@ -31,8 +37,11 @@ export const legalInstrumentListValidator = Prisma.validator<Prisma.LegalInstrum
     id: true,
     name: true,
     description: true,
-    fileId: true,
+    type: true,
+    templateFileId: true,
+    revisionKey: true,
     createdAt: true,
+    updatedAt: true,
   },
 })
 
@@ -48,12 +57,12 @@ export type GetLegalInstrumentsResponse = Prisma.LegalInstrumentGetPayload<typeo
 /**
  * Response type for getLegalInstrumentById
  */
-export type GetLegalInstrumentByIdResponse = Prisma.LegalInstrumentGetPayload<typeof legalInstrumentWithFileValidator> | null
+export type GetLegalInstrumentByIdResponse = Prisma.LegalInstrumentGetPayload<typeof legalInstrumentWithTemplateValidator> | null
 
 /**
  * Response type for updateLegalInstrument
  */
-export type UpdateLegalInstrumentResponse = Prisma.LegalInstrumentGetPayload<typeof legalInstrumentWithFileValidator>
+export type UpdateLegalInstrumentResponse = Prisma.LegalInstrumentGetPayload<typeof legalInstrumentWithTemplateValidator>
 
 /**
  * Response type for previewLegalInstrument
@@ -65,7 +74,7 @@ export interface PreviewLegalInstrumentResponse {
 /**
  * Response type for saveLegalInstrumentAnswers
  */
-export type SaveLegalInstrumentAnswersResponse = Prisma.LegalInstrumentInstanceGetPayload<typeof legalInstrumentInstanceWithFileValidator>
+export type SaveLegalInstrumentAnswersResponse = Prisma.LegalInstrumentInstanceGetPayload<typeof legalInstrumentInstanceWithVersionValidator>
 
 /**
  * Response type for checkExistingLegalInstrument

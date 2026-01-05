@@ -5,7 +5,7 @@ import { generateUniqueSlug } from "@/lib/utils/slug"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/config/auth"
 import { APP_ERRORS } from "@/lib/errors"
-import { ResourceMembersType, Project, LegalInstrumentInstance, ProjectStatus, LegalInstrumentStatus } from "@prisma/client"
+import { ResourceMembersType, Project, ProjectStatus, LegalInstrumentStatus, LegalInstrumentType } from "@prisma/client"
 import { Prisma } from "@prisma/client"
 import PermissionsService from "@/lib/services/permissions"
 import { notifyAdminsOfNewSubmission, notifyUserOfApproval, notifyUserOfRejection } from "@/lib/services/email"
@@ -96,38 +96,78 @@ export async function createLegalInstrument(slug: string, result: ProjectClassif
     const session = await getServerSession(authOptions)
     if (!session?.user?.email) return { success: false, error: "Unauthorized" }
 
-    const legalInstrument = await prisma.legalInstrument.findFirst({ where: { type: result.type } })
+    const type = result.type as LegalInstrumentType
+
+    const legalInstrument = await prisma.legalInstrument.findUnique({
+      where: { type },
+      select: {
+        id: true,
+        type: true,
+        revisionKey: true,
+        fieldsJson: true,
+        templateFileId: true,
+      },
+    })
+
     if (!legalInstrument) return { success: false, error: APP_ERRORS.PROJECT_CREATE_LEGAL_INSTRUMENTS.code }
 
-    const project = await prisma.project.findUnique({ where: { slug: slug }, include: { legalInstruments: true } })
+    const project = await prisma.project.findUnique({
+      where: { slug: slug },
+      select: { id: true, legalInstrumentInstance: { select: { id: true } } },
+    })
     if (!project) return { success: false, error: APP_ERRORS.PROJECT_CREATE_LEGAL_INSTRUMENTS.code }
 
-    const createdLink = await prisma.$transaction(
-      async (prismaTx) => {
-        const instance = await prismaTx.legalInstrumentInstance.create({
-          data: {
-            type: result.type,
-            fieldsJson: legalInstrument.fieldsJson as unknown as Prisma.InputJsonValue,
-            project_classification_answers: result.history,
-            fileId: legalInstrument.fileId,
-          },
-        })
+    if (project.legalInstrumentInstance) {
+      return { success: false, error: APP_ERRORS.PROJECT_CREATE_LEGAL_INSTRUMENTS.code }
+    }
 
-        const link = await prismaTx.projectLegalInstrument.create({
-          data: {
-            projectId: project.id,
-            legalInstrumentId: legalInstrument.id,
-            legalInstrumentInstanceId: instance.id,
-          },
-          include: {
-            legalInstrument: true,
-            legalInstrumentInstance: {
-              include: { answerFile: true, file: true },
+    const createdInstance = await prisma.$transaction(
+      async (prismaTx) => {
+        const existingVersion = await prismaTx.legalInstrumentVersion.findUnique({
+          where: {
+            legalInstrumentId_revisionKey: {
+              legalInstrumentId: legalInstrument.id,
+              revisionKey: legalInstrument.revisionKey,
             },
           },
+          select: { id: true },
         })
 
-        return link
+        let legalInstrumentVersionId = existingVersion?.id
+
+        if (!legalInstrumentVersionId) {
+          const latest = await prismaTx.legalInstrumentVersion.findFirst({
+            where: { legalInstrumentId: legalInstrument.id },
+            orderBy: { version: "desc" },
+            select: { version: true },
+          })
+
+          const nextVersion = (latest?.version ?? 0) + 1
+
+          const createdVersion = await prismaTx.legalInstrumentVersion.create({
+            data: {
+              legalInstrumentId: legalInstrument.id,
+              version: nextVersion,
+              revisionKey: legalInstrument.revisionKey,
+              type: legalInstrument.type,
+              fieldsJson: legalInstrument.fieldsJson as unknown as Prisma.InputJsonValue,
+              templateFileId: legalInstrument.templateFileId,
+            },
+            select: { id: true },
+          })
+
+          legalInstrumentVersionId = createdVersion.id
+        }
+
+        const instance = await prismaTx.legalInstrumentInstance.create({
+          data: {
+            projectId: project.id,
+            legalInstrumentVersionId,
+            projectClassificationAnswers: (result.history ?? []) as unknown as Prisma.InputJsonValue,
+          },
+        })
+
+        return instance
       },
       {
         timeout: 10000,
@@ -135,7 +175,7 @@ export async function createLegalInstrument(slug: string, result: ProjectClassif
       }
     )
 
-    return { success: true, error: null, created: createdLink }
+    return { success: true, error: null, created: createdInstance }
   } catch (error) {
     console.error("Error creating legal instrument:", error)
     return { success: false, error: APP_ERRORS.GENERIC_ERROR.code }
@@ -166,18 +206,20 @@ export async function getAllProjects(): Promise<GetAllProjectsResponse> {
   return projects
 }
 
-export async function getProjectLegalInstrument(slug: string): Promise<LegalInstrumentInstance | null> {
+export async function getProjectLegalInstrument(slug: string) {
   const session = await getServerSession(authOptions)
   if (!session?.user?.email) throw new Error("Unauthorized")
 
   const project = await prisma.project.findUnique({
     where: { slug },
     include: {
-      legalInstruments: {
+      legalInstrumentInstance: {
         include: {
-          legalInstrumentInstance: {
+          filledFile: true,
+          legalInstrumentVersion: {
             include: {
-              file: true,
+              legalInstrument: true,
+              templateFile: true,
             },
           },
         },
@@ -187,11 +229,7 @@ export async function getProjectLegalInstrument(slug: string): Promise<LegalInst
 
   if (!project) return null
 
-  // Since projectId is unique in ProjectLegalInstrument, there is at most one.
-  const link = project.legalInstruments[0]
-  if (!link) return null
-
-  return link.legalInstrumentInstance
+  return project.legalInstrumentInstance
 }
 
 export async function updateProject(slug: string, formData: FormData): Promise<Project> {
@@ -266,12 +304,8 @@ export async function submitProjectForApproval(slug: string): Promise<Project> {
   const project = await prisma.project.findUnique({
     where: { slug },
     include: {
-      legalInstruments: {
-        include: {
-          legalInstrumentInstance: {
-            select: { status: true },
-          },
-        },
+      legalInstrumentInstance: {
+        select: { status: true },
       },
       workPlan: true,
     },
@@ -288,17 +322,13 @@ export async function submitProjectForApproval(slug: string): Promise<Project> {
   }
 
   // Validate dependencies
-  if (!project.legalInstruments || project.legalInstruments.length === 0) {
-    throw new Error("Project must have at least one legal instrument before submission")
+  if (!project.legalInstrumentInstance) {
+    throw new Error("Project must have a legal instrument before submission")
   }
 
-  const hasPendingInstruments = project.legalInstruments.some((li) => {
-    const status = li.legalInstrumentInstance?.status || LegalInstrumentStatus.PENDING
-    return status !== LegalInstrumentStatus.FILLED
-  })
-
-  if (hasPendingInstruments) {
-    throw new Error("All legal instruments must be filled before submission")
+  const status = project.legalInstrumentInstance.status || LegalInstrumentStatus.PENDING
+  if (status !== LegalInstrumentStatus.FILLED) {
+    throw new Error("Legal instrument must be filled before submission")
   }
 
   if (!project.workPlan) {

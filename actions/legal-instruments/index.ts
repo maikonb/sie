@@ -9,8 +9,8 @@ import { Prisma } from "@prisma/client"
 import type { LegalInstrumentAnswers, LegalInstrumentFieldSpec, LegalInstrumentAnswerValue } from "@/types/legal-instrument"
 import {
   legalInstrumentListValidator,
-  legalInstrumentWithFileValidator,
-  legalInstrumentInstanceWithFileValidator,
+  legalInstrumentWithTemplateValidator,
+  legalInstrumentInstanceWithVersionValidator,
   GetLegalInstrumentsResponse,
   GetLegalInstrumentByIdResponse,
   UpdateLegalInstrumentResponse,
@@ -18,6 +18,8 @@ import {
   SaveLegalInstrumentAnswersResponse,
   CheckExistingLegalInstrumentResponse,
 } from "./types"
+
+import { randomUUID } from "crypto"
 
 export type UpdateLegalInstrumentPayload = {
   fileKey?: string
@@ -43,7 +45,7 @@ export async function getLegalInstrumentById(id: string): Promise<GetLegalInstru
 
   return prisma.legalInstrument.findUnique({
     where: { id },
-    ...legalInstrumentWithFileValidator,
+    ...legalInstrumentWithTemplateValidator,
   })
 }
 
@@ -53,21 +55,49 @@ export async function updateLegalInstrument(id: string, data: UpdateLegalInstrum
 
   await PermissionsService.authorize(session.user.id, { slug: "legal_instruments.manage" })
 
-  // If fileKey provided, create file record and update legalInstrument.fileId
-  let fileRecord = null
+  const instrument = await prisma.legalInstrument.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      type: true,
+      fieldsJson: true,
+      templateFileId: true,
+    },
+  })
+
+  if (!instrument) throw new Error("not_found")
+
+  let templateFileId = instrument.templateFileId
   if (data.fileKey) {
-    fileRecord = await fileService.createFileFromS3(data.fileKey)
+    const fileRecord = await fileService.createFileFromS3(data.fileKey)
+    templateFileId = fileRecord.id
   }
 
-  const updateData: Prisma.LegalInstrumentUpdateInput = {}
-  if (data.fieldsJson) updateData.fieldsJson = data.fieldsJson as unknown as Prisma.InputJsonValue
-  if (fileRecord) updateData.file = { connect: { id: fileRecord.id } }
+  const fieldsJson = (data.fieldsJson ?? ((instrument.fieldsJson as unknown) as LegalInstrumentFieldSpec[] | undefined)) as unknown as Prisma.InputJsonValue | undefined
 
-  return prisma.legalInstrument.update({
+  if (!templateFileId) {
+    throw new Error("no_template")
+  }
+  if (!fieldsJson) {
+    throw new Error("no_fields")
+  }
+
+  await prisma.legalInstrument.update({
     where: { id },
-    data: updateData,
-    ...legalInstrumentWithFileValidator,
+    data: {
+      templateFileId,
+      fieldsJson,
+      revisionKey: randomUUID(),
+    },
   })
+
+  const updated = await prisma.legalInstrument.findUnique({
+    where: { id },
+    ...legalInstrumentWithTemplateValidator,
+  })
+
+  if (!updated) throw new Error("not_found")
+  return updated
 }
 
 export async function previewLegalInstrument(
@@ -80,17 +110,20 @@ export async function previewLegalInstrument(
 
   await PermissionsService.authorize(session.user.id, { slug: "legal_instruments.manage" })
 
-  const li = await prisma.legalInstrument.findUnique({ where: { id }, include: { file: true } })
-  if (!li) throw new Error("not_found")
+  const li = await prisma.legalInstrument.findUnique({
+    where: { id },
+    include: { templateFile: true },
+  })
 
-  if (!li.file || !li.file.url) {
+  if (!li) throw new Error("not_found")
+  if (!li.templateFile) {
     throw new Error("no_template")
   }
 
   // Only support text templates for preview
   let text = ""
   try {
-    const fileStream = await fileService.getFileStream(li.file.key)
+    const fileStream = await fileService.getFileStream(li.templateFile.key)
     if (fileStream.Body) {
       text = await fileStream.Body.transformToString()
     }
@@ -119,18 +152,22 @@ export async function saveLegalInstrumentAnswers(
   const session = await getAuthSession()
   if (!session?.user?.id) throw new Error("Unauthorized")
 
-  // Fetch instance with template file
+  // Fetch instance with version + template file
   const instance = await prisma.legalInstrumentInstance.findUnique({
     where: { id: instanceId },
-    include: { file: true },
+    include: {
+      legalInstrumentVersion: {
+        include: { templateFile: true },
+      },
+    },
   })
 
   if (!instance) throw new Error("Instance not found")
 
-  let answerFileId = undefined
+  let filledFileId: string | undefined = undefined
 
   // Determine status based on answers completeness
-  const fields = ((instance.fieldsJson as unknown) as LegalInstrumentFieldSpec[]) || []
+  const fields = ((instance.legalInstrumentVersion.fieldsJson as unknown) as LegalInstrumentFieldSpec[]) || []
   const requiredFields = fields.filter((f) => f.required)
   const allRequiredFilled = requiredFields.every((f) => {
     const val = answers[f.id]
@@ -153,10 +190,10 @@ export async function saveLegalInstrumentAnswers(
   }
 
   // If we have a template file, generate the filled version
-  if (instance.file && allRequiredFilled) {
+  if (instance.legalInstrumentVersion.templateFile && allRequiredFilled) {
     try {
       // Get template content
-      const fileStream = await fileService.getFileStream(instance.file.key)
+      const fileStream = await fileService.getFileStream(instance.legalInstrumentVersion.templateFile.key)
       if (fileStream.Body) {
         let content = await fileStream.Body.transformToString()
 
@@ -169,14 +206,14 @@ export async function saveLegalInstrumentAnswers(
         }
 
         // Upload generated file
-        const newFilename = `filled_${instance.file.filename}`
+        const newFilename = `filled_${instance.legalInstrumentVersion.templateFile.filename}`
         const newFile = await fileService.uploadFile(
           content,
           newFilename,
           "text/plain",
           "legal-instruments/filled"
         )
-        answerFileId = newFile.id
+        filledFileId = newFile.id
       }
     } catch (error) {
       console.error("Error generating filled file:", error)
@@ -187,10 +224,10 @@ export async function saveLegalInstrumentAnswers(
     where: { id: instanceId },
     data: {
       answers,
-      answerFileId,
+      filledFileId,
       status: newStatus,
     },
-    ...legalInstrumentInstanceWithFileValidator,
+    ...legalInstrumentInstanceWithVersionValidator,
   })
 }
 
@@ -200,14 +237,10 @@ export async function checkExistingLegalInstrument(projectSlug: string): Promise
 
   const project = await prisma.project.findUnique({
     where: { slug: projectSlug },
-    select: { id: true },
+    select: { legalInstrumentInstance: { select: { id: true } } },
   })
 
   if (!project) throw new Error("Project not found")
 
-  const existing = await prisma.projectLegalInstrument.findUnique({
-    where: { projectId: project.id },
-  })
-
-  return { exists: !!existing }
+  return { exists: !!project.legalInstrumentInstance }
 }

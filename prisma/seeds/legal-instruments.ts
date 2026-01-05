@@ -34,17 +34,21 @@ export async function seedLegalInstruments(prisma: PrismaClient) {
   ]
 
   for (const instrument of instruments) {
-    const exists = await prisma.legalInstrument.findFirst({
+    const existing = await prisma.legalInstrument.findUnique({
       where: { type: instrument.type },
+      select: { id: true },
     })
 
-    if (!exists) {
-      await prisma.legalInstrument.create({
-        data: {
-          ...instrument,
-          fileId: dummyFile.id,
-        },
-      })
-    }
+    if (existing) continue
+
+    await prisma.legalInstrument.create({
+      data: {
+        name: instrument.name,
+        description: instrument.description,
+        type: instrument.type,
+        fieldsJson: instrument.fieldsJson as any,
+        templateFileId: dummyFile.id,
+      },
+    })
   }
 }
