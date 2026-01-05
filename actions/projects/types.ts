@@ -116,9 +116,23 @@ export type GetProjectsForApprovalResponse = Prisma.ProjectGetPayload<typeof pro
 export interface CreateLegalInstrumentResult {
   success: boolean
   error: string | null
-  // Optional created link payload (ProjectLegalInstrument with includes)
-  created?: any
+  created?: Prisma.LegalInstrumentInstanceGetPayload<typeof legalInstrumentInstanceForProjectValidator>
 }
+
+/**
+ * Validator for returning a LegalInstrumentInstance compatible with ProjectProvider state.
+ */
+export const legalInstrumentInstanceForProjectValidator = Prisma.validator<Prisma.LegalInstrumentInstanceDefaultArgs>()({
+  include: {
+    filledFile: true,
+    legalInstrumentVersion: {
+      include: {
+        legalInstrument: true,
+        templateFile: true,
+      },
+    },
+  },
+})
 
 /**
  * Response type for getProjectViewerContext

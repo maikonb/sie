@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/config/db"
+import { nanoid } from 'nanoid';
 
 export async function generateUniqueSlug(title: string): Promise<string> {
   // 1. Convert title to initial slug
@@ -15,7 +16,6 @@ export async function generateUniqueSlug(title: string): Promise<string> {
 
   // 2. Check for uniqueness
   let uniqueSlug = slug
-  let counter = 1
 
   while (true) {
     const existing = await prisma.project.findUnique({
@@ -27,8 +27,8 @@ export async function generateUniqueSlug(title: string): Promise<string> {
       break
     }
 
-    uniqueSlug = `${slug}-${counter}`
-    counter++
+    const shortId = nanoid(8);
+    uniqueSlug = `${slug}-${shortId}`
   }
 
   return uniqueSlug

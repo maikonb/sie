@@ -19,6 +19,7 @@ import {
   GetAllProjectsResponse,
   GetProjectsForApprovalResponse,
   CreateLegalInstrumentResult,
+  legalInstrumentInstanceForProjectValidator,
   ProjectViewerContext,
   GetProjectApprovalStatsResponse,
 } from "./types"
@@ -167,7 +168,16 @@ export async function createLegalInstrument(slug: string, result: ProjectClassif
           },
         })
 
-        return instance
+        const full = await prismaTx.legalInstrumentInstance.findUnique({
+          where: { id: instance.id },
+          ...legalInstrumentInstanceForProjectValidator,
+        })
+
+        if (!full) {
+          throw new Error("failed_to_load_instance")
+        }
+
+        return full
       },
       {
         timeout: 10000,
