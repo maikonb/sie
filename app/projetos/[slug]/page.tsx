@@ -23,6 +23,8 @@ import { submitProjectForApproval } from "@/actions/projects"
 import { notify } from "@/lib/notifications"
 import type { LucideIcon } from "lucide-react"
 import type { ProjectDependences } from "@/components/providers/project"
+import type { LegalInstrumentFieldSpec } from "@/types/legal-instrument"
+import { legalInstrumentTypeLabel } from "@/lib/utils/legal-instrument"
 
 type MissingDependency = {
   id: string
@@ -560,6 +562,19 @@ export default function ProjectDetailsPage() {
                   const status = instance.status || LegalInstrumentStatus.PENDING
                   const isFilled = status === LegalInstrumentStatus.FILLED
 
+                  const answers = (instance.answers ?? {}) as unknown as Record<string, unknown>
+                  const fields = ((instance.legalInstrumentVersion.fieldsJson ?? []) as unknown as LegalInstrumentFieldSpec[])
+                  const requiredFields = fields.filter((f) => f.required)
+
+                  const isAnswered = (fieldId: string) => {
+                    const val = answers[fieldId]
+                    return val !== undefined && val !== null && String(val).trim() !== ""
+                  }
+
+                  const requiredFilledCount = requiredFields.filter((f) => isAnswered(f.id)).length
+                  const requiredTotalCount = requiredFields.length
+                  const requiredProgress = requiredTotalCount > 0 ? requiredFilledCount / requiredTotalCount : 1
+
                   const actionLabel =
                     status === LegalInstrumentStatus.FILLED
                       ? "Visualizar Respostas"
@@ -575,24 +590,21 @@ export default function ProjectDetailsPage() {
                             <CardTitle className="flex items-center gap-2">
                               <Scale className="h-5 w-5" />
                               {instrument.name}
+                              <span className="text-xs font-normal text-muted-foreground">v{instance.legalInstrumentVersion.version}</span>
                             </CardTitle>
                             <Badge
                               variant={status === LegalInstrumentStatus.FILLED ? "default" : "secondary"}
                               className={cn("px-3 py-1 text-sm", status === LegalInstrumentStatus.FILLED && "bg-green-500 hover:bg-green-600")}
                             >
-                              {status === LegalInstrumentStatus.FILLED && "Aprovado"}
-                              {status === LegalInstrumentStatus.PARTIAL && "Parcial"}
-                              {status === LegalInstrumentStatus.PENDING && "Rascunho"}
+                              {status === LegalInstrumentStatus.FILLED && "Preenchido"}
+                              {status === LegalInstrumentStatus.PARTIAL && "Preenchido Parcialmente"}
+                              {status === LegalInstrumentStatus.PENDING && "Não preenchido"}
                             </Badge>
                           </div>
                           <CardDescription className="text-base mt-2">{instrument.description}</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
                           <div className="grid gap-4 sm:grid-cols-2">
-                            <div className="space-y-1">
-                              <span className="text-sm font-medium text-muted-foreground">Tipo de Instrumento</span>
-                              <p className="font-medium">{instance.legalInstrumentVersion.type}</p>
-                            </div>
                             <div className="space-y-1">
                               <span className="text-sm font-medium text-muted-foreground">Data de Criação</span>
                               <p className="font-medium flex items-center gap-2">
@@ -607,20 +619,40 @@ export default function ProjectDetailsPage() {
                                 {format(new Date(instance.updatedAt), "dd/MM/yyyy 'às' HH:mm")}
                               </p>
                             </div>
-                            <div className="space-y-1">
-                              <span className="text-sm font-medium text-muted-foreground">Status do Preenchimento</span>
+                          </div>
+
+                          <div className="p-4 rounded-lg bg-muted/30 border space-y-3">
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                              <div className="space-y-0.5">
+                                <h4 className="font-medium text-sm">Progresso do formulário</h4>
+                                <p className="text-xs text-muted-foreground">
+                                  {requiredTotalCount > 0 ? (
+                                    <>
+                                      Obrigatórios preenchidos: {requiredFilledCount}/{requiredTotalCount}
+                                    </>
+                                  ) : (
+                                    <>Sem campos obrigatórios.</>
+                                  )}
+                                </p>
+                              </div>
                               <div className="flex items-center gap-2">
-                                {isFilled ? (
-                                  <span className="text-green-600 font-medium flex items-center gap-1">
-                                    <CheckCircle2 className="h-4 w-4" /> Preenchido
-                                  </span>
-                                ) : (
-                                  <span className="text-orange-600 font-medium flex items-center gap-1">
-                                    <AlertCircle className="h-4 w-4" /> Pendente
-                                  </span>
-                                )}
+                                <Badge variant="outline" className="text-muted-foreground">
+                                  {legalInstrumentTypeLabel(instance.legalInstrumentVersion.type)}
+                                </Badge>
                               </div>
                             </div>
+
+                            {requiredTotalCount > 0 && (
+                              <div className="space-y-2">
+                                <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                                  <div className="h-2 rounded-full bg-primary" style={{ width: `${Math.round(requiredProgress * 100)}%` }} />
+                                </div>
+                                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                  <span>{Math.round(requiredProgress * 100)}% concluído</span>
+                                  <span>{requiredTotalCount} obrigatório(s)</span>
+                                </div>
+                              </div>
+                            )}
                           </div>
 
                           {filledFile && (
@@ -662,6 +694,57 @@ export default function ProjectDetailsPage() {
                             </CardContent>
                           </Card>
                         )}
+
+                        {(() => {
+                          const templateFile = instance.legalInstrumentVersion.templateFile
+                          if (!templateFile) return null
+
+                          const isPdf = templateFile.contentType?.includes("pdf") || templateFile.filename?.toLowerCase().endsWith(".pdf")
+                          const isDoc =
+                            templateFile.contentType?.includes("word") ||
+                            templateFile.contentType?.includes("msword") ||
+                            templateFile.filename?.toLowerCase().endsWith(".doc") ||
+                            templateFile.filename?.toLowerCase().endsWith(".docx")
+
+                          const directUrl = templateFile.url
+                          const officeViewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(directUrl)}`
+                          const previewUrl = isPdf ? directUrl : isDoc ? officeViewerUrl : directUrl
+
+                          return (
+                            <Card>
+                              <CardHeader>
+                                <CardTitle className="text-base">Template</CardTitle>
+                                <CardDescription>Visualização do modelo usado para gerar o documento.</CardDescription>
+                              </CardHeader>
+                              <CardContent className="space-y-3">
+                                <Button className="w-full" variant="outline" asChild>
+                                  <Link href={directUrl} target="_blank">
+                                    <Eye className="mr-2 h-4 w-4" /> Abrir em nova aba
+                                  </Link>
+                                </Button>
+
+                                {isPdf && (
+                                  <div className="rounded-lg overflow-hidden border bg-background">
+                                    <iframe title="Template (PDF)" src={previewUrl} className="w-full h-[520px]" />
+                                  </div>
+                                )}
+
+                                {isDoc && (
+                                  <div className="rounded-lg overflow-hidden border bg-background">
+                                    <iframe title="Template (DOC/DOCX)" src={previewUrl} className="w-full h-[520px]" />
+                                    <p className="text-xs text-muted-foreground px-3 py-2 border-t bg-muted/20">
+                                      Se o preview não carregar, a URL do arquivo pode não ser pública. Use “Abrir em nova aba”.
+                                    </p>
+                                  </div>
+                                )}
+
+                                {!isPdf && !isDoc && (
+                                  <p className="text-sm text-muted-foreground">Formato não suportado para pré-visualização.</p>
+                                )}
+                              </CardContent>
+                            </Card>
+                          )
+                        })()}
 
                         <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border border-blue-100 dark:border-blue-900">
                           <h4 className="font-medium text-blue-800 dark:text-blue-300 mb-2 text-sm">Informação Importante</h4>

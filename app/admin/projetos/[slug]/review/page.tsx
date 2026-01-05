@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
+import { legalInstrumentTypeLabel } from "@/lib/utils/legal-instrument"
 import { ArrowLeft, Calendar, FileText, CheckCircle2, XCircle, AlertCircle, Loader2 } from "lucide-react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
@@ -388,7 +389,7 @@ export default function ProjectReviewPage() {
                         <CardDescription>{li.legalInstrumentVersion.legalInstrument.description}</CardDescription>
                       </div>
                       <Badge variant="outline" className="whitespace-nowrap">
-                        {li.legalInstrumentVersion.type || "N/A"}
+                        {legalInstrumentTypeLabel(li.legalInstrumentVersion.type)}
                       </Badge>
                     </div>
                   </CardHeader>
