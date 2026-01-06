@@ -221,6 +221,7 @@ model User {
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
   resourceMembers ResourceMembers[]
+  notifications   Notification[]
 }
 
 model File {
@@ -450,4 +451,21 @@ model ProjectAudit {
   createdAt     DateTime @default(now())
 
   @@index([projectId])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title     String
+  message   String   @db.Text
+  type      String   // E.g., 'PROJECT_STATUS', 'SYSTEM', 'REMINDER'
+  url       String?  // Link opcional para ação
+  
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([read])
 }

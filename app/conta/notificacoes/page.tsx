@@ -1,8 +1,5 @@
-"use client"
-
 import { PageShell, PageHeader, PageHeaderHeading, PageHeaderDescription, PageContent } from "@/components/shell"
-import { UnderDevelopment } from "@/components/ui/under-development"
-import { Bell } from "lucide-react"
+import { NotificationList } from "@/components/notifications/notification-list"
 
 export default function Page() {
   return (
@@ -15,10 +12,7 @@ export default function Page() {
       </PageHeader>
 
       <PageContent>
-        <UnderDevelopment
-          icon={Bell}
-          description="Estamos preparando esta área. Em breve você poderá visualizar e gerenciar suas notificações aqui."
-        />
+        <NotificationList />
       </PageContent>
     </PageShell>
   )

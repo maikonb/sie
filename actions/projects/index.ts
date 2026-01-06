@@ -9,20 +9,10 @@ import { ResourceMembersType, Project, ProjectStatus, LegalInstrumentStatus, Leg
 import { Prisma } from "@prisma/client"
 import PermissionsService from "@/lib/services/permissions"
 import { notifyAdminsOfNewSubmission, notifyUserOfApproval, notifyUserOfRejection } from "@/lib/services/email"
+import { NotificationService } from "@/lib/services/notification"
 import { logProjectAction } from "@/lib/services/audit"
 import type { ProjectClassificationResult } from "@/types/legal-instrument"
-import {
-  projectWithRelationsValidator,
-  projectWithBasicRelationsValidator,
-  projectsForApprovalValidator,
-  GetProjectBySlugResponse,
-  GetAllProjectsResponse,
-  GetProjectsForApprovalResponse,
-  CreateLegalInstrumentResult,
-  legalInstrumentInstanceForProjectValidator,
-  ProjectViewerContext,
-  GetProjectApprovalStatsResponse,
-} from "./types"
+import { projectWithRelationsValidator, projectWithBasicRelationsValidator, projectsForApprovalValidator, GetProjectBySlugResponse, GetAllProjectsResponse, GetProjectsForApprovalResponse, CreateLegalInstrumentResult, legalInstrumentInstanceForProjectValidator, ProjectViewerContext, GetProjectApprovalStatsResponse } from "./types"
 
 export async function getProjectBySlug(slug: string): Promise<GetProjectBySlugResponse> {
   const session = await getServerSession(authOptions)
@@ -365,7 +355,7 @@ export async function submitProjectForApproval(slug: string): Promise<Project> {
       include: { user: { select: { name: true } } },
     })
     if (full) {
-      await notifyAdminsOfNewSubmission({ id: full.id, title: full.title, slug: full.slug!, user: { name: full.user?.name } })
+      await NotificationService.notifyAdminsOfNewSubmission({ id: full.id, title: full.title, slug: full.slug!, user: { name: full.user?.name } })
       await logProjectAction(full.id, "SUBMITTED", session.user.id, { fromStatus: project.status, toStatus: "PENDING_REVIEW" })
     }
   } catch (e) {
@@ -404,9 +394,9 @@ export async function startProjectReview(slug: string): Promise<Project> {
 
   // Log audit
   try {
-    await logProjectAction(project.id, "REVIEW_STARTED", session.user.id, { 
-      fromStatus: "PENDING_REVIEW", 
-      toStatus: "UNDER_REVIEW" 
+    await logProjectAction(project.id, "REVIEW_STARTED", session.user.id, {
+      fromStatus: "PENDING_REVIEW",
+      toStatus: "UNDER_REVIEW",
     })
   } catch (e) {
     console.error("log startProjectReview error", e)
@@ -449,7 +439,7 @@ export async function approveProject(slug: string): Promise<Project> {
       include: { user: { select: { email: true } } },
     })
     if (full) {
-      await notifyUserOfApproval({ title: full.title, slug: full.slug!, user: { email: full.user?.email } }, { name: session.user.name })
+      await NotificationService.notifyUserOfApproval({ title: full.title, slug: full.slug!, userId: full.userId, user: { email: full.user?.email } }, { name: session.user.name })
       await logProjectAction(full.id, "APPROVED", session.user.id, { toStatus: "APPROVED" })
     }
   } catch (e) {
@@ -496,7 +486,7 @@ export async function rejectProject(slug: string, reason: string): Promise<Proje
       include: { user: { select: { email: true } } },
     })
     if (full) {
-      await notifyUserOfRejection({ title: full.title, slug: full.slug!, user: { email: full.user?.email } }, reason, { name: session.user.name })
+      await NotificationService.notifyUserOfRejection({ title: full.title, slug: full.slug!, userId: full.userId, user: { email: full.user?.email } }, reason, { name: session.user.name })
       await logProjectAction(full.id, "REJECTED", session.user.id, { reason, toStatus: "REJECTED" })
     }
   } catch (e) {
@@ -529,13 +519,7 @@ export async function getProjectApprovalStats(): Promise<GetProjectApprovalStats
   // Verify approver has permission
   await PermissionsService.authorize(session.user.id, { slug: "projects.approve" })
 
-  const [pendingReview, underReview, approved, rejected, total] = await Promise.all([
-    prisma.project.count({ where: { status: "PENDING_REVIEW" } }),
-    prisma.project.count({ where: { status: "UNDER_REVIEW" } }),
-    prisma.project.count({ where: { status: "APPROVED" } }),
-    prisma.project.count({ where: { status: "REJECTED" } }),
-    prisma.project.count(),
-  ])
+  const [pendingReview, underReview, approved, rejected, total] = await Promise.all([prisma.project.count({ where: { status: "PENDING_REVIEW" } }), prisma.project.count({ where: { status: "UNDER_REVIEW" } }), prisma.project.count({ where: { status: "APPROVED" } }), prisma.project.count({ where: { status: "REJECTED" } }), prisma.project.count()])
 
   return {
     pendingReview,
