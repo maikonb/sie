@@ -4,7 +4,7 @@ import prisma from "@/lib/config/db"
 import PermissionsService from "@/lib/services/permissions"
 import { getAuthSession } from "@/lib/api-utils"
 import { fileService } from "@/lib/services/file"
-import { LegalInstrumentStatus } from "@prisma/client"
+import { LegalInstrumentStatus, ProjectStatus } from "@prisma/client"
 import { Prisma } from "@prisma/client"
 import type { LegalInstrumentAnswers, LegalInstrumentFieldSpec, LegalInstrumentAnswerValue } from "@/types/legal-instrument"
 import {
@@ -156,6 +156,11 @@ export async function saveLegalInstrumentAnswers(
   const instance = await prisma.legalInstrumentInstance.findUnique({
     where: { id: instanceId },
     include: {
+      project: {
+        select: {
+          status: true,
+        },
+      },
       legalInstrumentVersion: {
         include: { templateFile: true },
       },
@@ -163,6 +168,10 @@ export async function saveLegalInstrumentAnswers(
   })
 
   if (!instance) throw new Error("Instance not found")
+
+  if (instance.project.status === ProjectStatus.UNDER_REVIEW || instance.project.status === ProjectStatus.APPROVED) {
+    throw new Error("project_locked")
+  }
 
   let filledFileId: string | undefined = undefined
 

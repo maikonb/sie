@@ -225,6 +225,11 @@ export async function getProjectLegalInstrument(slug: string) {
     include: {
       legalInstrumentInstance: {
         include: {
+          project: {
+            select: {
+              status: true,
+            },
+          },
           filledFile: true,
           legalInstrumentVersion: {
             include: {

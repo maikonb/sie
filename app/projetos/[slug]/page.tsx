@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ArrowLeft, Calendar, FileText, Plus, Edit, Scale, Download, Eye, CheckCircle2, AlertCircle, SendHorizontal, Loader2 } from "lucide-react"
+import { Separator } from "@/components/ui/separator"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { useProject } from "@/components/providers/project"
@@ -56,7 +57,6 @@ export default function ProjectDetailsPage() {
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-
   if (loading) {
     return (
       <PageShell>
@@ -78,7 +78,7 @@ export default function ProjectDetailsPage() {
   const legalInstrumentInstance: ProjectLegalInstrumentInstance | null = dependences["legal-instrument"] ?? null
 
   const specificObjectives: any = workPlan?.specificObjectives
-  console.log("specificObjectives: ", specificObjectives);
+  console.log("specificObjectives: ", specificObjectives)
   console.log("workPlan: ", workPlan?.specificObjectives)
 
   // Calculate dependencies
@@ -168,13 +168,16 @@ export default function ProjectDetailsPage() {
               Criado em {format(new Date(project.createdAt), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
             </span>
             <span className="hidden md:inline">•</span>
-            <Badge variant="outline" className={cn("font-normal", {
-              "bg-muted text-muted-foreground": project.status === ProjectStatus.DRAFT,
-              "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400": project.status === ProjectStatus.PENDING_REVIEW,
-              "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400": project.status === ProjectStatus.UNDER_REVIEW,
-              "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400": project.status === ProjectStatus.APPROVED,
-              "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400": project.status === ProjectStatus.REJECTED,
-            })}>
+            <Badge
+              variant="outline"
+              className={cn("font-normal", {
+                "bg-muted text-muted-foreground": project.status === ProjectStatus.DRAFT,
+                "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400": project.status === ProjectStatus.PENDING_REVIEW,
+                "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400": project.status === ProjectStatus.UNDER_REVIEW,
+                "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400": project.status === ProjectStatus.APPROVED,
+                "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400": project.status === ProjectStatus.REJECTED,
+              })}
+            >
               {project.status === ProjectStatus.DRAFT && "Em Elaboração"}
               {project.status === ProjectStatus.PENDING_REVIEW && "Aguardando análise"}
               {project.status === ProjectStatus.UNDER_REVIEW && "Em análise"}
@@ -213,12 +216,7 @@ export default function ProjectDetailsPage() {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div>
-                    <Button 
-                      onClick={handleSubmit} 
-                      disabled={isSubmitting || !canSubmit}
-                      variant="default"
-                      className="bg-blue-600 hover:bg-blue-700"
-                    >
+                    <Button onClick={handleSubmit} disabled={isSubmitting || !canSubmit} variant="default" className="bg-blue-600 hover:bg-blue-700">
                       {isSubmitting ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando...
@@ -309,9 +307,7 @@ export default function ProjectDetailsPage() {
                           <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 shrink-0 mt-0.5" />
                           <div>
                             <CardTitle className="text-base text-green-900 dark:text-green-300">Pronto para Submissão</CardTitle>
-                            <CardDescription className="text-green-700 dark:text-green-400 mt-1">
-                              Todas as dependências foram atendidas. Você pode enviar o projeto para análise.
-                            </CardDescription>
+                            <CardDescription className="text-green-700 dark:text-green-400 mt-1">Todas as dependências foram atendidas. Você pode enviar o projeto para análise.</CardDescription>
                           </div>
                         </div>
                       </CardHeader>
@@ -334,8 +330,7 @@ export default function ProjectDetailsPage() {
                 ) : (
                   <div className="space-y-3">
                     {project.audits.map((a) => {
-                      const reason =
-                        isPlainObject(a.changeDetails) && typeof a.changeDetails.reason === "string" ? a.changeDetails.reason : undefined
+                      const reason = isPlainObject(a.changeDetails) && typeof a.changeDetails.reason === "string" ? a.changeDetails.reason : undefined
 
                       return (
                         <div key={a.id} className="flex items-center gap-3 text-sm">
@@ -361,7 +356,7 @@ export default function ProjectDetailsPage() {
               </CardContent>
             </Card>
           </TabsContent>
-          
+
           <TabsContent value="workplan" className="animate-in fade-in-50 duration-300">
             {workPlan ? (
               <div className="space-y-6">
@@ -371,9 +366,7 @@ export default function ProjectDetailsPage() {
                       <CardTitle>Plano de Trabalho</CardTitle>
                       <CardDescription>
                         Criado em {format(new Date(workPlan.createdAt), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                        {workPlan.updatedAt ? (
-                          <> • Atualizado em {format(new Date(workPlan.updatedAt), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</>
-                        ) : null}
+                        {workPlan.updatedAt ? <> • Atualizado em {format(new Date(workPlan.updatedAt), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</> : null}
                       </CardDescription>
                     </div>
                     {view?.allowActions && (
@@ -552,7 +545,7 @@ export default function ProjectDetailsPage() {
             )}
           </TabsContent>
 
-          <TabsContent value="legal-instrument" className="animate-in fade-in-50 duration-300">
+          <TabsContent value="legal-instrument" className="animate-in fade-in-50 duration-500">
             {legalInstrumentInstance ? (
               <div className="space-y-6">
                 {(() => {
@@ -560,10 +553,9 @@ export default function ProjectDetailsPage() {
                   const instrument = instance.legalInstrumentVersion.legalInstrument
                   const filledFile = instance.filledFile ?? null
                   const status = instance.status || LegalInstrumentStatus.PENDING
-                  const isFilled = status === LegalInstrumentStatus.FILLED
 
                   const answers = (instance.answers ?? {}) as unknown as Record<string, unknown>
-                  const fields = ((instance.legalInstrumentVersion.fieldsJson ?? []) as unknown as LegalInstrumentFieldSpec[])
+                  const fields = (instance.legalInstrumentVersion.fieldsJson ?? []) as unknown as LegalInstrumentFieldSpec[]
                   const requiredFields = fields.filter((f) => f.required)
 
                   const isAnswered = (fieldId: string) => {
@@ -574,198 +566,160 @@ export default function ProjectDetailsPage() {
                   const requiredFilledCount = requiredFields.filter((f) => isAnswered(f.id)).length
                   const requiredTotalCount = requiredFields.length
                   const requiredProgress = requiredTotalCount > 0 ? requiredFilledCount / requiredTotalCount : 1
+                  const isFullyFilled = status === LegalInstrumentStatus.FILLED
 
-                  const actionLabel =
-                    status === LegalInstrumentStatus.FILLED
-                      ? "Visualizar Respostas"
-                      : status === LegalInstrumentStatus.PARTIAL
-                        ? "Editar Respostas"
-                        : "Preencher Formulário"
+                  const actionLabel = status === LegalInstrumentStatus.FILLED ? "Revisar Respostas" : status === LegalInstrumentStatus.PARTIAL ? "Continuar Preenchimento" : "Iniciar Preenchimento"
 
                   return (
-                    <div className="grid gap-6 md:grid-cols-3">
-                      <Card className="md:col-span-2">
-                        <CardHeader>
-                          <div className="flex items-center justify-between">
-                            <CardTitle className="flex items-center gap-2">
-                              <Scale className="h-5 w-5" />
-                              {instrument.name}
-                              <span className="text-xs font-normal text-muted-foreground">v{instance.legalInstrumentVersion.version}</span>
-                            </CardTitle>
-                            <Badge
-                              variant={status === LegalInstrumentStatus.FILLED ? "default" : "secondary"}
-                              className={cn("px-3 py-1 text-sm", status === LegalInstrumentStatus.FILLED && "bg-green-500 hover:bg-green-600")}
-                            >
-                              {status === LegalInstrumentStatus.FILLED && "Preenchido"}
-                              {status === LegalInstrumentStatus.PARTIAL && "Preenchido Parcialmente"}
-                              {status === LegalInstrumentStatus.PENDING && "Não preenchido"}
-                            </Badge>
-                          </div>
-                          <CardDescription className="text-base mt-2">{instrument.description}</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                          <div className="grid gap-4 sm:grid-cols-2">
-                            <div className="space-y-1">
-                              <span className="text-sm font-medium text-muted-foreground">Data de Criação</span>
-                              <p className="font-medium flex items-center gap-2">
-                                <Calendar className="h-4 w-4 text-muted-foreground" />
-                                {format(new Date(instance.createdAt), "dd/MM/yyyy 'às' HH:mm")}
-                              </p>
-                            </div>
-                            <div className="space-y-1">
-                              <span className="text-sm font-medium text-muted-foreground">Última Atualização</span>
-                              <p className="font-medium flex items-center gap-2">
-                                <Calendar className="h-4 w-4 text-muted-foreground" />
-                                {format(new Date(instance.updatedAt), "dd/MM/yyyy 'às' HH:mm")}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="p-4 rounded-lg bg-muted/30 border space-y-3">
-                            <div className="flex flex-wrap items-center justify-between gap-3">
-                              <div className="space-y-0.5">
-                                <h4 className="font-medium text-sm">Progresso do formulário</h4>
-                                <p className="text-xs text-muted-foreground">
-                                  {requiredTotalCount > 0 ? (
-                                    <>
-                                      Obrigatórios preenchidos: {requiredFilledCount}/{requiredTotalCount}
-                                    </>
-                                  ) : (
-                                    <>Sem campos obrigatórios.</>
-                                  )}
-                                </p>
+                    <div className="grid gap-6 lg:grid-cols-12 items-stretch">
+                        {/* Header Status Card */}
+                        <Card className="overflow-hidden border-none col-span-7 shadow-md bg-linear-to-br from-card to-muted/30">
+                          <CardHeader className="pb-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                                    <Scale className="h-5 w-5" />
+                                  </div>
+                                  <CardTitle className="text-xl">{instrument.name}</CardTitle>
+                                </div>
+                                <CardDescription className="text-xs font-medium flex items-center gap-2">{legalInstrumentTypeLabel(instance.legalInstrumentVersion.type)}</CardDescription>
                               </div>
-                              <div className="flex items-center gap-2">
-                                <Badge variant="outline" className="text-muted-foreground">
-                                  {legalInstrumentTypeLabel(instance.legalInstrumentVersion.type)}
+                              <div className="flex flex-col items-end gap-2">
+                                <Badge variant={isFullyFilled ? "default" : "secondary"} className={cn("px-3 py-1 text-[10px] font-bold uppercase tracking-wider shadow-xs", isFullyFilled && "bg-green-500 hover:bg-green-600 border-none text-white", status === LegalInstrumentStatus.PARTIAL && "bg-yellow-500/10 text-yellow-600 border-yellow-200 dark:border-yellow-900", status === LegalInstrumentStatus.PENDING && "bg-muted text-muted-foreground")}>
+                                  {status === LegalInstrumentStatus.FILLED && "Completo"}
+                                  {status === LegalInstrumentStatus.PARTIAL && "Em Progresso"}
+                                  {status === LegalInstrumentStatus.PENDING && "Pendente"}
                                 </Badge>
+                              </div>
+                            </div>
+                          </CardHeader>
+
+                          <div className="flex px-6 flex-col sm:flex-row items-center justify-between gap-6">
+                            <div className="flex items-center gap-4">
+                              <div className="flex items-center justify-center h-12 w-12 rounded-full bg-background border shadow-sm">
+                                <CheckCircle2 className="h-6 w-6 text-primary" />
+                              </div>
+                              <div className="space-y-0.5">
+                                <h4 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Progresso</h4>
+                                <p className="text-xs text-muted-foreground">{requiredTotalCount > 0 ? `${requiredFilledCount} de ${requiredTotalCount} campos obrigatórios finalizados` : "Sem campos obrigatórios específicos"}</p>
                               </div>
                             </div>
 
                             {requiredTotalCount > 0 && (
-                              <div className="space-y-2">
-                                <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
-                                  <div className="h-2 rounded-full bg-primary" style={{ width: `${Math.round(requiredProgress * 100)}%` }} />
-                                </div>
-                                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                                  <span>{Math.round(requiredProgress * 100)}% concluído</span>
-                                  <span>{requiredTotalCount} obrigatório(s)</span>
-                                </div>
+                              <div className="flex items-baseline gap-2">
+                                <span className="text-4xl font-black tracking-tighter text-primary">{Math.round(requiredProgress * 100)}%</span>
+                                <span className="text-xs font-bold text-muted-foreground/50 uppercase">Concluído</span>
                               </div>
                             )}
                           </div>
 
-                          {filledFile && (
-                            <div className="p-4 rounded-lg bg-muted/50 border">
-                              <h4 className="font-medium mb-2 flex items-center gap-2">
-                                <FileText className="h-4 w-4" /> Documento Gerado
-                              </h4>
-                              <div className="flex items-center justify-between bg-background p-3 rounded border">
-                                <span className="text-sm truncate max-w-[200px] sm:max-w-md">{filledFile.filename || "documento.pdf"}</span>
-                                <Button size="sm" variant="ghost" asChild>
-                                  <Link href={filledFile.url} target="_blank">
-                                    <Download className="h-4 w-4 mr-2" /> Baixar
-                                  </Link>
-                                </Button>
-                              </div>
+                          {/* Progress bar attached to bottom of header card */}
+                          {requiredTotalCount > 0 && (
+                            <div className="h-1.5 w-full bg-muted/50">
+                              <div className={cn("h-full transition-all duration-1000 ease-out bg-primary")} style={{ width: `${Math.round(requiredProgress * 100)}%` }} />
                             </div>
                           )}
-                        </CardContent>
-                      </Card>
+                        </Card>
 
-                      <div className="space-y-4">
-                        {view?.allowActions && (
-                          <Card>
-                            <CardHeader>
-                              <CardTitle className="text-base">Ações</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-3">
-                              <Button className="w-full" variant={status === LegalInstrumentStatus.PENDING ? "default" : "secondary"} asChild>
-                                <Link href={`/projetos/${project.slug}/legal-instrument/fill`}>{actionLabel}</Link>
+                        {/* Actions Card */}
+                        <Card className="shadow-md border-primary/10 col-span-5 overflow-hidden">
+                          <CardHeader className="bg-muted/20 pb-4">
+                            <CardTitle className="text-lg">Gerenciar</CardTitle>
+                          </CardHeader>
+                          <CardContent className="p-6">
+                            {view?.allowActions ? (
+                              <Button className={cn("w-full h-11 text-sm font-semibold transition-all shadow-md", !isFullyFilled && "shadow-primary/20")} variant={isFullyFilled ? "outline" : "default"} asChild>
+                                <Link href={`/projetos/${project.slug}/legal-instrument/fill`}>
+                                  <Edit className="mr-2 h-4 w-4" /> {actionLabel}
+                                </Link>
                               </Button>
+                            ) : (
+                              <div className="flex items-center gap-3 p-3 rounded-lg bg-orange-50 dark:bg-orange-950/20 text-orange-700 dark:text-orange-400 border border-orange-200 dark:border-orange-900/50">
+                                <AlertCircle className="h-5 w-5 shrink-0" />
+                                <span className="text-sm font-medium">Visualização restrita.</span>
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
 
-                              {filledFile && (
-                                <Button className="w-full" variant="outline" asChild>
-                                  <Link href={filledFile.url} target="_blank">
-                                    <Download className="mr-2 h-4 w-4" /> Download PDF
-                                  </Link>
-                                </Button>
-                              )}
-                            </CardContent>
-                          </Card>
-                        )}
+                        <Card className="bg-muted/30 border-dashed col-span-7">
+                          <CardContent className="p-5">
+                            <p className="text-[11px] text-muted-foreground leading-relaxed flex items-start gap-2">
+                              <AlertCircle className="h-4 w-4 text-orange-500 shrink-0" />
+                              <span>As alterações são salvas automaticamente. O instrumento jurídico será bloqueado permanentemente após o envio para análise técnica.</span>
+                            </p>
+                          </CardContent>
+                        </Card>
 
-                        {(() => {
-                          const templateFile = instance.legalInstrumentVersion.templateFile
-                          if (!templateFile) return null
-
-                          const isPdf = templateFile.contentType?.includes("pdf") || templateFile.filename?.toLowerCase().endsWith(".pdf")
-                          const isDoc =
-                            templateFile.contentType?.includes("word") ||
-                            templateFile.contentType?.includes("msword") ||
-                            templateFile.filename?.toLowerCase().endsWith(".doc") ||
-                            templateFile.filename?.toLowerCase().endsWith(".docx")
-
-                          const directUrl = templateFile.url
-                          const officeViewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(directUrl)}`
-                          const previewUrl = isPdf ? directUrl : isDoc ? officeViewerUrl : directUrl
-
-                          return (
-                            <Card>
-                              <CardHeader>
-                                <CardTitle className="text-base">Template</CardTitle>
-                                <CardDescription>Visualização do modelo usado para gerar o documento.</CardDescription>
-                              </CardHeader>
-                              <CardContent className="space-y-3">
-                                <Button className="w-full" variant="outline" asChild>
-                                  <Link href={directUrl} target="_blank">
-                                    <Eye className="mr-2 h-4 w-4" /> Abrir em nova aba
-                                  </Link>
-                                </Button>
-
-                                {isPdf && (
-                                  <div className="rounded-lg overflow-hidden border bg-background">
-                                    <iframe title="Template (PDF)" src={previewUrl} className="w-full h-[520px]" />
+                        {/* Metadata/Cronologia Card */}
+                        <Card className="shadow-sm col-span-5">
+                          <CardHeader>
+                            <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Histórico</CardTitle>
+                          </CardHeader>
+                          <CardContent className="flex justify-between">
+                            <div className="space-y-1">
+                              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Primeiro Registro</span>
+                              <div className="flex items-center gap-2 text-sm font-medium">
+                                <Calendar className="h-4 w-4 text-primary/60" />
+                                {format(new Date(instance.createdAt), "dd/MM/yyyy HH:mm")}
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Última Edição</span>
+                              <div className="flex items-center gap-2 text-sm font-medium">
+                                <Calendar className="h-4 w-4 text-primary/60" />
+                                {format(new Date(instance.updatedAt), "dd/MM/yyyy HH:mm")}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                        <div className="col-span-7">
+                          {filledFile && (
+                            <Card className="border-green-500/20 col-span-7 bg-green-500/5 shadow-inner">
+                              <CardContent className="p-6">
+                                <div className="flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left">
+                                  <div className="p-3 rounded-xl bg-green-500/10 text-green-600">
+                                    <FileText className="h-8 w-8" />
                                   </div>
-                                )}
-
-                                {isDoc && (
-                                  <div className="rounded-lg overflow-hidden border bg-background">
-                                    <iframe title="Template (DOC/DOCX)" src={previewUrl} className="w-full h-[520px]" />
-                                    <p className="text-xs text-muted-foreground px-3 py-2 border-t bg-muted/20">
-                                      Se o preview não carregar, a URL do arquivo pode não ser pública. Use “Abrir em nova aba”.
-                                    </p>
+                                  <div className="flex-1 space-y-0.5 text-center sm:text-left">
+                                    <h4 className="font-bold text-green-900 dark:text-green-300">Minuta Pronta para Download</h4>
+                                    <p className="text-xs text-muted-foreground max-w-md">O documento foi gerado automaticamente com os dados preenchidos até o momento.</p>
                                   </div>
-                                )}
-
-                                {!isPdf && !isDoc && (
-                                  <p className="text-sm text-muted-foreground">Formato não suportado para pré-visualização.</p>
-                                )}
+                                  <Button size="sm" className="shrink-0 bg-green-600 hover:bg-green-700 shadow-sm" asChild>
+                                    <Link href={filledFile.url} target="_blank">
+                                      <Download className="h-4 w-4 mr-2" /> Baixar PDF
+                                    </Link>
+                                  </Button>
+                                </div>
                               </CardContent>
                             </Card>
-                          )
-                        })()}
-
-                        <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border border-blue-100 dark:border-blue-900">
-                          <h4 className="font-medium text-blue-800 dark:text-blue-300 mb-2 text-sm">Informação Importante</h4>
-                          <p className="text-sm text-blue-700 dark:text-blue-400">Após o preenchimento e envio para análise, o instrumento não poderá ser alterado até que receba um parecer.</p>
+                          )}
                         </div>
-                      </div>
+
+                        {/* Discrete Technical Reference */}
+                        <div className="px-2 pt-2 col-span-5 space-y-1 opacity-40 hover:opacity-100 transition-opacity">
+                          <div className="flex items-center justify-between text-[9px] font-mono uppercase tracking-widest text-muted-foreground">
+                            <span>Versão do Instrumento</span>
+                            <span className="font-bold">v{instance.legalInstrumentVersion.version}</span>
+                          </div>
+                          <div className="text-[8px] font-mono text-muted-foreground break-all text-center">ID: {instance.id}</div>
+                        </div>
                     </div>
                   )
                 })()}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed rounded-lg bg-muted/10">
-                <div className="p-4 rounded-full bg-muted mb-4">
-                  <Scale className="h-8 w-8 text-muted-foreground" />
+              <div className="flex flex-col items-center justify-center py-20 border-2 border-dashed rounded-xl bg-muted/5 transition-colors hover:bg-muted/10">
+                <div className="p-6 rounded-full bg-muted/50 mb-6 group-hover:scale-110 transition-transform">
+                  <Scale className="h-12 w-12 text-muted-foreground/50" />
                 </div>
-                <h3 className="text-lg font-semibold mb-2">Instrumento jurídico ainda não selecionado</h3>
-                <p className="text-muted-foreground max-w-sm text-center mb-6">Selecione um instrumento jurídico adequado para o seu projeto.</p>
+                <h3 className="text-xl font-bold mb-2">Instrumento jurídico não selecionado</h3>
+                <p className="text-muted-foreground max-w-sm text-center mb-8 text-sm">Cada projeto deve estar vinculado a um instrumento jurídico que define as regras e termos da parceria.</p>
                 {view?.allowActions && (
-                  <Button asChild>
+                  <Button size="lg" className="px-8 shadow-lg shadow-primary/20" asChild>
                     <Link href={`/projetos/${project.slug}/legal-instrument`}>
-                      <Plus className="mr-2 h-4 w-4" /> Selecionar Instrumento
+                      <Plus className="mr-2 h-5 w-5" /> Selecionar Agora
                     </Link>
                   </Button>
                 )}
