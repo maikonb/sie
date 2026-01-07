@@ -41,12 +41,27 @@ const statusUi = {
   },
 } as const
 
-export default async function ProjectsApprovalPage() {
+export default async function ProjectsApprovalPage(props: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
+  const searchParams = await props.searchParams
   let projects = []
   let stats = null
 
+  // Extract filters from searchParams
+  const filters = {
+    search: typeof searchParams.search === "string" ? searchParams.search : undefined,
+    status: typeof searchParams.status === "string" ? [searchParams.status] : Array.isArray(searchParams.status) ? searchParams.status : undefined,
+    assignedToMe: searchParams.assignedToMe === "true",
+    hasWorkPlan: searchParams.hasWorkPlan === "true",
+    missingWorkPlan: searchParams.missingWorkPlan === "true",
+    hasLegalInstrument: searchParams.hasLegalInstrument === "true",
+    missingLegalInstrument: searchParams.missingLegalInstrument === "true",
+    dateStart: typeof searchParams.dateStart === "string" ? searchParams.dateStart : undefined,
+    dateEnd: typeof searchParams.dateEnd === "string" ? searchParams.dateEnd : undefined,
+    sort: typeof searchParams.sort === "string" ? searchParams.sort : undefined,
+  }
+
   try {
-    projects = await getProjectsForApproval()
+    projects = await getProjectsForApproval(filters)
     stats = await getProjectApprovalStats()
   } catch (err) {
     console.error(err)
@@ -130,11 +145,7 @@ export default async function ProjectsApprovalPage() {
                             </Badge>
                           )
                         })()}
-                        <span className="text-xs text-muted-foreground whitespace-nowrap">
-                          {project.statusUpdatedAt || project.submittedAt
-                            ? formatDistanceToNow(new Date(project.statusUpdatedAt ?? project.submittedAt!), { addSuffix: true, locale: ptBR })
-                            : "N/A"}
-                        </span>
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">{project.statusUpdatedAt || project.submittedAt ? formatDistanceToNow(new Date(project.statusUpdatedAt ?? project.submittedAt!), { addSuffix: true, locale: ptBR }) : "N/A"}</span>
                       </div>
                       <CardTitle className="line-clamp-2 text-lg group-hover:text-primary transition-colors">{project.title}</CardTitle>
                     </CardHeader>
@@ -177,22 +188,13 @@ export default async function ProjectsApprovalPage() {
                           <h4 className="text-xs font-semibold text-muted-foreground uppercase">Instrumentos</h4>
                           <div className="space-y-1">
                             <div className="flex items-center justify-between text-xs">
-                                <span className="truncate">{project.legalInstrumentInstance.legalInstrumentVersion.legalInstrument.name}</span>
-                                <Badge
-                                  variant="outline"
-                                  className={
-                                    project.legalInstrumentInstance.status === LegalInstrumentStatus.FILLED
-                                      ? "bg-green-500/10 text-green-600 border-green-200"
-                                      : project.legalInstrumentInstance.status === LegalInstrumentStatus.PARTIAL
-                                        ? "bg-yellow-500/10 text-yellow-600 border-yellow-200"
-                                        : "bg-muted text-muted-foreground"
-                                  }
-                                >
-                                  {project.legalInstrumentInstance.status === LegalInstrumentStatus.FILLED && "Preenchido"}
-                                  {project.legalInstrumentInstance.status === LegalInstrumentStatus.PARTIAL && "Parcial"}
-                                  {project.legalInstrumentInstance.status === LegalInstrumentStatus.PENDING && "Pendente"}
-                                </Badge>
-                              </div>
+                              <span className="truncate">{project.legalInstrumentInstance.legalInstrumentVersion.legalInstrument.name}</span>
+                              <Badge variant="outline" className={project.legalInstrumentInstance.status === LegalInstrumentStatus.FILLED ? "bg-green-500/10 text-green-600 border-green-200" : project.legalInstrumentInstance.status === LegalInstrumentStatus.PARTIAL ? "bg-yellow-500/10 text-yellow-600 border-yellow-200" : "bg-muted text-muted-foreground"}>
+                                {project.legalInstrumentInstance.status === LegalInstrumentStatus.FILLED && "Preenchido"}
+                                {project.legalInstrumentInstance.status === LegalInstrumentStatus.PARTIAL && "Parcial"}
+                                {project.legalInstrumentInstance.status === LegalInstrumentStatus.PENDING && "Pendente"}
+                              </Badge>
+                            </div>
                           </div>
                         </div>
                       )}

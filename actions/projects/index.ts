@@ -12,7 +12,7 @@ import { notifyAdminsOfNewSubmission, notifyUserOfApproval, notifyUserOfRejectio
 import { NotificationService } from "@/lib/services/notification"
 import { logProjectAction } from "@/lib/services/audit"
 import type { ProjectClassificationResult } from "@/types/legal-instrument"
-import { projectWithRelationsValidator, projectWithBasicRelationsValidator, projectsForApprovalValidator, GetProjectBySlugResponse, GetAllProjectsResponse, GetProjectsForApprovalResponse, CreateLegalInstrumentResult, legalInstrumentInstanceForProjectValidator, ProjectViewerContext, GetProjectApprovalStatsResponse } from "./types"
+import { projectWithRelationsValidator, projectWithBasicRelationsValidator, projectsForApprovalValidator, GetProjectBySlugResponse, GetAllProjectsResponse, GetProjectsForApprovalResponse, GetProjectsForApprovalFilters, CreateLegalInstrumentResult, legalInstrumentInstanceForProjectValidator, ProjectViewerContext, GetProjectApprovalStatsResponse } from "./types"
 
 export async function getProjectBySlug(slug: string): Promise<GetProjectBySlugResponse> {
   const session = await getServerSession(authOptions)
@@ -500,16 +500,83 @@ export async function rejectProject(slug: string, reason: string): Promise<Proje
   return updated
 }
 
-export async function getProjectsForApproval(): Promise<GetProjectsForApprovalResponse> {
+export async function getProjectsForApproval(filters?: GetProjectsForApprovalFilters): Promise<GetProjectsForApprovalResponse> {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) throw new Error("Unauthorized")
 
-  // Verify approver has permission
+  // Verify reviewer has permission
   await PermissionsService.authorize(session.user.id, { slug: "projects.approve" })
 
+  const { search, status, assignedToMe, hasWorkPlan, missingWorkPlan, hasLegalInstrument, missingLegalInstrument, dateStart, dateEnd, sort } = filters || {}
+
+  const where: Prisma.ProjectWhereInput = {}
+
+  // Search filter (title or user name/email)
+  if (search) {
+    where.OR = [{ title: { contains: search, mode: "insensitive" } }, { user: { name: { contains: search, mode: "insensitive" } } }, { user: { email: { contains: search, mode: "insensitive" } } }]
+  }
+
+  // Status filter
+  if (status && status.length > 0) {
+    where.status = { in: status as ProjectStatus[] }
+  }
+
+  // Assignment filter
+  if (assignedToMe) {
+    where.reviewStartedBy = session.user.id
+  }
+
+  // Work Plan filters
+  if (hasWorkPlan) {
+    where.workPlan = { isNot: null }
+  } else if (missingWorkPlan) {
+    where.workPlan = { is: null }
+  }
+
+  // Legal Instrument filters
+  if (hasLegalInstrument) {
+    where.legalInstrumentInstance = { isNot: null }
+  } else if (missingLegalInstrument) {
+    where.legalInstrumentInstance = { is: null }
+  }
+
+  // Date filters (using submittedAt)
+  if (dateStart || dateEnd) {
+    where.submittedAt = {}
+    if (dateStart) {
+      where.submittedAt.gte = new Date(dateStart)
+    }
+    if (dateEnd) {
+      // Set to end of day
+      const end = new Date(dateEnd)
+      end.setHours(23, 59, 59, 999)
+      where.submittedAt.lte = end
+    }
+  }
+
+  // Sorting
+  let orderBy: Prisma.ProjectOrderByWithRelationInput = { submittedAt: "desc" }
+  if (sort) {
+    switch (sort) {
+      case "date_asc":
+        orderBy = { submittedAt: "asc" }
+        break
+      case "date_desc":
+        orderBy = { submittedAt: "desc" }
+        break
+      case "title_asc":
+        orderBy = { title: "asc" }
+        break
+      case "title_desc":
+        orderBy = { title: "desc" }
+        break
+    }
+  }
+
   return prisma.project.findMany({
+    where,
     ...projectsForApprovalValidator,
-    orderBy: { submittedAt: "desc" },
+    orderBy,
   })
 }
 

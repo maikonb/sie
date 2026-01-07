@@ -104,6 +104,22 @@ export type GetProjectBySlugResponse = Prisma.ProjectGetPayload<typeof projectWi
 export type GetAllProjectsResponse = Prisma.ProjectGetPayload<typeof projectWithBasicRelationsValidator>[]
 
 /**
+ * Filter options for getProjectsForApproval
+ */
+export interface GetProjectsForApprovalFilters {
+  search?: string
+  status?: string[]
+  assignedToMe?: boolean
+  hasWorkPlan?: boolean
+  missingWorkPlan?: boolean
+  hasLegalInstrument?: boolean
+  missingLegalInstrument?: boolean
+  dateStart?: string
+  dateEnd?: string
+  sort?: string
+}
+
+/**
  * Response type for getProjectsForApproval
  * Returns array of projects with user and legal instruments info
  */
