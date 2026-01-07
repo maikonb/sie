@@ -73,6 +73,9 @@ model Project {
 
   status ProjectStatus @default(DRAFT)
 
+  // Timestamp of last status transition
+  statusUpdatedAt DateTime @default(now())
+
   // Approval tracking
   submittedAt     DateTime?
   reviewStartedAt DateTime?

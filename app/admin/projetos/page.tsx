@@ -7,10 +7,39 @@ import Link from "next/link"
 import { ProjectStatus, LegalInstrumentStatus } from "@prisma/client"
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { PageContent, PageHeader, PageHeaderDescription, PageHeaderHeading, PageShell } from "@/components/shell"
 import { UserAvatar } from "@/components/user-avatar"
+import { ProjectsApprovalToolbar } from "@/components/admin/projects/projects-approval-toolbar"
+
+const statusUi = {
+  [ProjectStatus.DRAFT]: {
+    label: "Rascunho",
+    badgeClass: "bg-muted text-muted-foreground border-border",
+    Icon: Clock,
+  },
+  [ProjectStatus.PENDING_REVIEW]: {
+    label: "Pendente",
+    badgeClass: "bg-yellow-500/10 text-yellow-600 border-yellow-200",
+    Icon: Clock,
+  },
+  [ProjectStatus.UNDER_REVIEW]: {
+    label: "Em Revisão",
+    badgeClass: "bg-blue-500/10 text-blue-600 border-blue-200",
+    Icon: Clock,
+  },
+  [ProjectStatus.APPROVED]: {
+    label: "Aprovado",
+    badgeClass: "bg-green-500/10 text-green-600 border-green-200",
+    Icon: CheckCircle2,
+  },
+  [ProjectStatus.REJECTED]: {
+    label: "Rejeitado",
+    badgeClass: "bg-red-500/10 text-red-600 border-red-200",
+    Icon: XCircle,
+  },
+} as const
 
 export default async function ProjectsApprovalPage() {
   let projects = []
@@ -24,8 +53,6 @@ export default async function ProjectsApprovalPage() {
     return notFound()
   }
 
-  const pendingProjects = projects.filter((p) => p.status === ProjectStatus.PENDING_REVIEW || p.status === ProjectStatus.UNDER_REVIEW)
-
   return (
     <PageShell>
       <PageHeader>
@@ -38,74 +65,74 @@ export default async function ProjectsApprovalPage() {
       <PageContent>
         {/* Stats Cards */}
         {stats && (
-          <div className="grid gap-4 md:grid-cols-4 mb-8">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Pendentes</CardTitle>
-                <Clock className="h-4 w-4 text-yellow-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.inReview}</div>
-                <p className="text-xs text-muted-foreground">projetos aguardando análise</p>
-              </CardContent>
-            </Card>
+          <Card className="mb-4">
+            <CardContent className="py-2">
+              <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+                <div className="flex items-center justify-between rounded-md border bg-muted/10 px-3 py-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Clock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    <span className="text-xs text-muted-foreground truncate">Pendentes</span>
+                  </div>
+                  <span className="text-sm font-semibold tabular-nums">{stats.inReview}</span>
+                </div>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Aprovados</CardTitle>
-                <CheckCircle2 className="h-4 w-4 text-green-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.approved}</div>
-                <p className="text-xs text-muted-foreground">projetos aprovados</p>
-              </CardContent>
-            </Card>
+                <div className="flex items-center justify-between rounded-md border bg-muted/10 px-3 py-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    <span className="text-xs text-muted-foreground truncate">Aprovados</span>
+                  </div>
+                  <span className="text-sm font-semibold tabular-nums">{stats.approved}</span>
+                </div>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Rejeitados</CardTitle>
-                <XCircle className="h-4 w-4 text-red-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.rejected}</div>
-                <p className="text-xs text-muted-foreground">projetos rejeitados</p>
-              </CardContent>
-            </Card>
+                <div className="flex items-center justify-between rounded-md border bg-muted/10 px-3 py-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <XCircle className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    <span className="text-xs text-muted-foreground truncate">Rejeitados</span>
+                  </div>
+                  <span className="text-sm font-semibold tabular-nums">{stats.rejected}</span>
+                </div>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total</CardTitle>
-                <BarChart3 className="h-4 w-4 text-blue-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.total}</div>
-                <p className="text-xs text-muted-foreground">projetos no sistema</p>
-              </CardContent>
-            </Card>
-          </div>
+                <div className="flex items-center justify-between rounded-md border bg-muted/10 px-3 py-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <BarChart3 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    <span className="text-xs text-muted-foreground truncate">Total</span>
+                  </div>
+                  <span className="text-sm font-semibold tabular-nums">{stats.total}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
+        <ProjectsApprovalToolbar />
+
         {/* Projects List */}
-        {pendingProjects.length > 0 ? (
+        {projects.length > 0 ? (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Projetos em Análise</h2>
-              <span className="text-sm text-muted-foreground">{pendingProjects.length} projeto(s)</span>
+              <h2 className="text-lg font-semibold">Projetos</h2>
+              <span className="text-sm text-muted-foreground">{projects.length} projeto(s)</span>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {pendingProjects.map((project) => (
+              {projects.map((project) => (
                 <Link key={project.id} href={`/admin/projetos/${project.slug}/review`} className="group block h-full">
                   <Card className="h-full transition-all hover:shadow-md hover:border-primary/50 flex flex-col">
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between gap-4 mb-3">
-                        <Badge variant="secondary" className="bg-yellow-500/10 text-yellow-600 border-yellow-200">
-                          <Clock className="mr-1 h-3 w-3" />
-                          Em Análise
-                        </Badge>
+                        {(() => {
+                          const cfg = statusUi[project.status] ?? statusUi[ProjectStatus.PENDING_REVIEW]
+                          const Icon = cfg.Icon
+                          return (
+                            <Badge variant="secondary" className={cfg.badgeClass}>
+                              <Icon className="mr-1 h-3 w-3" />
+                              {cfg.label}
+                            </Badge>
+                          )
+                        })()}
                         <span className="text-xs text-muted-foreground whitespace-nowrap">
-                          {project.submittedAt
-                            ? formatDistanceToNow(new Date(project.submittedAt), { addSuffix: true, locale: ptBR })
+                          {project.statusUpdatedAt || project.submittedAt
+                            ? formatDistanceToNow(new Date(project.statusUpdatedAt ?? project.submittedAt!), { addSuffix: true, locale: ptBR })
                             : "N/A"}
                         </span>
                       </div>
@@ -180,6 +207,20 @@ export default async function ProjectsApprovalPage() {
                   </Card>
                 </Link>
               ))}
+            </div>
+
+            {/* Pagination (visual only) */}
+            <div className="flex flex-col gap-2 border-t pt-4 md:flex-row md:items-center md:justify-between">
+              <p className="text-sm text-muted-foreground">Mostrando {projects.length} projeto(s)</p>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" disabled>
+                  Anterior
+                </Button>
+                <span className="text-sm text-muted-foreground">Página 1</span>
+                <Button variant="outline" size="sm" disabled>
+                  Próxima
+                </Button>
+              </div>
             </div>
           </div>
         ) : (

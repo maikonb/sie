@@ -26,11 +26,6 @@ const data: Record<string, NavItem[]> = {
       icon: Settings2,
       items: [
         {
-          title: "Aprovação de Projetos",
-          url: "/admin/projetos",
-          permissionSlug: "projects.approve",
-        },
-        {
           title: "Instrumentos Jurídicos",
           url: "/admin/legal-instruments",
           permissionSlug: "legal_instruments.manage",
@@ -44,7 +39,11 @@ const data: Record<string, NavItem[]> = {
       transforms: [
         {
           permission: "projects.view.all",
-          changes: { title: "Projetos", icon: CheckCircle2 },
+          changes: { title: "Projetos", url: "/projetos", icon: CheckCircle2 },
+        },
+        {
+          permission: "projects.approve",
+          changes: { url: "/admin/projetos", icon: CheckCircle2 },
         },
       ],
     },

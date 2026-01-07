@@ -345,6 +345,7 @@ export async function submitProjectForApproval(slug: string): Promise<Project> {
     data: {
       status: "PENDING_REVIEW",
       submittedAt: new Date(),
+      statusUpdatedAt: new Date(),
     },
   })
 
@@ -389,6 +390,7 @@ export async function startProjectReview(slug: string): Promise<Project> {
       status: "UNDER_REVIEW",
       reviewStartedAt: new Date(),
       reviewStartedBy: session.user.id,
+      statusUpdatedAt: new Date(),
     },
   })
 
@@ -429,6 +431,7 @@ export async function approveProject(slug: string): Promise<Project> {
       status: "APPROVED",
       approvedAt: new Date(),
       approvedBy: session.user.id,
+      statusUpdatedAt: new Date(),
     },
   })
 
@@ -476,6 +479,7 @@ export async function rejectProject(slug: string, reason: string): Promise<Proje
     data: {
       status: "REJECTED",
       rejectionReason: reason,
+      statusUpdatedAt: new Date(),
     },
   })
 
@@ -504,9 +508,6 @@ export async function getProjectsForApproval(): Promise<GetProjectsForApprovalRe
   await PermissionsService.authorize(session.user.id, { slug: "projects.approve" })
 
   return prisma.project.findMany({
-    where: {
-      status: { in: ["PENDING_REVIEW", "UNDER_REVIEW"] },
-    },
     ...projectsForApprovalValidator,
     orderBy: { submittedAt: "desc" },
   })
