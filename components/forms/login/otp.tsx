@@ -12,13 +12,18 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 import { getSession } from "next-auth/react"
 import { APP_ERRORS } from "@/lib/errors"
 import { requestOtp } from "@/actions/user"
+import PermissionsService from "@/lib/services/permissions"
+import useCan from "@/hooks/use-can"
 
 export function OTPForm({ ...props }: React.ComponentProps<typeof Card>) {
-  const params = useSearchParams()
-  const router = useRouter()
-  const email = params.get("email") ?? ""
   const [code, setCode] = useState("")
   const [timeLeft, setTimeLeft] = useState(25)
+
+  const params = useSearchParams()
+  const router = useRouter()
+  const canProjectApprove = useCan('projects.approve')
+
+  const email = params.get("email") ?? ""
 
   useEffect(() => {
     if (timeLeft <= 0) return
@@ -55,8 +60,12 @@ export function OTPForm({ ...props }: React.ComponentProps<typeof Card>) {
     const session = await getSession()
     if (session?.user?.firstAccess) {
       router.push("/conta/primeiro-acesso")
-    } else {
-      router.push("/projetos/")
+    } else if (session?.user) {
+      if (canProjectApprove) {
+        router.push("/admin/projetos")
+      } else {
+        router.push("/projetos")
+      }
     }
   }
 

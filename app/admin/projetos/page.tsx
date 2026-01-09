@@ -1,5 +1,5 @@
 import { getProjectsForApproval, getProjectApprovalStats } from "@/actions/projects"
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { CheckCircle2, Clock, XCircle, BarChart3, ArrowRight } from "lucide-react"
@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { PageContent, PageHeader, PageHeaderDescription, PageHeaderHeading, PageShell } from "@/components/shell"
 import { UserAvatar } from "@/components/user-avatar"
 import { ProjectsApprovalToolbar } from "@/components/admin/projects/projects-approval-toolbar"
+import { getProjectsApprovalDefaultQueryParams } from "@/components/admin/projects/projects-approval-toolbar/projects-approval-defaults"
 
 const statusUi = {
   [ProjectStatus.DRAFT]: {
@@ -45,6 +46,36 @@ export default async function ProjectsApprovalPage(props: { searchParams: Promis
   const searchParams = await props.searchParams
   let projects = []
   let stats = null
+
+  if (searchParams.defaults !== "1") {
+    const params = new URLSearchParams()
+
+    for (const [key, value] of Object.entries(searchParams)) {
+      if (value === undefined) continue
+      if (Array.isArray(value)) value.forEach((v) => params.append(key, v))
+      else params.set(key, value)
+    }
+
+    const defaults = getProjectsApprovalDefaultQueryParams()
+    for (const [key, value] of Object.entries(defaults)) {
+      if (params.has(key)) continue
+
+      if (Array.isArray(value)) value.forEach((v) => params.append(key, v))
+      else params.set(key, value)
+    }
+
+    params.set("defaults", "1")
+
+    redirect(`/admin/projetos?${params.toString()}`)
+  }
+
+  const hasActiveFilters = Object.entries(searchParams).some(([key, value]) => {
+    if (key === "sort" || key === "defaults") return false
+    if (value === undefined) return false
+    if (Array.isArray(value)) return value.length > 0
+    if (typeof value === "string") return value.trim().length > 0
+    return false
+  })
 
   // Extract filters from searchParams
   const filters = {
@@ -129,7 +160,7 @@ export default async function ProjectsApprovalPage(props: { searchParams: Promis
               <span className="text-sm text-muted-foreground">{projects.length} projeto(s)</span>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
               {projects.map((project) => (
                 <Link key={project.id} href={`/admin/projetos/${project.slug}/review`} className="group block h-full">
                   <Card className="h-full transition-all hover:shadow-md hover:border-primary/50 flex flex-col">
@@ -230,8 +261,20 @@ export default async function ProjectsApprovalPage(props: { searchParams: Promis
             <div className="h-12 w-12 rounded-full bg-muted/50 flex items-center justify-center mb-4">
               <CheckCircle2 className="h-6 w-6 text-green-500" />
             </div>
-            <h3 className="text-lg font-semibold mb-1">Nenhum projeto pendente</h3>
-            <p className="text-muted-foreground text-sm max-w-sm">Parabéns! Todos os projetos foram analisados.</p>
+            <h3 className="text-lg font-semibold mb-1">
+              {stats?.total === 0
+                ? "Ainda não há projetos por aqui"
+                : hasActiveFilters
+                  ? "Nenhum resultado para os filtros selecionados"
+                  : "Nenhum projeto aguardando aprovação"}
+            </h3>
+            <p className="text-muted-foreground text-sm max-w-sm">
+              {stats?.total === 0
+                ? "Quando um projeto for submetido, ele vai aparecer aqui para revisão."
+                : hasActiveFilters
+                  ? "Tente ajustar ou limpar os filtros para ver mais resultados."
+                  : "Você está em dia — não há projetos pendentes no momento."}
+            </p>
           </div>
         )}
       </PageContent>
