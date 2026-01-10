@@ -12,7 +12,7 @@ import { notifyAdminsOfNewSubmission, notifyUserOfApproval, notifyUserOfRejectio
 import { NotificationService } from "@/lib/services/notification"
 import { logProjectAction } from "@/lib/services/audit"
 import type { ProjectClassificationResult } from "@/types/legal-instrument"
-import { projectWithRelationsValidator, projectWithBasicRelationsValidator, projectsForApprovalValidator, GetProjectBySlugResponse, GetAllProjectsResponse, GetProjectsForApprovalResponse, GetProjectsForApprovalFilters, CreateLegalInstrumentResult, legalInstrumentInstanceForProjectValidator, ProjectViewerContext, GetProjectApprovalStatsResponse } from "./types"
+import { projectWithRelationsValidator, projectWithBasicRelationsValidator, projectsForApprovalValidator, GetProjectBySlugResponse, GetAllProjectsResponse, GetProjectsForApprovalResponse, GetProjectsForApprovalFilters, CreateLegalInstrumentResult, legalInstrumentInstanceForProjectValidator, ProjectViewerContext, GetProjectApprovalStatsResponse, GetUserProjectStatsResponse } from "./types"
 
 export async function getProjectBySlug(slug: string): Promise<GetProjectBySlugResponse> {
   const session = await getServerSession(authOptions)
@@ -580,7 +580,7 @@ export async function getProjectsForApproval(filters?: GetProjectsForApprovalFil
   })
 }
 
-export async function getProjectApprovalStats(): Promise<GetProjectApprovalStatsResponse> {
+export async function getGlobalProjectStats(): Promise<GetProjectApprovalStatsResponse> {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) throw new Error("Unauthorized")
 
@@ -596,5 +596,56 @@ export async function getProjectApprovalStats(): Promise<GetProjectApprovalStats
     approved,
     rejected,
     total,
+  }
+}
+
+export async function getUserProjectStats(): Promise<GetUserProjectStatsResponse> {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) throw new Error("Unauthorized")
+
+  // Verify approver has permission
+  await PermissionsService.authorize(session.user.id, { slug: "projects.approve" })
+
+  const userId = session.user.id
+
+  const [assignedToMe, inReviewByMe, approvedByMe, rejectedByMe, totalPendingInSystem, totalGlobal] = await Promise.all([
+    prisma.project.count({
+      where: {
+        reviewStartedBy: userId,
+      },
+    }),
+    prisma.project.count({
+      where: {
+        reviewStartedBy: userId,
+        status: ProjectStatus.UNDER_REVIEW,
+      },
+    }),
+    prisma.project.count({
+      where: {
+        approvedBy: userId,
+        status: ProjectStatus.APPROVED,
+      },
+    }),
+    prisma.project.count({
+      where: {
+        reviewStartedBy: userId,
+        status: ProjectStatus.REJECTED,
+      },
+    }),
+    prisma.project.count({
+      where: {
+        status: ProjectStatus.PENDING_REVIEW,
+      },
+    }),
+    prisma.project.count(),
+  ])
+
+  return {
+    assignedToMe,
+    inReviewByMe,
+    approvedByMe,
+    rejectedByMe,
+    totalPendingInSystem,
+    totalGlobal,
   }
 }

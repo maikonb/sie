@@ -172,6 +172,19 @@ export interface GetProjectApprovalStatsResponse {
   total: number
 }
 
+/**
+ * Response type for getUserProjectStats
+ * Returns count statistics for current user on approval dashboard
+ */
+export interface GetUserProjectStatsResponse {
+  assignedToMe: number
+  inReviewByMe: number
+  approvedByMe: number
+  rejectedByMe: number
+  totalPendingInSystem: number
+  totalGlobal: number
+}
+
 // ============================================================================
 // INPUT TYPES - Function parameters
 // ============================================================================

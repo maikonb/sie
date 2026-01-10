@@ -1,4 +1,4 @@
-import { getProjectsForApproval, getProjectApprovalStats } from "@/actions/projects"
+import { getProjectsForApproval, getUserProjectStats } from "@/actions/projects"
 import { notFound, redirect } from "next/navigation"
 import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
@@ -93,7 +93,7 @@ export default async function ProjectsApprovalPage(props: { searchParams: Promis
 
   try {
     projects = await getProjectsForApproval(filters)
-    stats = await getProjectApprovalStats()
+    stats = await getUserProjectStats()
   } catch (err) {
     console.error(err)
     return notFound()
@@ -117,33 +117,33 @@ export default async function ProjectsApprovalPage(props: { searchParams: Promis
                 <div className="flex items-center justify-between rounded-md border bg-muted/10 px-3 py-2">
                   <div className="flex items-center gap-2 min-w-0">
                     <Clock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                    <span className="text-xs text-muted-foreground truncate">Pendentes</span>
+                    <span className="text-xs text-muted-foreground truncate">Meus em Análise</span>
                   </div>
-                  <span className="text-sm font-semibold tabular-nums">{stats.inReview}</span>
+                  <span className="text-sm font-semibold tabular-nums">{stats.inReviewByMe}</span>
                 </div>
 
                 <div className="flex items-center justify-between rounded-md border bg-muted/10 px-3 py-2">
                   <div className="flex items-center gap-2 min-w-0">
                     <CheckCircle2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                    <span className="text-xs text-muted-foreground truncate">Aprovados</span>
+                    <span className="text-xs text-muted-foreground truncate">Meus Aprovados</span>
                   </div>
-                  <span className="text-sm font-semibold tabular-nums">{stats.approved}</span>
+                  <span className="text-sm font-semibold tabular-nums">{stats.approvedByMe}</span>
                 </div>
 
                 <div className="flex items-center justify-between rounded-md border bg-muted/10 px-3 py-2">
                   <div className="flex items-center gap-2 min-w-0">
                     <XCircle className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                    <span className="text-xs text-muted-foreground truncate">Rejeitados</span>
+                    <span className="text-xs text-muted-foreground truncate">Aguardando Atribuição</span>
                   </div>
-                  <span className="text-sm font-semibold tabular-nums">{stats.rejected}</span>
+                  <span className="text-sm font-semibold tabular-nums">{stats.totalPendingInSystem}</span>
                 </div>
 
                 <div className="flex items-center justify-between rounded-md border bg-muted/10 px-3 py-2">
                   <div className="flex items-center gap-2 min-w-0">
                     <BarChart3 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                    <span className="text-xs text-muted-foreground truncate">Total</span>
+                    <span className="text-xs text-muted-foreground truncate">Total Vinculados</span>
                   </div>
-                  <span className="text-sm font-semibold tabular-nums">{stats.total}</span>
+                  <span className="text-sm font-semibold tabular-nums">{stats.assignedToMe}</span>
                 </div>
               </div>
             </CardContent>
@@ -261,20 +261,8 @@ export default async function ProjectsApprovalPage(props: { searchParams: Promis
             <div className="h-12 w-12 rounded-full bg-muted/50 flex items-center justify-center mb-4">
               <CheckCircle2 className="h-6 w-6 text-green-500" />
             </div>
-            <h3 className="text-lg font-semibold mb-1">
-              {stats?.total === 0
-                ? "Ainda não há projetos por aqui"
-                : hasActiveFilters
-                  ? "Nenhum resultado para os filtros selecionados"
-                  : "Nenhum projeto aguardando aprovação"}
-            </h3>
-            <p className="text-muted-foreground text-sm max-w-sm">
-              {stats?.total === 0
-                ? "Quando um projeto for submetido, ele vai aparecer aqui para revisão."
-                : hasActiveFilters
-                  ? "Tente ajustar ou limpar os filtros para ver mais resultados."
-                  : "Você está em dia — não há projetos pendentes no momento."}
-            </p>
+            <h3 className="text-lg font-semibold mb-1">{stats?.totalGlobal === 0 ? "Ainda não há projetos por aqui" : hasActiveFilters ? "Nenhum resultado para os filtros selecionados" : "Nenhum projeto aguardando aprovação"}</h3>
+            <p className="text-muted-foreground text-sm max-w-sm">{stats?.totalGlobal === 0 ? "Quando um projeto for submetido, ele vai aparecer aqui para revisão." : hasActiveFilters ? "Tente ajustar ou limpar os filtros para ver mais resultados." : "Você está em dia — não há projetos pendentes no momento."}</p>
           </div>
         )}
       </PageContent>
