@@ -13,7 +13,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { ToggleRadioRow } from "@/components/ui/toggle-radio"
 import { ProjectStatus } from "@prisma/client"
 import { cn } from "@/lib/utils"
-import { cloneProjectsApprovalLocalFilters, getProjectsApprovalDefaultQueryParams } from "@/components/admin/projects/projects-approval-toolbar/projects-approval-defaults"
+import { cloneProjectsApprovalLocalFilters, getProjectsApprovalDefaultQueryParams } from "@/components/admin/projects/approval-toolbar/default"
 
 function CheckboxRow({ label, checked, onCheckedChange }: { label: string; checked: boolean; onCheckedChange: (next: boolean) => void }) {
   return (
@@ -107,6 +107,8 @@ export function ProjectsApprovalToolbar() {
       dateEnd: localFilters.dateEnd || null,
     }
 
+    console.log(`${pathname}?${createQueryString(params)}`)
+
     router.push(`${pathname}?${createQueryString(params)}`, { scroll: false })
     setOpen(false)
   }
@@ -119,7 +121,7 @@ export function ProjectsApprovalToolbar() {
     if (!newOpen) {
       handleApply()
     }
-    
+
     setOpen(newOpen)
   }
 
@@ -139,10 +141,10 @@ export function ProjectsApprovalToolbar() {
   const activeFiltersCount = searchParams.getAll("status").length + (searchParams.get("assignedToMe") === "true" ? 1 : 0) + (searchParams.get("hasWorkPlan") === "true" ? 1 : 0) + (searchParams.get("missingWorkPlan") === "true" ? 1 : 0) + (searchParams.get("hasLegalInstrument") === "true" ? 1 : 0) + (searchParams.get("missingLegalInstrument") === "true" ? 1 : 0) + (searchParams.get("dateStart") ? 1 : 0) + (searchParams.get("dateEnd") ? 1 : 0)
 
   return (
-    <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
       <div className="relative w-full md:max-w-md">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input placeholder="Buscar por título, proponente..." className="pl-9 pr-9" value={searchValue} onChange={(e) => setSearchValue(e.target.value)} aria-label="Buscar projetos" />
+        <Input placeholder="Buscar por título, proponente..." className="pl-9 pr-9 bg-white" value={searchValue} onChange={(e) => setSearchValue(e.target.value)} aria-label="Buscar projetos" />
         {searchValue && (
           <button onClick={() => setSearchValue("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors group">
             <X className="h-4 w-4 group-hover:scale-110" />
@@ -306,6 +308,13 @@ export function ProjectsApprovalToolbar() {
             </DropdownMenuItem>
             <DropdownMenuItem className="cursor-pointer" onClick={() => router.push(`${pathname}?${createQueryString({ sort: "title_desc" })}`)}>
               Título (Z → A)
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="cursor-pointer" onClick={() => router.push(`${pathname}?${createQueryString({ sort: "status_asc" })}`)}>
+              Status (A → Z)
+            </DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer" onClick={() => router.push(`${pathname}?${createQueryString({ sort: "status_desc" })}`)}>
+              Status (Z → A)
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

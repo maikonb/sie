@@ -117,13 +117,21 @@ export interface GetProjectsForApprovalFilters {
   dateStart?: string
   dateEnd?: string
   sort?: string
+  page?: number
+  pageSize?: number
 }
 
 /**
  * Response type for getProjectsForApproval
- * Returns array of projects with user and legal instruments info
+ * Returns array of projects with user and legal instruments info, and pagination metadata
  */
-export type GetProjectsForApprovalResponse = Prisma.ProjectGetPayload<typeof projectsForApprovalValidator>[]
+export type GetProjectsForApprovalResponse = {
+  data: Prisma.ProjectGetPayload<typeof projectsForApprovalValidator>[]
+  total: number
+  page: number
+  pageSize: number
+  pageCount: number
+}
 
 /**
  * Response type for createLegalInstrument

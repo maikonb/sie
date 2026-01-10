@@ -500,6 +500,14 @@ export async function rejectProject(slug: string, reason: string): Promise<Proje
   return updated
 }
 
+const STATUS_SORT_ORDER: Record<string, number> = {
+  [ProjectStatus.APPROVED]: 1,
+  [ProjectStatus.UNDER_REVIEW]: 2,
+  [ProjectStatus.PENDING_REVIEW]: 3,
+  [ProjectStatus.DRAFT]: 4,
+  [ProjectStatus.REJECTED]: 5,
+}
+
 export async function getProjectsForApproval(filters?: GetProjectsForApprovalFilters): Promise<GetProjectsForApprovalResponse> {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) throw new Error("Unauthorized")
@@ -507,7 +515,7 @@ export async function getProjectsForApproval(filters?: GetProjectsForApprovalFil
   // Verify reviewer has permission
   await PermissionsService.authorize(session.user.id, { slug: "projects.approve" })
 
-  const { search, status, assignedToMe, hasWorkPlan, missingWorkPlan, hasLegalInstrument, missingLegalInstrument, dateStart, dateEnd, sort } = filters || {}
+  const { search, status, assignedToMe, hasWorkPlan, missingWorkPlan, hasLegalInstrument, missingLegalInstrument, dateStart, dateEnd, sort, page = 1, pageSize = 12 } = filters || {}
 
   const where: Prisma.ProjectWhereInput = {}
 
@@ -556,7 +564,9 @@ export async function getProjectsForApproval(filters?: GetProjectsForApprovalFil
 
   // Sorting
   let orderBy: Prisma.ProjectOrderByWithRelationInput = { submittedAt: "desc" }
-  if (sort) {
+  const isStatusSort = sort === "status_asc" || sort === "status_desc"
+
+  if (sort && !isStatusSort) {
     switch (sort) {
       case "date_asc":
         orderBy = { submittedAt: "asc" }
@@ -573,11 +583,146 @@ export async function getProjectsForApproval(filters?: GetProjectsForApprovalFil
     }
   }
 
-  return prisma.project.findMany({
-    where,
-    ...projectsForApprovalValidator,
-    orderBy,
-  })
+  const skip = (page - 1) * pageSize
+  const take = pageSize
+
+  let data: Prisma.ProjectGetPayload<typeof projectsForApprovalValidator>[] = []
+  let total = 0
+
+  if (isStatusSort) {
+    // 1. Build the dynamic WHERE clause for Raw SQL
+    const conditions: Prisma.Sql[] = [Prisma.sql`1=1`]
+
+    if (search) {
+      const searchPattern = `%${search}%`
+      conditions.push(Prisma.sql`(p.title ILIKE ${searchPattern} OR u.name ILIKE ${searchPattern} OR u.email ILIKE ${searchPattern})`)
+    }
+
+    if (status && status.length > 0) {
+      // Need to cast the string array to the enum type in SQL
+      conditions.push(Prisma.sql`p.status::text IN (${Prisma.join(status)})`)
+    }
+
+    if (assignedToMe) {
+      conditions.push(Prisma.sql`p."reviewStartedBy" = ${session.user.id}`)
+    }
+
+    if (hasWorkPlan) {
+      conditions.push(Prisma.sql`wp.id IS NOT NULL`)
+    } else if (missingWorkPlan) {
+      conditions.push(Prisma.sql`wp.id IS NULL`)
+    }
+
+    if (hasLegalInstrument) {
+      conditions.push(Prisma.sql`lii.id IS NOT NULL`)
+    } else if (missingLegalInstrument) {
+      conditions.push(Prisma.sql`lii.id IS NULL`)
+    }
+
+    if (dateStart || dateEnd) {
+      if (dateStart) {
+        conditions.push(Prisma.sql`p."submittedAt" >= ${new Date(dateStart)}`)
+      }
+      if (dateEnd) {
+        const end = new Date(dateEnd)
+        end.setHours(23, 59, 59, 999)
+        conditions.push(Prisma.sql`p."submittedAt" <= ${end}`)
+      }
+    }
+
+    const whereClause = Prisma.sql`WHERE ${Prisma.join(conditions, " AND ")}`
+
+    // 2. Count total matches
+    const countResult = await prisma.$queryRaw<[{ count: bigint }]>`
+      SELECT COUNT(DISTINCT p.id) as count
+      FROM "Project" p
+      LEFT JOIN "User" u ON p."userId" = u.id
+      LEFT JOIN "LegalInstrumentInstance" lii ON p.id = lii."projectId"
+      LEFT JOIN "WorkPlan" wp ON p.id = wp."projectId"
+      ${whereClause}
+    `
+    total = Number(countResult[0].count)
+
+    // 3. Fetch paginated and sorted results
+    const statusOrder = Prisma.sql`
+      CASE p.status::text
+        WHEN 'APPROVED' THEN 1
+        WHEN 'UNDER_REVIEW' THEN 2
+        WHEN 'PENDING_REVIEW' THEN 3
+        WHEN 'DRAFT' THEN 4
+        WHEN 'REJECTED' THEN 5
+        ELSE 99
+      END
+    `
+    const orderDir = sort === "status_asc" ? Prisma.sql`ASC` : Prisma.sql`DESC`
+
+    const rawResults = await prisma.$queryRaw<any[]>`
+      SELECT 
+        p.*,
+        u.name as "userName", u.email as "userEmail", u.color as "userColor",
+        f.url as "userImageUrl",
+        lii.status as "liiStatus",
+        liv.type as "livType",
+        li.name as "liName", li.description as "liDescription",
+        wp.id as "wpId"
+      FROM "Project" p
+      LEFT JOIN "User" u ON p."userId" = u.id
+      LEFT JOIN "File" f ON u."imageId" = f.id
+      LEFT JOIN "LegalInstrumentInstance" lii ON p.id = lii."projectId"
+      LEFT JOIN "LegalInstrumentVersion" liv ON lii."legalInstrumentVersionId" = liv.id
+      LEFT JOIN "LegalInstrument" li ON liv."legalInstrumentId" = li.id
+      LEFT JOIN "WorkPlan" wp ON p.id = wp."projectId"
+      ${whereClause}
+      ORDER BY ${statusOrder} ${orderDir}, p."submittedAt" DESC
+      LIMIT ${take} OFFSET ${skip}
+    `
+
+    // 4. Map to the expected nested structure
+    data = rawResults.map((r) => ({
+      ...r,
+      user: {
+        name: r.userName,
+        email: r.userEmail,
+        color: r.userColor,
+        imageFile: r.userImageUrl ? { url: r.userImageUrl } : null,
+      },
+      legalInstrumentInstance: r.liiStatus
+        ? {
+            status: r.liiStatus,
+            legalInstrumentVersion: {
+              type: r.livType,
+              legalInstrument: {
+                name: r.liName,
+                description: r.liDescription,
+              },
+            },
+          }
+        : null,
+      workPlan: r.wpId ? { id: r.wpId } : null,
+    }))
+  } else {
+    // Standard Prisma pagination for other sorts
+    const [t, d] = await Promise.all([
+      prisma.project.count({ where }),
+      prisma.project.findMany({
+        where,
+        ...projectsForApprovalValidator,
+        orderBy,
+        skip,
+        take,
+      }),
+    ])
+    total = t
+    data = d
+  }
+
+  return {
+    data,
+    total,
+    page,
+    pageSize,
+    pageCount: Math.ceil(total / pageSize),
+  }
 }
 
 export async function getGlobalProjectStats(): Promise<GetProjectApprovalStatsResponse> {
