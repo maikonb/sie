@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Label } from "@/components/ui/label"
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, MoreHorizontal } from "lucide-react"
 
 interface PageShellProps extends React.HTMLAttributes<HTMLDivElement> {}
 
@@ -160,22 +161,109 @@ export function PagePagination({ currentPage, pageCount, totalCount, searchParam
 
   if (pageCount <= 1) return null
 
+  // Numerical pagination logic
+  const pages = []
+  const maxVisible = 3
+
+  let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2))
+  let endPage = Math.min(pageCount, startPage + maxVisible - 1)
+
+  if (endPage - startPage + 1 < maxVisible) {
+    startPage = Math.max(1, endPage - maxVisible + 1)
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    pages.push(i)
+  }
+
   return (
-    <div className="flex flex-col gap-2 border-t pt-4 md:flex-row md:items-center md:justify-between">
-      <p className="text-sm text-muted-foreground">
-        Página {currentPage} de {pageCount} ({totalCount} {totalCount === 1 ? itemLabel : labelPlural} no total)
+    <div className="flex flex-col gap-4 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-sm text-muted-foreground order-2 sm:order-1">
+        Mostrando <span className="font-medium text-foreground">{currentPage}</span> de <span className="font-medium text-foreground">{pageCount}</span> páginas (<span className="font-medium text-foreground">{totalCount}</span> {totalCount === 1 ? itemLabel : labelPlural})
       </p>
-      <div className="flex items-center gap-2">
-        <Button variant="outline" className="disabled:opacity-50 disabled:cursor-not-allowed" size="sm" asChild disabled={currentPage <= 1}>
-          {currentPage > 1 ? <Link href={createPageUrl(currentPage - 1)}>Anterior</Link> : <span>Anterior</span>}
+
+      <nav className="flex items-center gap-1.5 order-1 sm:order-2" aria-label="Paginação">
+        {/* Ir para Primeira */}
+        <Button variant="outline" size="icon" className="h-8 w-8 hidden sm:flex" asChild disabled={currentPage <= 1}>
+          {currentPage > 1 ? (
+            <Link href={createPageUrl(1)}>
+              <ChevronsLeft className="h-4 w-4" />
+              <span className="sr-only">Primeira página</span>
+            </Link>
+          ) : (
+            <span>
+              <ChevronsLeft className="h-4 w-4" />
+            </span>
+          )}
         </Button>
-        <span className="text-sm font-medium px-2">
-          {currentPage} / {pageCount}
-        </span>
-        <Button variant="outline" className="disabled:opacity-50 disabled:cursor-not-allowed" size="sm" asChild disabled={currentPage >= pageCount}>
-          {currentPage < pageCount ? <Link href={createPageUrl(currentPage + 1)}>Próxima</Link> : <span>Próxima</span>}
+
+        {/* Anterior */}
+        <Button variant="outline" size="icon" className="h-8 w-8" asChild disabled={currentPage <= 1}>
+          {currentPage > 1 ? (
+            <Link href={createPageUrl(currentPage - 1)}>
+              <ChevronLeft className="h-4 w-4" />
+              <span className="sr-only">Página anterior</span>
+            </Link>
+          ) : (
+            <span>
+              <ChevronLeft className="h-4 w-4" />
+            </span>
+          )}
         </Button>
-      </div>
+
+        {/* Números */}
+        {startPage > 1 && (
+          <>
+            <Button variant="outline" size="icon" className="h-8 w-8 hidden sm:flex" asChild>
+              <Link href={createPageUrl(1)}>1</Link>
+            </Button>
+            {startPage > 2 && <MoreHorizontal className="h-4 w-4 text-muted-foreground hidden sm:block" />}
+          </>
+        )}
+
+        {pages.map((p) => (
+          <Button key={p} variant={p === currentPage ? "default" : "outline"} size="icon" className={cn("h-8 w-8 text-sm", p === currentPage && "pointer-events-none shadow-sm")} asChild>
+            {p === currentPage ? <span>{p}</span> : <Link href={createPageUrl(p)}>{p}</Link>}
+          </Button>
+        ))}
+
+        {endPage < pageCount && (
+          <>
+            {endPage < pageCount - 1 && <MoreHorizontal className="h-4 w-4 text-muted-foreground hidden sm:block" />}
+            <Button variant="outline" size="icon" className="h-8 w-8 hidden sm:flex" asChild>
+              <Link href={createPageUrl(pageCount)}>{pageCount}</Link>
+            </Button>
+          </>
+        )}
+
+        {/* Próxima */}
+        <Button variant="outline" size="icon" className="h-8 w-8" asChild disabled={currentPage >= pageCount}>
+          {currentPage < pageCount ? (
+            <Link href={createPageUrl(currentPage + 1)}>
+              <ChevronRight className="h-4 w-4" />
+              <span className="sr-only">Próxima página</span>
+            </Link>
+          ) : (
+            <span>
+              <ChevronRight className="h-4 w-4" />
+            </span>
+          )}
+        </Button>
+
+        {/* Ir para Última */}
+        <Button variant="outline" size="icon" className="h-8 w-8 hidden sm:flex" asChild disabled={currentPage >= pageCount}>
+          {currentPage < pageCount ? (
+            <Link href={createPageUrl(pageCount)}>
+              <ChevronsRight className="h-4 w-4" />
+              <span className="sr-only">Última página</span>
+            </Link>
+          ) : (
+            <span>
+              <ChevronsRight className="h-4 w-4" />
+            </span>
+          )}
+        </Button>
+      </nav>
     </div>
   )
 }
