@@ -1,7 +1,11 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { Label } from "@/components/ui/label"
 
 interface PageShellProps extends React.HTMLAttributes<HTMLDivElement> {}
 
@@ -127,5 +131,107 @@ export function PageContent({ children, className, ...props }: PageContentProps)
     <div className={cn("space-y-4", className)} {...props}>
       {children}
     </div>
+  )
+}
+
+interface PagePaginationProps {
+  currentPage: number
+  pageCount: number
+  totalCount: number
+  searchParams: Record<string, string | string[] | undefined>
+  itemLabel?: string
+  itemLabelPlural?: string
+  pageParamName?: string
+}
+
+export function PagePagination({ currentPage, pageCount, totalCount, searchParams, itemLabel = "item", itemLabelPlural, pageParamName = "page" }: PagePaginationProps) {
+  const labelPlural = itemLabelPlural || `${itemLabel}s`
+
+  const createPageUrl = (pageNumber: number) => {
+    const params = new URLSearchParams()
+    for (const [key, value] of Object.entries(searchParams)) {
+      if (value === undefined || key === pageParamName) continue
+      if (Array.isArray(value)) value.forEach((v) => params.append(key, v))
+      else params.set(key, value)
+    }
+    params.set(pageParamName, pageNumber.toString())
+    return `?${params.toString()}`
+  }
+
+  if (pageCount <= 1) return null
+
+  return (
+    <div className="flex flex-col gap-2 border-t pt-4 md:flex-row md:items-center md:justify-between">
+      <p className="text-sm text-muted-foreground">
+        Página {currentPage} de {pageCount} ({totalCount} {totalCount === 1 ? itemLabel : labelPlural} no total)
+      </p>
+      <div className="flex items-center gap-2">
+        <Button variant="outline" className="disabled:opacity-50 disabled:cursor-not-allowed" size="sm" asChild disabled={currentPage <= 1}>
+          {currentPage > 1 ? <Link href={createPageUrl(currentPage - 1)}>Anterior</Link> : <span>Anterior</span>}
+        </Button>
+        <span className="text-sm font-medium px-2">
+          {currentPage} / {pageCount}
+        </span>
+        <Button variant="outline" className="disabled:opacity-50 disabled:cursor-not-allowed" size="sm" asChild disabled={currentPage >= pageCount}>
+          {currentPage < pageCount ? <Link href={createPageUrl(currentPage + 1)}>Próxima</Link> : <span>Próxima</span>}
+        </Button>
+      </div>
+    </div>
+  )
+}
+interface PageFiltersProps {
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  trigger: React.ReactNode
+  title: string
+  description?: string
+  children: React.ReactNode
+  footer?: React.ReactNode
+}
+
+export function PageFilters({ open, onOpenChange, trigger, title, description, children, footer }: PageFiltersProps) {
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetTrigger asChild>{trigger}</SheetTrigger>
+      <SheetContent side="right" className="flex w-full flex-col h-full p-0 md:w-[400px]">
+        <SheetHeader className="p-6 border-b text-left">
+          <SheetTitle>{title}</SheetTitle>
+          {description && <SheetDescription>{description}</SheetDescription>}
+        </SheetHeader>
+        <div className="flex-1 overflow-y-auto p-6 space-y-8">{children}</div>
+        {footer && <SheetFooter className="mt-auto border-t p-6 bg-muted/20">{footer}</SheetFooter>}
+      </SheetContent>
+    </Sheet>
+  )
+}
+
+interface PageFilterGroupProps {
+  label: string
+  children: React.ReactNode
+  className?: string
+}
+
+export function PageFilterGroup({ label, children, className }: PageFilterGroupProps) {
+  return (
+    <div className={cn("space-y-4", className)}>
+      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground text-left block">{label}</Label>
+      {children}
+    </div>
+  )
+}
+
+interface PageFilterRowProps {
+  label: string
+  checked: boolean
+  onCheckedChange: (checked: boolean) => void
+  className?: string
+}
+
+export function PageFilterRow({ label, checked, onCheckedChange, className }: PageFilterRowProps) {
+  return (
+    <label className={cn("flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 p-1.5 rounded-md transition-colors", className)}>
+      <input type="checkbox" className="h-4 w-4 rounded border-input bg-background text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2" checked={checked} onChange={(e) => onCheckedChange(e.target.checked)} />
+      <span className="text-foreground select-none">{label}</span>
+    </label>
   )
 }

@@ -9,7 +9,7 @@ import { ProjectStatus, LegalInstrumentStatus } from "@prisma/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { PageContent, PageHeader, PageHeaderDescription, PageHeaderHeading, PageSecondaryHeader, PageShell } from "@/components/shell"
+import { PageContent, PageHeader, PageHeaderDescription, PageHeaderHeading, PagePagination, PageSecondaryHeader, PageShell } from "@/components/shell"
 import { UserAvatar } from "@/components/user-avatar"
 import { ProjectsApprovalToolbar } from "@/components/admin/projects/approval-toolbar"
 import { getProjectsApprovalDefaultQueryParams } from "@/components/admin/projects/approval-toolbar/default"
@@ -100,17 +100,6 @@ export default async function ProjectsApprovalPage(props: { searchParams: Promis
     const currentPage = response.page
     stats = await getUserProjectStats()
 
-    const createPageUrl = (pageNumber: number) => {
-      const params = new URLSearchParams()
-      for (const [key, value] of Object.entries(searchParams)) {
-        if (value === undefined) continue
-        if (Array.isArray(value)) value.forEach((v) => params.append(key, v))
-        else params.set(key, value)
-      }
-      params.set("page", pageNumber.toString())
-      return `${params.toString()}`
-    }
-
     return (
       <PageShell>
         <PageHeader>
@@ -131,7 +120,6 @@ export default async function ProjectsApprovalPage(props: { searchParams: Promis
                 <h2 className="text-lg font-semibold">Projetos</h2>
                 <span className="text-sm text-muted-foreground">{totalCount} projeto(s) encontrados</span>
               </div>
-
               <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
                 {projects.map((project: any) => (
                   <Link key={project.id} href={`/admin/projetos/${project.slug}/review`} className="group block h-full">
@@ -213,24 +201,8 @@ export default async function ProjectsApprovalPage(props: { searchParams: Promis
                   </Link>
                 ))}
               </div>
-
               {/* Pagination */}
-              <div className="flex flex-col gap-2 border-t pt-4 md:flex-row md:items-center md:justify-between">
-                <p className="text-sm text-muted-foreground">
-                  Página {currentPage} de {pageCount} ({totalCount} projetos no total)
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" asChild disabled={currentPage <= 1}>
-                    {currentPage > 1 ? <Link href={`?${createPageUrl(currentPage - 1)}`}>Anterior</Link> : <span>Anterior</span>}
-                  </Button>
-                  <span className="text-sm font-medium px-2">
-                    {currentPage} / {pageCount}
-                  </span>
-                  <Button variant="outline" size="sm" asChild disabled={currentPage >= pageCount}>
-                    {currentPage < pageCount ? <Link href={`?${createPageUrl(currentPage + 1)}`}>Próxima</Link> : <span>Próxima</span>}
-                  </Button>
-                </div>
-              </div>
+              <PagePagination currentPage={currentPage} pageCount={pageCount} totalCount={totalCount} searchParams={searchParams} itemLabel="projeto" />
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-center border-2 border-dashed rounded-xl bg-muted/10">

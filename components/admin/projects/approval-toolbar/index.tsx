@@ -8,21 +8,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ToggleRadioRow } from "@/components/ui/toggle-radio"
 import { ProjectStatus } from "@prisma/client"
 import { cn } from "@/lib/utils"
+import { PageFilters, PageFilterGroup, PageFilterRow } from "@/components/shell"
 import { cloneProjectsApprovalLocalFilters, getProjectsApprovalDefaultQueryParams } from "@/components/admin/projects/approval-toolbar/default"
-
-function CheckboxRow({ label, checked, onCheckedChange }: { label: string; checked: boolean; onCheckedChange: (next: boolean) => void }) {
-  return (
-    <label className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 p-1.5 rounded-md transition-colors">
-      <input type="checkbox" className="h-4 w-4 rounded border-input bg-background text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2" checked={checked} onChange={(e) => onCheckedChange(e.target.checked)} />
-      <span className="text-foreground select-none">{label}</span>
-    </label>
-  )
-}
 
 export function ProjectsApprovalToolbar() {
   const router = useRouter()
@@ -153,137 +144,127 @@ export function ProjectsApprovalToolbar() {
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <Sheet open={open} onOpenChange={handleOpenChange}>
-          <SheetTrigger asChild>
+        <PageFilters
+          open={open}
+          onOpenChange={handleOpenChange}
+          title="Filtros"
+          description="Selecione os critérios e clique em aplicar."
+          trigger={
             <Button variant="outline" size="sm" className={cn("h-9 gap-2", activeFiltersCount > 0 && "border-primary/50 bg-primary/5 text-primary")}>
               <ListFilter className="h-4 w-4 text-primary" />
               Filtros
               {activeFiltersCount > 0 && <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">{activeFiltersCount}</span>}
             </Button>
-          </SheetTrigger>
+          }
+          footer={
+            <div className="flex w-full gap-3">
+              <Button variant="outline" className="flex-1 h-10" onClick={clearFilters}>
+                Limpar Tudo
+              </Button>
+              <Button className="flex-1 h-10" onClick={handleApply}>
+                Aplicar Filtros
+              </Button>
+            </div>
+          }
+        >
+          <PageFilterGroup label="Status do Projeto">
+            <div className="grid grid-cols-2 gap-1">
+              <PageFilterRow label="Pendente" checked={localFilters.status.includes(ProjectStatus.PENDING_REVIEW)} onCheckedChange={(next) => toggleLocalStatus(ProjectStatus.PENDING_REVIEW, next)} />
+              <PageFilterRow label="Em revisão" checked={localFilters.status.includes(ProjectStatus.UNDER_REVIEW)} onCheckedChange={(next) => toggleLocalStatus(ProjectStatus.UNDER_REVIEW, next)} />
+              <PageFilterRow label="Aprovado" checked={localFilters.status.includes(ProjectStatus.APPROVED)} onCheckedChange={(next) => toggleLocalStatus(ProjectStatus.APPROVED, next)} />
+              <PageFilterRow label="Rejeitado" checked={localFilters.status.includes(ProjectStatus.REJECTED)} onCheckedChange={(next) => toggleLocalStatus(ProjectStatus.REJECTED, next)} />
+            </div>
+          </PageFilterGroup>
 
-          <SheetContent side="right" className="flex w-[320px] flex-col h-full p-0 sm:w-[400px]">
-            <SheetHeader className="p-6 border-b text-left">
-              <SheetTitle>Filtros</SheetTitle>
-              <SheetDescription>Selecione os critérios e clique em aplicar.</SheetDescription>
-            </SheetHeader>
+          <Separator />
 
-            <div className="flex-1 overflow-y-auto p-6 space-y-8">
-              <div className="space-y-4">
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground text-left block">Status do Projeto</Label>
-                <div className="grid grid-cols-2 gap-1">
-                  <CheckboxRow label="Pendente" checked={localFilters.status.includes(ProjectStatus.PENDING_REVIEW)} onCheckedChange={(next) => toggleLocalStatus(ProjectStatus.PENDING_REVIEW, next)} />
-                  <CheckboxRow label="Em revisão" checked={localFilters.status.includes(ProjectStatus.UNDER_REVIEW)} onCheckedChange={(next) => toggleLocalStatus(ProjectStatus.UNDER_REVIEW, next)} />
-                  <CheckboxRow label="Aprovado" checked={localFilters.status.includes(ProjectStatus.APPROVED)} onCheckedChange={(next) => toggleLocalStatus(ProjectStatus.APPROVED, next)} />
-                  <CheckboxRow label="Rejeitado" checked={localFilters.status.includes(ProjectStatus.REJECTED)} onCheckedChange={(next) => toggleLocalStatus(ProjectStatus.REJECTED, next)} />
+          <PageFilterGroup label="Atribuição">
+            <PageFilterRow label="Vinculados a mim" checked={localFilters.assignedToMe} onCheckedChange={(next) => setLocalFilters((prev) => ({ ...prev, assignedToMe: next }))} />
+          </PageFilterGroup>
+
+          <Separator />
+
+          <PageFilterGroup label="Período de Submissão">
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-2">
+                <Label className="text-[10px] font-bold uppercase text-muted-foreground text-left block">Desde</Label>
+                <div className="relative">
+                  <CalendarDays className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input type="date" className="h-9 pl-9 text-sm" value={localFilters.dateStart} onChange={(e) => setLocalFilters((prev) => ({ ...prev, dateStart: e.target.value }))} />
                 </div>
               </div>
-
-              <Separator />
-
-              <div className="space-y-4">
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground text-left block">Atribuição</Label>
-                <CheckboxRow label="Vinculados a mim" checked={localFilters.assignedToMe} onCheckedChange={(next) => setLocalFilters((prev) => ({ ...prev, assignedToMe: next }))} />
-              </div>
-
-              <Separator />
-
-              <div className="space-y-4">
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground text-left block">Período de Submissão</Label>
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-bold uppercase text-muted-foreground text-left block">Desde</Label>
-                    <div className="relative">
-                      <CalendarDays className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input type="date" className="h-9 pl-9 text-sm" value={localFilters.dateStart} onChange={(e) => setLocalFilters((prev) => ({ ...prev, dateStart: e.target.value }))} />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-bold uppercase text-muted-foreground text-left block">Até</Label>
-                    <div className="relative">
-                      <CalendarDays className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input type="date" className="h-9 pl-9 text-sm" value={localFilters.dateEnd} onChange={(e) => setLocalFilters((prev) => ({ ...prev, dateEnd: e.target.value }))} />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <Separator />
-
-              <div className="space-y-4">
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground text-left block">Pendências Técnicas</Label>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label className="text-[10px] text-muted-foreground text-left block">Plano de Trabalho</Label>
-                    <div className="grid grid-cols-1 gap-1" role="radiogroup" aria-label="Plano de Trabalho">
-                      <ToggleRadioRow
-                        label="Com plano"
-                        checked={localFilters.hasWorkPlan}
-                        onCheckedChange={(next) =>
-                          setLocalFilters((prev) => ({
-                            ...prev,
-                            hasWorkPlan: next,
-                            missingWorkPlan: false,
-                          }))
-                        }
-                      />
-                      <ToggleRadioRow
-                        label="Sem plano"
-                        checked={localFilters.missingWorkPlan}
-                        onCheckedChange={(next) =>
-                          setLocalFilters((prev) => ({
-                            ...prev,
-                            missingWorkPlan: next,
-                            hasWorkPlan: false,
-                          }))
-                        }
-                      />
-                    </div>
-                  </div>
-                  <Separator className="border-dashed" />
-                  <div className="space-y-2">
-                    <Label className="text-[10px] text-muted-foreground text-left block">Instrumento Jurídico</Label>
-                    <div className="grid grid-cols-1 gap-1" role="radiogroup" aria-label="Instrumento Jurídico">
-                      <ToggleRadioRow
-                        label="Com instrumento"
-                        checked={localFilters.hasLegalInstrument}
-                        onCheckedChange={(next) =>
-                          setLocalFilters((prev) => ({
-                            ...prev,
-                            hasLegalInstrument: next,
-                            missingLegalInstrument: false,
-                          }))
-                        }
-                      />
-                      <ToggleRadioRow
-                        label="Sem instrumento"
-                        checked={localFilters.missingLegalInstrument}
-                        onCheckedChange={(next) =>
-                          setLocalFilters((prev) => ({
-                            ...prev,
-                            missingLegalInstrument: next,
-                            hasLegalInstrument: false,
-                          }))
-                        }
-                      />
-                    </div>
-                  </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-bold uppercase text-muted-foreground text-left block">Até</Label>
+                <div className="relative">
+                  <CalendarDays className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input type="date" className="h-9 pl-9 text-sm" value={localFilters.dateEnd} onChange={(e) => setLocalFilters((prev) => ({ ...prev, dateEnd: e.target.value }))} />
                 </div>
               </div>
             </div>
+          </PageFilterGroup>
 
-            <SheetFooter className="mt-auto border-t p-6 bg-muted/20">
-              <div className="flex w-full gap-3">
-                <Button variant="outline" className="flex-1 h-10" onClick={clearFilters}>
-                  Limpar Tudo
-                </Button>
-                <Button className="flex-1 h-10" onClick={handleApply}>
-                  Aplicar Filtros
-                </Button>
+          <Separator />
+
+          <PageFilterGroup label="Pendências Técnicas">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-[10px] text-muted-foreground text-left block">Plano de Trabalho</Label>
+                <div className="grid grid-cols-1 gap-1" role="radiogroup" aria-label="Plano de Trabalho">
+                  <ToggleRadioRow
+                    label="Com plano"
+                    checked={localFilters.hasWorkPlan}
+                    onCheckedChange={(next) =>
+                      setLocalFilters((prev) => ({
+                        ...prev,
+                        hasWorkPlan: next,
+                        missingWorkPlan: false,
+                      }))
+                    }
+                  />
+                  <ToggleRadioRow
+                    label="Sem plano"
+                    checked={localFilters.missingWorkPlan}
+                    onCheckedChange={(next) =>
+                      setLocalFilters((prev) => ({
+                        ...prev,
+                        missingWorkPlan: next,
+                        hasWorkPlan: false,
+                      }))
+                    }
+                  />
+                </div>
               </div>
-            </SheetFooter>
-          </SheetContent>
-        </Sheet>
+              <Separator className="border-dashed" />
+              <div className="space-y-2">
+                <Label className="text-[10px] text-muted-foreground text-left block">Instrumento Jurídico</Label>
+                <div className="grid grid-cols-1 gap-1" role="radiogroup" aria-label="Instrumento Jurídico">
+                  <ToggleRadioRow
+                    label="Com instrumento"
+                    checked={localFilters.hasLegalInstrument}
+                    onCheckedChange={(next) =>
+                      setLocalFilters((prev) => ({
+                        ...prev,
+                        hasLegalInstrument: next,
+                        missingLegalInstrument: false,
+                      }))
+                    }
+                  />
+                  <ToggleRadioRow
+                    label="Sem instrumento"
+                    checked={localFilters.missingLegalInstrument}
+                    onCheckedChange={(next) =>
+                      setLocalFilters((prev) => ({
+                        ...prev,
+                        missingLegalInstrument: next,
+                        hasLegalInstrument: false,
+                      }))
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+          </PageFilterGroup>
+        </PageFilters>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
