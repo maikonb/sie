@@ -1,12 +1,12 @@
 "use client"
 
-import * as React from "react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Label } from "@/components/ui/label"
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, MoreHorizontal } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
 
 interface PageShellProps extends React.HTMLAttributes<HTMLDivElement> {}
 
@@ -23,10 +23,11 @@ interface PageHeaderProps extends React.HTMLAttributes<HTMLDivElement> {}
 export function PageHeader({ children, className, ...props }: PageHeaderProps) {
   return (
     <div
+      data-solid="false"
       className={cn(
         "page-header md:sticky md:top-14 md:z-20 -mx-8 px-8 py-4 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 flex items-center justify-between space-y-2 transition-all",
         // When merged, we remove the background and blur on desktop to avoid "double blur"
-        "in-[.is-merged]:md:bg-transparent in-[.is-merged]:md:backdrop-blur-none in-[.is-merged]:md:border-b-transparent",
+        "data-[solid=true]:md:bg-transparent data-[solid=true]:md:backdrop-blur-none data-[solid=true]:md:border-b-transparent",
         className
       )}
       {...props}
@@ -39,23 +40,22 @@ export function PageHeader({ children, className, ...props }: PageHeaderProps) {
 interface PageSecondaryHeaderPropos extends React.HTMLAttributes<HTMLDivElement> {}
 
 export function PageSecondaryHeader({ children, className, ...props }: PageSecondaryHeaderPropos) {
-  const [headerHeight, setHeaderHeight] = React.useState(0)
-  const [isStuck, setIsStuck] = React.useState(false)
-  const ref = React.useRef<HTMLDivElement>(null)
+  const [headerHeight, setHeaderHeight] = useState(0)
+  const [isStuck, setIsStuck] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
 
-  React.useEffect(() => {
+  useEffect(() => {
     const header = document.querySelector(".page-header") as HTMLElement
     if (!header) return
 
-    // Signal that we are merging to the PageHeader
-    header.classList.add("is-merged")
+    header.dataset.solid = "true"
 
     // Set initial height
-    setHeaderHeight(header.getBoundingClientRect().height)
+    setHeaderHeight(header.getBoundingClientRect().height - 5)
 
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        setHeaderHeight(entry.target.getBoundingClientRect().height)
+        setHeaderHeight(entry.target.getBoundingClientRect().height - 5)
       }
     })
 
@@ -77,29 +77,40 @@ export function PageSecondaryHeader({ children, className, ...props }: PageSecon
     }
 
     return () => {
-      header.classList.remove("is-merged")
+      header.dataset.solid = "false"
       resizeObserver.disconnect()
       observer.disconnect()
     }
   }, [headerHeight])
 
-  React.useEffect(() => {
+  useEffect(() => {
     const header = document.querySelector(".page-header") as HTMLElement
     if (!header) return
 
     if (isStuck) {
       header.style.borderBottomColor = "transparent"
     } else {
-      header.style.borderBottomColor = ""
+      header.style.borderBottomColor = "var(--border)"
     }
   }, [isStuck])
 
   return (
-    <div ref={ref} className={cn("sticky top-14 -mx-8 px-8 pt-3 md:pt-0 pb-3 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 transition-colors md:top-[calc(3.5rem+var(--header-height,0px))] z-10", !isStuck ? "border-b-transparent" : "border-b-border", className)} style={{ "--header-height": `${headerHeight}px` } as React.CSSProperties} {...props}>
-      {/* Background Shim: This "stretches" the blur upwards on desktop to cover the PageHeader area */}
-      <div className="absolute inset-x-0 bottom-full hidden bg-inherit backdrop-blur-inherit supports-backdrop-filter:bg-inherit md:block" style={{ height: `${headerHeight}px` }} />
+    <div
+      ref={ref}
+      className={cn(
+        "sticky top-14 -mx-8 px-8 pt-3 md:pt-0 pb-3 border-b bg-transparent transition-colors md:top-[calc(3.5rem+var(--header-height,0px))] z-10",
+        !isStuck ? "border-b-transparent" : "border-b-border",
+        className
+      )}
+      style={{ "--header-height": `${headerHeight}px` } as React.CSSProperties}
+      {...props}
+    >
+      <div
+        aria-hidden
+        className="absolute md:inset-x-0 inset-0 -z-10 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 top-0 h-full md:block md:top-[calc(-1*var(--header-height,0px))] md:h-[calc(100%+var(--header-height,0px))]"
+      />
 
-      {/* Content wrapper to stay above shim */}
+      {/* Conteúdo */}
       <div className="relative z-10">{children}</div>
     </div>
   )
