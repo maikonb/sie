@@ -8,7 +8,7 @@ type UserSeed = {
   query?: (prisma: PrismaClient) => Promise<{ roleId?: string }>
 }
 
-export async function seedTestUsers(prisma: PrismaClient) {
+export async function seedDevTestUsers(prisma: PrismaClient) {
   console.log("Seeding Test Users...")
 
   const seeds: UserSeed[] = [

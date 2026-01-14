@@ -51,11 +51,11 @@ export function PageSecondaryHeader({ children, className, ...props }: PageSecon
     header.dataset.solid = "true"
 
     // Set initial height
-    setHeaderHeight(header.getBoundingClientRect().height - 5)
+    setHeaderHeight(header.getBoundingClientRect().height - 6)
 
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        setHeaderHeight(entry.target.getBoundingClientRect().height - 5)
+        setHeaderHeight(entry.target.getBoundingClientRect().height - 6)
       }
     })
 
@@ -68,7 +68,7 @@ export function PageSecondaryHeader({ children, className, ...props }: PageSecon
       },
       {
         threshold: [1],
-        rootMargin: `-${56 + (window.innerWidth >= 768 ? headerHeight : 0) + 1}px 0px 0px 0px`,
+        rootMargin: `-${56 + (window.innerWidth >= 768 ? headerHeight + 8 : 0) + 1}px 0px 0px 0px`,
       }
     )
 

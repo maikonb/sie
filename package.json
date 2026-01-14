@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:setup": "npm run docker:dev:up && sleep 5 && npm run prisma:dev:migrate && npm run prisma:dev:seed && next dev",
     "build": "npm run prisma:prod:migrate && npm run prisma:prod:seed && next build",
     "postinstall": "npm run prisma:generate",
     "start": "next start",

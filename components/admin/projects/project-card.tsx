@@ -3,59 +3,26 @@
 import Link from "next/link"
 import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { ArrowRight, CheckCircle2, Clock, XCircle } from "lucide-react"
+import { ArrowRight } from "lucide-react"
 import { ProjectStatus, LegalInstrumentStatus } from "@prisma/client"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { UserAvatar } from "@/components/user-avatar"
-
-const statusUi = {
-  [ProjectStatus.DRAFT]: {
-    label: "Rascunho",
-    badgeClass: "bg-muted text-muted-foreground border-border",
-    Icon: Clock,
-  },
-  [ProjectStatus.PENDING_REVIEW]: {
-    label: "Pendente",
-    badgeClass: "bg-yellow-500/10 text-yellow-600 border-yellow-200",
-    Icon: Clock,
-  },
-  [ProjectStatus.UNDER_REVIEW]: {
-    label: "Em Revisão",
-    badgeClass: "bg-blue-500/10 text-blue-600 border-blue-200",
-    Icon: Clock,
-  },
-  [ProjectStatus.APPROVED]: {
-    label: "Aprovado",
-    badgeClass: "bg-green-500/10 text-green-600 border-green-200",
-    Icon: CheckCircle2,
-  },
-  [ProjectStatus.REJECTED]: {
-    label: "Rejeitado",
-    badgeClass: "bg-red-500/10 text-red-600 border-red-200",
-    Icon: XCircle,
-  },
-} as const
+import { ProjectStatusBadge } from "@/components/projects/status-badge"
 
 interface ProjectCardProps {
   project: any // Could be typed more strictly if needed
 }
 
 export function ProjectCard({ project }: ProjectCardProps) {
-  const cfg = statusUi[project.status as ProjectStatus] ?? statusUi[ProjectStatus.PENDING_REVIEW]
-  const Icon = cfg.Icon
-
   return (
     <Link href={`/admin/projetos/${project.slug}/review`} className="group block h-full">
       <Card className="h-full transition-all hover:shadow-md hover:border-primary/50 flex flex-col">
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-4 mb-3">
-            <Badge variant="secondary" className={cfg.badgeClass}>
-              <Icon className="mr-1 h-3 w-3" />
-              {cfg.label}
-            </Badge>
+            <ProjectStatusBadge status={project.status} />
             <span className="text-xs text-muted-foreground whitespace-nowrap">
               {project.statusUpdatedAt || project.submittedAt
                 ? formatDistanceToNow(new Date(project.statusUpdatedAt ?? project.submittedAt!), {

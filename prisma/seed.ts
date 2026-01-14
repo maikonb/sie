@@ -2,7 +2,7 @@ import { PrismaClient } from "@prisma/client"
 import { seedLegalInstruments } from "./seeds/legal-instruments"
 import { seedPermissions } from "./seeds/permissions"
 import { seedSystemDefaults } from "./seeds/system-defaults"
-import { seedTestUsers } from "./seeds/dev-test-users"
+import { seedDevTestUsers } from "./seeds/dev-test-users"
 import { seedDevProjects } from "./seeds/dev-projects"
 
 const prisma = new PrismaClient({})
@@ -10,7 +10,7 @@ const prisma = new PrismaClient({})
 const devSeeds = [
   seedLegalInstruments,
   seedPermissions,
-  seedTestUsers,
+  seedDevTestUsers,
   seedDevProjects,
   seedSystemDefaults, // alweys last
 ]

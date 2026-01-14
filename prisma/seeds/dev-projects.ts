@@ -28,25 +28,29 @@ export async function seedDevProjects(prisma: PrismaClient) {
 
     // Some projects have submittedAt, others don't (if DRAFT)
     const submittedAt = status !== ProjectStatus.DRAFT ? new Date(createdAt.getTime() + 1000 * 60 * 60 * 2) : null
-
-    await prisma.project.create({
-      data: {
-        title: `Projeto de Pesquisa ${i.toString().padStart(2, "0")}`,
-        objectives: `Objetivos detalhados para o projeto ${i}. Este é um projeto gerado automaticamente para testes.`,
-        justification: `Justificativa técnica para a execução do projeto ${i}.`,
-        scope: `Escopo de atuação e limites do projeto ${i}.`,
-        status,
-        userId: user.id,
-        createdAt,
-        submittedAt,
-        legalInstrumentInstance: {
-          create: {
-            legalInstrumentVersionId: instrumentVersion.id,
-            status: LegalInstrumentStatus.PENDING,
-            answers: {},
-          },
+    const data = {
+      slug: `teste-${i.toString().padStart(2, "0")}`,
+      title: `Projeto de Pesquisa ${i.toString().padStart(2, "0")}`,
+      objectives: `Objetivos detalhados para o projeto ${i}. Este é um projeto gerado automaticamente para testes.`,
+      justification: `Justificativa técnica para a execução do projeto ${i}.`,
+      scope: `Escopo de atuação e limites do projeto ${i}.`,
+      status,
+      userId: user.id,
+      createdAt,
+      submittedAt,
+      legalInstrumentInstance: {
+        create: {
+          legalInstrumentVersionId: instrumentVersion.id,
+          status: LegalInstrumentStatus.PENDING,
+          answers: {},
         },
       },
+    }
+    
+    await prisma.project.upsert({
+      where: {slug: `teste-${i.toString().padStart(2, "0")}`},
+      create: data,
+      update: {slug: `teste-${i.toString().padStart(2, "0")}`}
     })
   }
 
