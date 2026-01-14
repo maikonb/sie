@@ -31,6 +31,11 @@ export const projectStatusConfig = {
     badgeClass: "bg-red-500/10 text-red-600 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-900",
     Icon: XCircle,
   },
+  [(ProjectStatus as any).RETURNED || "RETURNED"]: {
+    label: "Ajustes Solicitados",
+    badgeClass: "bg-amber-500/10 text-amber-600 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-900",
+    Icon: AlertCircle,
+  },
 } as const
 
 interface ProjectStatusBadgeProps {

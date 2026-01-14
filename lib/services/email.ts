@@ -4,6 +4,7 @@ import { otpTemplate } from "../emails/templates/otp"
 import { projectSubmittedTemplate } from "../emails/templates/project-submitted"
 import { projectApprovedTemplate } from "../emails/templates/project-approved"
 import { projectRejectedTemplate } from "../emails/templates/project-rejected"
+import { projectReturnedTemplate } from "../emails/templates/project-returned"
 import { prisma } from "@/lib/config/db"
 
 const transporter = nodemailer.createTransport({
@@ -24,6 +25,7 @@ const TEMPLATES = {
   PROJECT_SUBMITTED: projectSubmittedTemplate,
   PROJECT_APPROVED: projectApprovedTemplate,
   PROJECT_REJECTED: projectRejectedTemplate,
+  PROJECT_RETURNED: projectReturnedTemplate,
 }
 
 function replaceVariables(template: string, vars: Record<string, string>): string {
@@ -105,11 +107,7 @@ export async function notifyAdminsOfNewSubmission(project: { id: string; title: 
   if (!emails.length) return
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.APP_URL ?? "http://localhost:3000"
   const reviewUrl = `${baseUrl}/admin/projetos/${project.slug}/review`
-  await Promise.all(
-    emails.map((to) =>
-      sendByTemplate("PROJECT_SUBMITTED", { projectTitle: project.title, submitterName: project.user.name ?? "Usuário" , reviewUrl }, to)
-    )
-  )
+  await Promise.all(emails.map((to) => sendByTemplate("PROJECT_SUBMITTED", { projectTitle: project.title, submitterName: project.user.name ?? "Usuário", reviewUrl }, to)))
 }
 
 export async function notifyUserOfApproval(project: { title: string; slug: string; user: { email?: string | null } }, approver: { name?: string | null }) {
@@ -126,4 +124,12 @@ export async function notifyUserOfRejection(project: { title: string; slug: stri
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.APP_URL ?? "http://localhost:3000"
   const projectUrl = `${baseUrl}/projetos/${project.slug}`
   await sendByTemplate("PROJECT_REJECTED", { projectTitle: project.title, approverName: approver.name ?? "Administrador", reason, projectUrl }, to)
+}
+
+export async function notifyUserOfAdjustments(project: { title: string; slug: string; user: { email?: string | null } }, reason: string, approver: { name?: string | null }) {
+  const to = project.user.email
+  if (!to) return
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? process.env.APP_URL ?? "http://localhost:3000"
+  const projectUrl = `${baseUrl}/projetos/${project.slug}`
+  await sendByTemplate("PROJECT_RETURNED", { projectTitle: project.title, approverName: approver.name ?? "Administrador", reason, projectUrl }, to)
 }

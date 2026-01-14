@@ -321,9 +321,9 @@ export async function submitProjectForApproval(slug: string): Promise<Project> {
     throw new Error("Unauthorized - only project creator can submit for approval")
   }
 
-  // Validate that project is in DRAFT status
-  if (project.status !== ProjectStatus.DRAFT) {
-    throw new Error("Project has already been submitted for approval")
+  // Validate that project is in DRAFT or RETURNED status
+  if (project.status !== ProjectStatus.DRAFT && project.status !== (ProjectStatus as any).RETURNED) {
+    throw new Error("Project cannot be submitted in its current status")
   }
 
   // Validate dependencies
@@ -500,12 +500,61 @@ export async function rejectProject(slug: string, reason: string): Promise<Proje
   return updated
 }
 
+export async function requestProjectAdjustments(slug: string, reason: string): Promise<Project> {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) throw new Error("Unauthorized")
+
+  // Verify approver has permission
+  await PermissionsService.authorize(session.user.id, { slug: "projects.approve" })
+
+  if (!reason || reason.trim().length === 0) {
+    throw new Error("Reason for adjustments is required")
+  }
+
+  const project = await prisma.project.findUnique({
+    where: { slug },
+    select: { id: true, status: true },
+  })
+
+  if (!project) throw new Error("Project not found")
+
+  if (project.status !== ProjectStatus.UNDER_REVIEW) {
+    throw new Error("Only projects under review can be returned for adjustments")
+  }
+
+  const updated = await prisma.project.update({
+    where: { slug },
+    data: {
+      status: ProjectStatus.RETURNED,
+      returnReason: reason,
+      statusUpdatedAt: new Date(),
+    },
+  })
+
+  // Notify user and log audit
+  try {
+    const full = await prisma.project.findUnique({
+      where: { slug },
+      include: { user: { select: { email: true, name: true } } },
+    })
+    if (full) {
+      await NotificationService.notifyUserOfAdjustments({ title: full.title, slug: full.slug!, userId: full.userId, user: { email: full.user?.email } }, reason, { name: session.user.name })
+      await logProjectAction(full.id, ProjectStatus.RETURNED, session.user.id, { reason, toStatus: ProjectStatus.RETURNED })
+    }
+  } catch (e) {
+    console.error("notify/log requestProjectAdjustments error", e)
+  }
+
+  return updated
+}
+
 const STATUS_SORT_ORDER: Record<string, number> = {
   [ProjectStatus.APPROVED]: 1,
   [ProjectStatus.UNDER_REVIEW]: 2,
   [ProjectStatus.PENDING_REVIEW]: 3,
-  [ProjectStatus.DRAFT]: 4,
-  [ProjectStatus.REJECTED]: 5,
+  [ProjectStatus.RETURNED]: 4,
+  [ProjectStatus.DRAFT]: 5,
+  [ProjectStatus.REJECTED]: 6,
 }
 
 export async function getProjectsForApproval(filters?: GetProjectsForApprovalFilters): Promise<GetProjectsForApprovalResponse> {
@@ -649,8 +698,9 @@ export async function getProjectsForApproval(filters?: GetProjectsForApprovalFil
         WHEN 'APPROVED' THEN 1
         WHEN 'UNDER_REVIEW' THEN 2
         WHEN 'PENDING_REVIEW' THEN 3
-        WHEN 'DRAFT' THEN 4
-        WHEN 'REJECTED' THEN 5
+        WHEN 'RETURNED' THEN 4
+        WHEN 'DRAFT' THEN 5
+        WHEN 'REJECTED' THEN 6
         ELSE 99
       END
     `

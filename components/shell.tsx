@@ -5,8 +5,27 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Label } from "@/components/ui/label"
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, MoreHorizontal } from "lucide-react"
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, MoreHorizontal, ArrowLeft } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
+
+interface PageBackProps {
+  href: string
+  children: React.ReactNode
+  className?: string
+}
+
+export function PageBack({ href, children, className }: PageBackProps) {
+  return (
+    <div className={cn("flex items-center gap-2 text-muted-foreground mb-4", className)}>
+      <Button variant="ghost" size="sm" asChild className="-ml-3 h-8 px-2">
+        <Link href={href}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          {children}
+        </Link>
+      </Button>
+    </div>
+  )
+}
 
 interface PageShellProps extends React.HTMLAttributes<HTMLDivElement> {}
 
@@ -95,20 +114,8 @@ export function PageSecondaryHeader({ children, className, ...props }: PageSecon
   }, [isStuck])
 
   return (
-    <div
-      ref={ref}
-      className={cn(
-        "sticky top-14 -mx-8 px-8 pt-3 md:pt-0 pb-3 border-b bg-transparent transition-colors md:top-[calc(3.5rem+var(--header-height,0px))] z-10",
-        !isStuck ? "border-b-transparent" : "border-b-border",
-        className
-      )}
-      style={{ "--header-height": `${headerHeight}px` } as React.CSSProperties}
-      {...props}
-    >
-      <div
-        aria-hidden
-        className="absolute md:inset-x-0 inset-0 -z-10 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 top-0 h-full md:block md:top-[calc(-1*var(--header-height,0px))] md:h-[calc(100%+var(--header-height,0px))]"
-      />
+    <div ref={ref} className={cn("sticky top-14 -mx-8 px-8 pt-3 md:pt-0 pb-3 border-b bg-transparent transition-colors md:top-[calc(3.5rem+var(--header-height,0px))] z-10", !isStuck ? "border-b-transparent" : "border-b-border", className)} style={{ "--header-height": `${headerHeight}px` } as React.CSSProperties} {...props}>
+      <div aria-hidden className="absolute md:inset-x-0 inset-0 -z-10 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 top-0 h-full md:block md:top-[calc(-1*var(--header-height,0px))] md:h-[calc(100%+var(--header-height,0px))]" />
 
       {/* Conteúdo */}
       <div className="relative z-10">{children}</div>

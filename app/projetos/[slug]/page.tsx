@@ -7,15 +7,14 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowLeft, Calendar, FileText, Plus, Edit, Scale, Download, Eye, CheckCircle2, AlertCircle, SendHorizontal, Loader2 } from "lucide-react"
-import { Separator } from "@/components/ui/separator"
+import { Calendar, FileText, Plus, Edit, Scale, Download, CheckCircle2, AlertCircle, SendHorizontal, Loader2 } from "lucide-react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { useProject } from "@/components/providers/project"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { PageContent, PageHeader, PageHeaderHeading, PageShell } from "@/components/shell"
+import { PageContent, PageHeader, PageHeaderHeading, PageShell, PageBack } from "@/components/shell"
 import { ProjectEditSheet } from "@/components/projects/edit-sheet"
 import { DependencyCard } from "@/components/projects/dependency-card"
 import { UserAvatar } from "@/components/user-avatar"
@@ -89,11 +88,11 @@ export default function ProjectDetailsPage() {
   const hasLegalInstrument = !!legalInstrumentInstance
   const hasPendingInstrument = hasLegalInstrument && (legalInstrumentInstance.status || LegalInstrumentStatus.PENDING) !== LegalInstrumentStatus.FILLED
 
-  const canSubmit = view?.allowActions && hasWorkPlan && hasLegalInstrument && !hasPendingInstrument && project.status === ProjectStatus.DRAFT
+  const canSubmit = view?.allowActions && hasWorkPlan && hasLegalInstrument && !hasPendingInstrument && (project.status === ProjectStatus.DRAFT || (project.status as any) === "RETURNED")
 
   // Mensagem de feedback para botão desabilitado
   const getSubmitDisabledReason = () => {
-    if (project.status !== ProjectStatus.DRAFT) return "Projeto já foi enviado"
+    if (project.status !== ProjectStatus.DRAFT && (project.status as any) !== "RETURNED") return "Projeto já foi enviado"
     if (!hasWorkPlan) return "É necessário criar o Plano de Trabalho"
     if (!hasLegalInstrument) return "É necessário selecionar um Instrumento Jurídico"
     if (hasPendingInstrument) return "É necessário preencher completamente o Instrumento Jurídico"
@@ -155,13 +154,9 @@ export default function ProjectDetailsPage() {
       {/* Header */}
       <PageHeader className="flex-col items-start gap-4 md:flex-row md:items-start md:justify-between">
         <div className="space-y-2">
-          <div className="flex items-center gap-2 text-muted-foreground mb-2">
-            <Button variant="ghost" size="sm" asChild className="-ml-3 h-8 px-2 text-muted-foreground hover:text-foreground">
-              <Link href="/projetos">
-                <ArrowLeft className="mr-2 h-4 w-4" /> Voltar para Projetos
-              </Link>
-            </Button>
-          </div>
+          <PageBack href="/projetos" className="text-muted-foreground hover:text-foreground">
+            Voltar para Projetos
+          </PageBack>
           <PageHeaderHeading className="text-3xl font-bold tracking-tight">{project.title}</PageHeaderHeading>
           <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
             <span className="flex items-center">
@@ -197,7 +192,7 @@ export default function ProjectDetailsPage() {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          {view?.allowActions && project.status === ProjectStatus.DRAFT && (
+          {view?.allowActions && (project.status === ProjectStatus.DRAFT || (project.status as any) === "RETURNED") && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -230,6 +225,23 @@ export default function ProjectDetailsPage() {
           )}
         </div>
       </PageHeader>
+
+      {project.status === (ProjectStatus as any).RETURNED && (project as any).returnReason && (
+        <Card className="bg-amber-50 border-amber-200 mb-6">
+          <CardContent className="pt-6">
+            <div className="flex gap-3">
+              <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="font-semibold text-amber-900">Ajustes Solicitados pelo Administrador</p>
+                <div className="prose prose-sm prose-amber max-w-none">
+                  <p className="text-amber-800 whitespace-pre-wrap">{(project as any).returnReason}</p>
+                </div>
+                <p className="text-xs text-amber-700 mt-2 italic">* Realize as alterações solicitadas e clique em "Enviar para Análise" novamente.</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Content */}
       <PageContent>

@@ -1,4 +1,4 @@
-export type EmailTemplateKey = "OTP" | "PROJECT_SUBMITTED" | "PROJECT_APPROVED" | "PROJECT_REJECTED"
+export type EmailTemplateKey = "OTP" | "PROJECT_SUBMITTED" | "PROJECT_APPROVED" | "PROJECT_REJECTED" | "PROJECT_RETURNED"
 
 export interface EmailTemplateVars {
   OTP: {
@@ -15,6 +15,12 @@ export interface EmailTemplateVars {
     projectUrl: string
   }
   PROJECT_REJECTED: {
+    projectTitle: string
+    approverName: string
+    reason: string
+    projectUrl: string
+  }
+  PROJECT_RETURNED: {
     projectTitle: string
     approverName: string
     reason: string

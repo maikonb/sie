@@ -8,7 +8,14 @@ import { type WorkPlanFormData } from "@/lib/schemas/work-plan"
 /**
  * Validator for basic WorkPlan query
  */
-export const workPlanValidator = Prisma.validator<Prisma.WorkPlanDefaultArgs>()({})
+export const workPlanValidator = Prisma.validator<Prisma.WorkPlanDefaultArgs>()({
+  include: {
+    schedule: true,
+    team: true,
+    participants: true,
+    responsibilities: true,
+  },
+})
 
 // ============================================================================
 // OUTPUT TYPES - Direct Prisma.validator payloads

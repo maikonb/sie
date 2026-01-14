@@ -61,6 +61,7 @@ enum ProjectStatus {
   UNDER_REVIEW
   APPROVED
   REJECTED
+  RETURNED
 }
 
 model Project {
@@ -85,6 +86,7 @@ model Project {
   approvedBy      String?
   approver        User?     @relation("ProjectApprover", fields: [approvedBy], references: [id])
   rejectionReason String?   @db.Text
+  returnReason    String?   @db.Text
 
   userId String
   user   User   @relation("ProjectCreator", fields: [userId], references: [id])

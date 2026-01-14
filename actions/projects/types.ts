@@ -33,7 +33,14 @@ export const projectWithRelationsValidator = Prisma.validator<Prisma.ProjectDefa
         },
       },
     },
-    workPlan: true,
+    workPlan: {
+      include: {
+        schedule: true,
+        team: true,
+        participants: true,
+        responsibilities: true,
+      },
+    },
     audits: {
       include: {
         user: { select: { name: true } },
@@ -233,6 +240,14 @@ export interface ApproveProjectInput {
  * Input type for rejectProject
  */
 export interface RejectProjectInput {
+  slug: string
+  reason: string
+}
+
+/**
+ * Input type for requestProjectAdjustments
+ */
+export interface RequestProjectAdjustmentsInput {
   slug: string
   reason: string
 }

@@ -145,4 +145,14 @@ export class NotificationService {
       vars: { projectTitle: project.title, approverName: approver.name ?? "Administrador", reason, projectUrl },
     })
   }
+
+  static async notifyUserOfAdjustments(project: { title: string; slug: string; userId: string; user: { email?: string | null } }, reason: string, approver: { name?: string | null }) {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
+    const projectUrl = `${baseUrl}/projetos/${project.slug}`
+
+    return this.notifyUser(project.userId, "Ajustes Solicitados", `Seu projeto "${project.title}" precisa de ajustes. Veja as observações do administrador.`, `/projetos/${project.slug}`, {
+      key: "PROJECT_RETURNED",
+      vars: { projectTitle: project.title, approverName: approver.name ?? "Administrador", reason, projectUrl },
+    })
+  }
 }
