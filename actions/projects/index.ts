@@ -407,7 +407,7 @@ export async function startProjectReview(slug: string): Promise<Project> {
   return updated
 }
 
-export async function approveProject(slug: string): Promise<Project> {
+export async function approveProject(slug: string, opinion?: string): Promise<Project> {
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) throw new Error("Unauthorized")
 
@@ -421,6 +421,10 @@ export async function approveProject(slug: string): Promise<Project> {
 
   if (!project) throw new Error("Project not found")
 
+  if (!opinion || opinion.trim().length === 0) {
+    throw new Error("O parecer técnico é obrigatório para aprovação")
+  }
+
   if (project.status !== ProjectStatus.UNDER_REVIEW) {
     throw new Error("Only projects under review can be approved")
   }
@@ -431,6 +435,7 @@ export async function approveProject(slug: string): Promise<Project> {
       status: "APPROVED",
       approvedAt: new Date(),
       approvedBy: session.user.id,
+      approvalOpinion: opinion,
       statusUpdatedAt: new Date(),
     },
   })
@@ -442,8 +447,8 @@ export async function approveProject(slug: string): Promise<Project> {
       include: { user: { select: { email: true } } },
     })
     if (full) {
-      await NotificationService.notifyUserOfApproval({ title: full.title, slug: full.slug!, userId: full.userId, user: { email: full.user?.email } }, { name: session.user.name })
-      await logProjectAction(full.id, "APPROVED", session.user.id, { toStatus: "APPROVED" })
+      await NotificationService.notifyUserOfApproval({ title: full.title, slug: full.slug!, userId: full.userId, user: { email: full.user?.email } }, { name: session.user.name }, opinion)
+      await logProjectAction(full.id, "APPROVED", session.user.id, { opinion, toStatus: "APPROVED" })
     }
   } catch (e) {
     console.error("notify/log approveProject error", e)
@@ -519,7 +524,7 @@ export async function requestProjectAdjustments(slug: string, reason: string): P
   if (!project) throw new Error("Project not found")
 
   if (project.status !== ProjectStatus.UNDER_REVIEW) {
-    throw new Error("Only projects under review can be returned for adjustments")
+    throw new Error("Somente projetos em analise podem ser retornados para ajustes")
   }
 
   const updated = await prisma.project.update({
@@ -539,7 +544,7 @@ export async function requestProjectAdjustments(slug: string, reason: string): P
     })
     if (full) {
       await NotificationService.notifyUserOfAdjustments({ title: full.title, slug: full.slug!, userId: full.userId, user: { email: full.user?.email } }, reason, { name: session.user.name })
-      await logProjectAction(full.id, ProjectStatus.RETURNED, session.user.id, { reason, toStatus: ProjectStatus.RETURNED })
+      await logProjectAction(full.id, "RETURNED", session.user.id, { reason, toStatus: ProjectStatus.RETURNED })
     }
   } catch (e) {
     console.error("notify/log requestProjectAdjustments error", e)

@@ -6,6 +6,7 @@ export const projectApprovedTemplate: EmailTemplate = {
   <div style="font-family: Arial, sans-serif; font-size: 14px; color: #222;">
     <p>Olá,</p>
     <p>Seu projeto <b>{{projectTitle}}</b> foi <b>aprovado</b> por <b>{{approverName}}</b>.</p>
+    <p><b>Parecer Técnico:</b> {{opinion}}</p>
     <p>
       Veja os detalhes do projeto:
       <a href="{{projectUrl}}" style="color:#0B6BFF">Abrir projeto</a>

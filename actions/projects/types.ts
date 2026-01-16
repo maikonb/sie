@@ -234,6 +234,7 @@ export interface StartProjectReviewInput {
  */
 export interface ApproveProjectInput {
   slug: string
+  opinion?: string
 }
 
 /**

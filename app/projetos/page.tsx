@@ -12,6 +12,7 @@ import { getAllProjects } from "@/actions/projects"
 import type { GetAllProjectsResponse } from "@/actions/projects/types"
 import useCan from "@/hooks/use-can"
 import { PageContent, PageHeader, PageHeaderDescription, PageHeaderHeading, PageShell } from "@/components/shell"
+import { ProjectStatusBadge } from "@/components/projects/status-badge"
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<GetAllProjectsResponse>([])
@@ -40,7 +41,7 @@ export default function ProjectsPage() {
           <PageHeaderHeading>Projetos</PageHeaderHeading>
           <PageHeaderDescription>Gerencie seus projetos de pesquisa e inovação.</PageHeaderDescription>
         </div>
-        {loadingCreate && <div className="w-32 h-9 mr-2"/>}
+        {loadingCreate && <div className="w-32 h-9 mr-2" />}
         {canCreate && (
           <Button asChild>
             <Link href="/projetos/novo">
@@ -69,7 +70,7 @@ export default function ProjectsPage() {
           <div className="flex flex-col items-center justify-center h-[400px] border-2 border-dashed rounded-lg bg-muted/50">
             <p className="text-lg text-muted-foreground mb-4">Nenhum projeto encontrado.</p>
             <Button variant="outline" asChild>
-              {canCreate && (<Link href="/projetos/novo">Criar meu primeiro projeto</Link>)}
+              {canCreate && <Link href="/projetos/novo">Criar meu primeiro projeto</Link>}
             </Button>
           </div>
         ) : (
@@ -78,28 +79,13 @@ export default function ProjectsPage() {
               const hasWorkPlan = !!project.workPlan
               const legalInstrument = project.legalInstrumentInstance
               const status = project.status || "DRAFT"
-              const statusLabel = {
-                DRAFT: "Em Elaboração",
-                PENDING_REVIEW: "Aguardando Revisão",
-                UNDER_REVIEW: "Em Revisão",
-                APPROVED: "Aprovado",
-                REJECTED: "Rejeitado",
-              }[status]
-
-              const statusColor = {
-                DRAFT: "bg-muted text-muted-foreground",
-                PENDING_REVIEW: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-                UNDER_REVIEW: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-                APPROVED: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-                REJECTED: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-              }[status]
 
               return (
                 <Link key={project.id} href={`/projetos/${project.slug || project.id}`} className="group block h-full">
                   <Card className="h-full transition-all duration-300 hover:border-primary/50 hover:shadow-md flex flex-col">
                     <CardHeader className="pb-4">
                       <div className="flex justify-between items-start gap-4 mb-2">
-                        <div className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColor}`}>{statusLabel}</div>
+                        <ProjectStatusBadge status={status} />
                         <span className="text-xs text-muted-foreground whitespace-nowrap">{formatDistanceToNow(new Date(project.updatedAt), { addSuffix: true, locale: ptBR })}</span>
                       </div>
                       <CardTitle className="line-clamp-2 text-xl group-hover:text-primary transition-colors">{project.title}</CardTitle>

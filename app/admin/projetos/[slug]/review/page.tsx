@@ -3,25 +3,28 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { legalInstrumentTypeLabel } from "@/lib/utils/legal-instrument"
-import { ArrowLeft, Calendar, FileText, CheckCircle2, XCircle, AlertCircle, Loader2, Scale, Download } from "lucide-react"
+import { Calendar, CheckCircle2, Loader2, AlertCircle, FileText, Scale, Download, History } from "lucide-react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { cn } from "@/lib/utils"
 import { notify } from "@/lib/notifications"
-import { approveProject, rejectProject, startProjectReview, requestProjectAdjustments } from "@/actions/projects"
+import { startProjectReview } from "@/actions/projects"
 import { useProject } from "@/components/providers/project"
-import { Textarea } from "@/components/ui/textarea"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { UserAvatar } from "@/components/user-avatar"
 import { ProjectStatus } from "@prisma/client"
 import { PageHeader, PageShell, PageBack, PageHeaderHeading } from "@/components/shell"
 import { ProjectStatusBadge } from "@/components/projects/status-badge"
+
+import { RejectProjectDialog } from "@/components/admin/projects/review/reject-project-dialog"
+import { ReturnProjectDialog } from "@/components/admin/projects/review/return-project-dialog"
+import { ApproveProjectDialog } from "@/components/admin/projects/review/approve-project-dialog"
 
 const getErrorMessage = (error: unknown): string | undefined => {
   if (error instanceof Error) return error.message
@@ -41,16 +44,9 @@ export default function ProjectReviewPage() {
   const router = useRouter()
   const slug = params.slug as string
   const { project, loading } = useProject()
+  const { data: session } = useSession()
 
-  const [isApproving, setIsApproving] = useState(false)
-  const [isRejecting, setIsRejecting] = useState(false)
   const [isStartingReview, setIsStartingReview] = useState(false)
-  const [rejectReason, setRejectReason] = useState("")
-  const [showRejectDialog, setShowRejectDialog] = useState(false)
-
-  const [isReturning, setIsReturning] = useState(false)
-  const [returnReason, setReturnReason] = useState("")
-  const [showReturnDialog, setShowReturnDialog] = useState(false)
 
   if (loading) {
     return (
@@ -80,71 +76,15 @@ export default function ProjectReviewPage() {
     }
   }
 
-  const handleApprove = async () => {
-    try {
-      setIsApproving(true)
-      await approveProject(slug)
-      notify.success("Projeto aprovado com sucesso!")
-      router.push("/admin/projetos")
-      router.refresh()
-    } catch (error: unknown) {
-      console.error(error)
-      notify.error(getErrorMessage(error) ?? "Erro ao aprovar projeto")
-    } finally {
-      setIsApproving(false)
-    }
-  }
-
-  const handleReject = async () => {
-    if (!rejectReason.trim()) {
-      notify.error("Motivo da rejeição é obrigatório")
-      return
-    }
-
-    try {
-      setIsRejecting(true)
-      await rejectProject(slug, rejectReason)
-      notify.success("Projeto rejeitado")
-      router.push("/admin/projetos")
-      router.refresh()
-    } catch (error: unknown) {
-      console.error(error)
-      notify.error(getErrorMessage(error) ?? "Erro ao rejeitar projeto")
-    } finally {
-      setIsRejecting(false)
-      setShowRejectDialog(false)
-    }
-  }
-
-  const handleRequestAdjustments = async () => {
-    if (!returnReason.trim()) {
-      notify.error("Motivo dos ajustes é obrigatório")
-      return
-    }
-
-    try {
-      setIsReturning(true)
-      await requestProjectAdjustments(slug, returnReason)
-      notify.success("Solicitação de ajustes enviada")
-      router.push("/admin/projetos")
-      router.refresh()
-    } catch (error: unknown) {
-      console.error(error)
-      notify.error(getErrorMessage(error) ?? "Erro ao solicitar ajustes")
-    } finally {
-      setIsReturning(false)
-      setShowReturnDialog(false)
-    }
-  }
-
   return (
     <PageShell>
       {/* Header */}
       <PageHeader>
-        <div className="flex items-center justify-between w-full">
-          <div className="items-start justify-between gap-4">
+        <div className="flex justify-between items-start w-full gap-8">
+          {/* Left Side: Project Context */}
+          <div className="flex flex-col gap-4 max-w-3xl">
             <PageBack href="/admin/projetos">Voltar para Aprovações</PageBack>
-            <div className="space-y-2 flex-1">
+            <div className="space-y-2">
               <PageHeaderHeading className="text-3xl font-bold tracking-tight">{project.title}</PageHeaderHeading>
               <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                 <span className="flex items-center">
@@ -156,96 +96,75 @@ export default function ProjectReviewPage() {
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-2">
-            {project.status === ProjectStatus.PENDING_REVIEW && (
-              <Button onClick={handleStartReview} disabled={isStartingReview} size="lg" className="bg-blue-600 hover:bg-blue-700">
-                {isStartingReview ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Iniciando...
-                  </>
-                ) : (
-                  <>
-                    <AlertCircle className="mr-2 h-4 w-4" /> Iniciar Análise
-                  </>
-                )}
-              </Button>
-            )}
+          {/* Right Side: Proponent & Actions */}
+          <div className="flex flex-col items-end gap-4 shrink-0">
+            <div className="flex items-center gap-3 px-4 py-2 bg-card rounded-full border shadow-sm">
+              <UserAvatar
+                size="sm"
+                preview={{
+                  name: project.user?.name || "Usuário",
+                  image: project.user?.imageFile?.url,
+                  color: project.user?.color,
+                }}
+              />
+              <div className="flex flex-col">
+                <p className="text-sm font-semibold leading-none">{project.user?.name || "Sem nome"}</p>
+                <p className="text-[10px] text-muted-foreground">{project.user?.email}</p>
+              </div>
+            </div>
 
-            {project.status === ProjectStatus.UNDER_REVIEW && (
-              <>
-                <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
-                  <DialogTrigger asChild>
-                    <Button variant="destructive" size="lg">
-                      <XCircle className="mr-2 h-4 w-4" /> Rejeitar
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Rejeitar Projeto</DialogTitle>
-                      <DialogDescription>Forneça um motivo claro para a rejeição do projeto.</DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <Textarea placeholder="Motivo da rejeição..." value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} className="min-h-[120px]" />
-                      <div className="flex gap-2 justify-end">
-                        <Button variant="outline" onClick={() => setShowRejectDialog(false)}>
-                          Cancelar
-                        </Button>
-                        <Button variant="destructive" onClick={handleReject} disabled={isRejecting || !rejectReason.trim()}>
-                          {isRejecting ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Rejeitando...
-                            </>
-                          ) : (
-                            <>
-                              <XCircle className="mr-2 h-4 w-4" /> Confirmar Rejeição
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-
-                <Button onClick={handleApprove} disabled={isApproving} size="lg" className="bg-green-600 hover:bg-green-700">
-                  {isApproving ? (
+            {/* Action Buttons */}
+            <div className="flex gap-2">
+              {project.status === ProjectStatus.PENDING_REVIEW && (
+                <Button onClick={handleStartReview} disabled={isStartingReview} size="default" className="bg-blue-600 hover:bg-blue-700">
+                  {isStartingReview ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Aprovando...
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Iniciando...
                     </>
                   ) : (
                     <>
-                      <CheckCircle2 className="mr-2 h-4 w-4" /> Aprovar
+                      <AlertCircle className="mr-2 h-4 w-4" /> Iniciar Análise
                     </>
                   )}
                 </Button>
-              </>
-            )}
+              )}
+
+              {project.status === ProjectStatus.UNDER_REVIEW && (
+                <>
+                  <RejectProjectDialog slug={slug} />
+                  <ReturnProjectDialog slug={slug} />
+                  <ApproveProjectDialog slug={slug} />
+                </>
+              )}
+            </div>
           </div>
         </div>
       </PageHeader>
 
-      {/* Proposer Info */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Informações do Proponente</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-3">
-            <UserAvatar
-              size="lg"
-              preview={{
-                name: project.user?.name || "Usuário",
-                image: project.user?.imageFile?.url,
-                color: project.user?.color,
-              }}
-            />
-            <div>
-              <p className="font-semibold">{project.user?.name || "Sem nome"}</p>
-              <p className="text-sm text-muted-foreground">{project.user?.email}</p>
-            </div>
+      {project.status === ProjectStatus.UNDER_REVIEW && project.reviewStartedBy && session?.user?.id && project.reviewStartedBy !== session.user.id && (
+        <Card className="bg-amber-50 border-amber-200 mb-6 py-3 px-4">
+          <div className="flex items-center gap-3 text-amber-800">
+            <AlertCircle className="h-5 w-5 shrink-0" />
+            <p className="text-sm font-medium">Atenção: Este projeto já está sendo analisado por outro administrador.</p>
           </div>
-        </CardContent>
-      </Card>
+        </Card>
+      )}
+
+      {project.status === ProjectStatus.APPROVED && (project as any).approvalOpinion && (
+        <Card className="bg-green-50 border-green-200 mb-6">
+          <CardContent className="pt-6">
+            <div className="flex gap-3">
+              <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="font-semibold text-green-900">Parecer Técnico de Aprovação</p>
+                <div className="prose prose-sm prose-green max-w-none">
+                  <p className="text-green-800 whitespace-pre-wrap">{(project as any).approvalOpinion}</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Project Content */}
       <Tabs defaultValue="overview" className="space-y-6">
@@ -258,6 +177,9 @@ export default function ProjectReviewPage() {
           </TabsTrigger>
           <TabsTrigger value="legal-instrument" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3">
             Instrumento Jurídico
+          </TabsTrigger>
+          <TabsTrigger value="history" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3">
+            Histórico
           </TabsTrigger>
         </TabsList>
 
@@ -333,6 +255,65 @@ export default function ProjectReviewPage() {
                       <h4 className="text-xs font-semibold uppercase text-muted-foreground">Objetivo Geral</h4>
                       <p className="text-sm">{workPlan.generalObjective || "N/A"}</p>
                     </div>
+
+                    <div className="space-y-1">
+                      <div className="text-xs font-semibold uppercase text-muted-foreground">Vigência</div>
+                      <div className="text-sm">
+                        <span className="text-muted-foreground">
+                          {workPlan.validityStart ? format(new Date(workPlan.validityStart), "dd/MM/yyyy") : "Início não definido"}
+                          {" - "}
+                          {workPlan.validityEnd ? format(new Date(workPlan.validityEnd), "dd/MM/yyyy") : "Fim não definido"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="text-xs font-semibold uppercase text-muted-foreground">Objeto</div>
+                      <p className="text-sm text-muted-foreground">{workPlan.object || "Não informado."}</p>
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-2 pt-2 border-t">
+                      <div className="space-y-1">
+                        <div className="text-xs font-semibold uppercase text-muted-foreground">Unidade Responsável</div>
+                        <div className="text-sm text-muted-foreground">{workPlan.responsibleUnit || "Não informado."}</div>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="text-xs font-semibold uppercase text-muted-foreground">Gestor da ICT</div>
+                        <div className="text-sm text-muted-foreground">{workPlan.ictManager || "Não informado."}</div>
+                      </div>
+                      <div className="space-y-1 sm:col-span-2">
+                        <div className="text-xs font-semibold uppercase text-muted-foreground">Gestor do Parceiro</div>
+                        <div className="text-sm text-muted-foreground">{workPlan.partnerManager || "Não informado."}</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Diagnóstico e Escopo</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-1">
+                      <div className="text-xs font-semibold uppercase text-muted-foreground">Diagnóstico</div>
+                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">{workPlan.diagnosis || "Não informado."}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-xs font-semibold uppercase text-muted-foreground">Justificativa do Plano</div>
+                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">{workPlan.planJustification || "Não informado."}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-xs font-semibold uppercase text-muted-foreground">Abrangência do Plano</div>
+                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">{workPlan.planScope || "Não informado."}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Metodologia e Resultados</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
                     <div className="space-y-1">
                       <h4 className="text-xs font-semibold uppercase text-muted-foreground">Metodologia</h4>
                       <p className="text-sm">{workPlan.methodology || "N/A"}</p>
@@ -600,87 +581,88 @@ export default function ProjectReviewPage() {
             </Card>
           )}
         </TabsContent>
+        <TabsContent value="history" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <History className="h-5 w-5 text-muted-foreground" />
+                Histórico de Alterações
+              </CardTitle>
+              <CardDescription>Registro cronológico de todas as ações realizadas neste projeto.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {project.audits && (project as any).audits.length > 0 ? (
+                <div className="relative space-y-8 before:absolute before:inset-0 before:ml-5 before:-translate-x-px before:h-full before:w-0.5 before:bg-linear-to-b before:from-transparent before:via-muted-foreground/20 before:to-transparent">
+                  {(project as any).audits
+                    .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                    .map((audit: any, index: number) => (
+                      <div key={audit.id} className="relative flex items-start gap-6 pl-12 group">
+                        <div className="absolute left-0 mt-1 flex h-10 w-10 items-center justify-center rounded-full bg-background border shadow-sm group-hover:border-primary transition-colors">
+                          <div className="h-2 w-2 rounded-full bg-muted-foreground group-hover:bg-primary" />
+                        </div>
+                        <div className="flex flex-col gap-1 w-full">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <h4 className="text-sm font-semibold uppercase tracking-wider text-foreground">
+                              {audit.action === "SUBMITTED" && "Enviado para Análise"}
+                              {audit.action === "REVIEW_STARTED" && "Análise Iniciada"}
+                              {audit.action === "APPROVED" && "Projeto Aprovado"}
+                              {audit.action === "REJECTED" && "Projeto Rejeitado"}
+                              {audit.action === "RETURNED" && "Ajustes Solicitados"}
+                              {audit.action === "CREATED" && "Projeto Criado"}
+                              {audit.action === "UPDATED" && "Projeto Atualizado"}
+                              {!["SUBMITTED", "REVIEW_STARTED", "APPROVED", "REJECTED", "RETURNED", "CREATED", "UPDATED"].includes(audit.action) && audit.action}
+                            </h4>
+                            <span className="text-xs text-muted-foreground whitespace-nowrap">{format(new Date(audit.createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
+                          </div>
+                          <div className="text-sm text-muted-foreground flex items-center gap-2">
+                            Realizado por <span className="font-medium text-foreground">{audit.user?.name || "Usuário do Sistema"}</span>
+                            {audit.changedBy === project.userId ? (
+                              <Badge variant="outline" className="text-[9px] h-4 px-1.5 border-blue-200 bg-blue-50 text-blue-700 uppercase">
+                                Proponente
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-[9px] h-4 px-1.5 border-purple-200 bg-purple-50 text-purple-700 uppercase">
+                                Administrador
+                              </Badge>
+                            )}
+                          </div>
+                          {audit.changeDetails && ((audit.action === "RETURNED" && audit.changeDetails.reason) || (audit.action === "REJECTED" && audit.changeDetails.reason) || (audit.action === "APPROVED" && audit.changeDetails.opinion) || (audit.action === "UPDATED" && audit.changeDetails.changedFields?.length > 0)) && (
+                            <div className="mt-2 p-3 rounded-lg bg-muted/30 border text-xs space-y-2">
+                              {audit.action === "RETURNED" && audit.changeDetails.reason && (
+                                <div>
+                                  <p className="font-semibold text-amber-900 mb-1">Motivo dos Ajustes:</p>
+                                  <p className="whitespace-pre-wrap italic">"{audit.changeDetails.reason}"</p>
+                                </div>
+                              )}
+                              {audit.action === "REJECTED" && audit.changeDetails.reason && (
+                                <div>
+                                  <p className="font-semibold text-red-900 mb-1">Motivo da Rejeição:</p>
+                                  <p className="whitespace-pre-wrap italic">"{audit.changeDetails.reason}"</p>
+                                </div>
+                              )}
+                              {audit.action === "APPROVED" && audit.changeDetails.opinion && (
+                                <div>
+                                  <p className="font-semibold text-green-900 mb-1">Parecer Técnico:</p>
+                                  <p className="whitespace-pre-wrap italic">"{audit.changeDetails.opinion}"</p>
+                                </div>
+                              )}
+                              {audit.action === "UPDATED" && audit.changeDetails.changedFields && <p>Campos alterados: {audit.changeDetails.changedFields.join(", ")}</p>}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <History className="h-12 w-12 text-muted-foreground/20 mb-4" />
+                  <p className="text-sm text-muted-foreground">Nenhum histórico disponível para este projeto.</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
-
-      {/* Footer Actions */}
-      <div className="flex gap-2 justify-end pt-4 border-t">
-        <Button variant="outline" asChild>
-          <Link href="/admin/projetos">Cancelar</Link>
-        </Button>
-        <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
-          <DialogTrigger asChild>
-            <Button variant="destructive">Rejeitar Projeto</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Rejeitar Projeto</DialogTitle>
-              <DialogDescription>Forneça um motivo claro para a rejeição do projeto.</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <Textarea placeholder="Motivo da rejeição..." value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} className="min-h-[120px]" />
-              <div className="flex gap-2 justify-end">
-                <Button variant="outline" onClick={() => setShowRejectDialog(false)}>
-                  Cancelar
-                </Button>
-                <Button variant="destructive" onClick={handleReject} disabled={isRejecting || !rejectReason.trim()}>
-                  {isRejecting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Rejeitando...
-                    </>
-                  ) : (
-                    <>
-                      <XCircle className="mr-2 h-4 w-4" /> Confirmar Rejeição
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-        <Dialog open={showReturnDialog} onOpenChange={setShowReturnDialog}>
-          <DialogTrigger asChild>
-            <Button variant="outline" className="text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700">
-              Solicitar Ajustes
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Solicitar Ajustes</DialogTitle>
-              <DialogDescription>Descreva quais alterações o proponente precisa realizar para que o projeto possa ser aprovado.</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <Textarea placeholder="Descreva os ajustes necessários..." value={returnReason} onChange={(e) => setReturnReason(e.target.value)} className="min-h-[120px]" />
-              <div className="flex gap-2 justify-end">
-                <Button variant="outline" onClick={() => setShowReturnDialog(false)}>
-                  Cancelar
-                </Button>
-                <Button className="bg-amber-600 hover:bg-amber-700 text-white" onClick={handleRequestAdjustments} disabled={isReturning || !returnReason.trim()}>
-                  {isReturning ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando...
-                    </>
-                  ) : (
-                    <>
-                      <AlertCircle className="mr-2 h-4 w-4" /> Enviar Solicitação
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-        <Button onClick={handleApprove} disabled={isApproving} className="bg-green-600 hover:bg-green-700">
-          {isApproving ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Aprovando...
-            </>
-          ) : (
-            <>
-              <CheckCircle2 className="mr-2 h-4 w-4" /> Aprovar Projeto
-            </>
-          )}
-        </Button>
-      </div>
     </PageShell>
   )
 }

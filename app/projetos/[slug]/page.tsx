@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Calendar, FileText, Plus, Edit, Scale, Download, CheckCircle2, AlertCircle, SendHorizontal, Loader2 } from "lucide-react"
+import { Calendar, FileText, Plus, Edit, Scale, Download, CheckCircle2, AlertCircle, SendHorizontal, Loader2, XCircle } from "lucide-react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { useProject } from "@/components/providers/project"
@@ -226,6 +226,22 @@ export default function ProjectDetailsPage() {
         </div>
       </PageHeader>
 
+      {project.status === ProjectStatus.APPROVED && (project as any).approvalOpinion && (
+        <Card className="bg-green-50 border-green-200 mb-6">
+          <CardContent className="pt-6">
+            <div className="flex gap-3">
+              <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="font-semibold text-green-900">Parecer Técnico de Aprovação</p>
+                <div className="prose prose-sm prose-green max-w-none">
+                  <p className="text-green-800 whitespace-pre-wrap">{(project as any).approvalOpinion}</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {project.status === (ProjectStatus as any).RETURNED && (project as any).returnReason && (
         <Card className="bg-amber-50 border-amber-200 mb-6">
           <CardContent className="pt-6">
@@ -237,6 +253,23 @@ export default function ProjectDetailsPage() {
                   <p className="text-amber-800 whitespace-pre-wrap">{(project as any).returnReason}</p>
                 </div>
                 <p className="text-xs text-amber-700 mt-2 italic">* Realize as alterações solicitadas e clique em "Enviar para Análise" novamente.</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {project.status === ProjectStatus.REJECTED && project.rejectionReason && (
+        <Card className="bg-red-50 border-red-200 mb-6">
+          <CardContent className="pt-6">
+            <div className="flex gap-3">
+              <XCircle className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="font-semibold text-red-900">Projeto Rejeitado</p>
+                <div className="prose prose-sm prose-red max-w-none">
+                  <p className="text-red-800 whitespace-pre-wrap">{project.rejectionReason}</p>
+                </div>
+                <p className="text-xs text-red-700 mt-2 italic">* Caso deseje contestar, entre em contato com a coordenação.</p>
               </div>
             </div>
           </CardContent>
@@ -328,23 +361,28 @@ export default function ProjectDetailsPage() {
                 ) : (
                   <div className="space-y-3">
                     {project.audits.map((a) => {
-                      const reason = isPlainObject(a.changeDetails) && typeof a.changeDetails.reason === "string" ? a.changeDetails.reason : undefined
+                      const details = isPlainObject(a.changeDetails) ? (a.changeDetails as any) : {}
+                      const reason = typeof details.reason === "string" ? details.reason : undefined
+                      const opinion = typeof details.opinion === "string" ? details.opinion : undefined
 
                       return (
-                        <div key={a.id} className="flex items-center gap-3 text-sm">
-                          <div className="shrink-0 w-2 h-2 rounded-full bg-muted" />
+                        <div key={a.id} className="flex items-start gap-3 text-sm">
+                          <div className="shrink-0 w-2 h-2 rounded-full bg-muted mt-1.5" />
                           <div className="flex-1">
                             <div className="font-medium">
                               {a.action === "SUBMITTED" && "Enviado para análise"}
-                              {a.action === "APPROVED" && "Aprovado"}
-                              {a.action === "REJECTED" && "Rejeitado"}
-                              {!(["SUBMITTED", "APPROVED", "REJECTED"] as string[]).includes(a.action) && a.action}
+                              {a.action === "APPROVED" && "Projeto Aprovado"}
+                              {a.action === "REJECTED" && "Projeto Rejeitado"}
+                              {a.action === "RETURNED" && "Ajustes Solicitados"}
+                              {a.action === "REVIEW_STARTED" && "Análise Iniciada"}
+                              {!(["SUBMITTED", "APPROVED", "REJECTED", "RETURNED", "REVIEW_STARTED"] as string[]).includes(a.action) && a.action}
                             </div>
                             <div className="text-muted-foreground">
-                              {a.user?.name ? `por ${a.user.name}` : null}
+                              {a.user?.name ? (a.changedBy === project.userId ? `por ${a.user.name}` : "por Administrador") : null}
                               {a.createdAt ? ` • ${format(new Date(a.createdAt), "dd/MM/yyyy HH:mm", { locale: ptBR })}` : null}
                             </div>
-                            {reason && <div className="text-red-600 dark:text-red-400">Motivo: {reason}</div>}
+                            {reason && <div className="mt-1 text-red-600 dark:text-red-400 italic">Motivo: {reason}</div>}
+                            {opinion && <div className="mt-1 text-green-600 dark:text-green-400 italic">Parecer: {opinion}</div>}
                           </div>
                         </div>
                       )

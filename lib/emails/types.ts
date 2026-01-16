@@ -13,6 +13,7 @@ export interface EmailTemplateVars {
     projectTitle: string
     approverName: string
     projectUrl: string
+    opinion?: string
   }
   PROJECT_REJECTED: {
     projectTitle: string

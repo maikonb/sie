@@ -126,13 +126,16 @@ export class NotificationService {
     return null
   }
 
-  static async notifyUserOfApproval(project: { title: string; slug: string; userId: string; user: { email?: string | null } }, approver: { name?: string | null }) {
+  static async notifyUserOfApproval(project: { title: string; slug: string; userId: string; user: { email?: string | null } }, approver: { name?: string | null }, opinion?: string) {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
     const projectUrl = `${baseUrl}/projetos/${project.slug}`
 
-    return this.notifyUser(project.userId, "Projeto Aprovado!", `Seu projeto "${project.title}" foi aprovado por ${approver.name ?? "um administrador"}.`, `/projetos/${project.slug}`, {
+    // Anonymize for proponent security
+    const message = opinion ? `Seu projeto "${project.title}" foi aprovado. Parecer: ${opinion}` : `Seu projeto "${project.title}" foi aprovado.`
+
+    return this.notifyUser(project.userId, "Projeto Aprovado!", message, `/projetos/${project.slug}`, {
       key: "PROJECT_APPROVED",
-      vars: { projectTitle: project.title, approverName: approver.name ?? "Administrador", projectUrl },
+      vars: { projectTitle: project.title, approverName: "Administrador", projectUrl, opinion },
     })
   }
 
@@ -142,7 +145,7 @@ export class NotificationService {
 
     return this.notifyUser(project.userId, "Projeto Rejeitado", `Seu projeto "${project.title}" foi rejeitado. Motivo: ${reason}`, `/projetos/${project.slug}`, {
       key: "PROJECT_REJECTED",
-      vars: { projectTitle: project.title, approverName: approver.name ?? "Administrador", reason, projectUrl },
+      vars: { projectTitle: project.title, approverName: "Administrador", reason, projectUrl },
     })
   }
 
@@ -152,7 +155,7 @@ export class NotificationService {
 
     return this.notifyUser(project.userId, "Ajustes Solicitados", `Seu projeto "${project.title}" precisa de ajustes. Veja as observações do administrador.`, `/projetos/${project.slug}`, {
       key: "PROJECT_RETURNED",
-      vars: { projectTitle: project.title, approverName: approver.name ?? "Administrador", reason, projectUrl },
+      vars: { projectTitle: project.title, approverName: "Administrador", reason, projectUrl },
     })
   }
 }
