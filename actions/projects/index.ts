@@ -353,7 +353,17 @@ export async function submitProjectForApproval(slug: string): Promise<Project> {
   const project = await prisma.project.findUnique({
     where: { slug },
     include: {
-      workPlan: true,
+      workPlan: {
+        include: {
+          team: { select: { id: true } },
+        },
+      },
+      schedule: {
+        include: {
+          milestones: { select: { id: true } },
+          tasks: { select: { id: true } },
+        },
+      },
     },
   })
 
@@ -374,6 +384,15 @@ export async function submitProjectForApproval(slug: string): Promise<Project> {
 
   if (!project.workPlan) {
     throw new Error("Project must have a work plan before submission")
+  }
+
+  if (project.workPlan.team.length === 0) {
+    throw new Error("Project must have at least one team member defined")
+  }
+
+  const hasSchedule = project.schedule && (project.schedule.milestones.length > 0 || project.schedule.tasks.length > 0)
+  if (!hasSchedule) {
+    throw new Error("Project must have at least one milestone or task in the technical schedule")
   }
 
   const updated = await prisma.project.update({

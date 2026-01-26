@@ -89,13 +89,17 @@ export default function ProjectDetailsPage() {
   const hasWorkPlan = !!workPlan
   const hasLegalInstrument = !!legalInstrumentInstance || (!!(project as any).proposedInstrumentType && !!(project as any).classificationAnswers)
   const hasPendingInstrument = !!legalInstrumentInstance && (legalInstrumentInstance.status || LegalInstrumentStatus.PENDING) !== LegalInstrumentStatus.FILLED
+  const hasTeam = !!workPlan && Array.isArray(workPlan.team) && workPlan.team.length > 0
+  const hasSchedule = !!project.schedule && (project.schedule.milestones.length > 0 || project.schedule.tasks.length > 0)
 
-  const canSubmit = view?.allowActions && hasWorkPlan && hasLegalInstrument && (project.status === ProjectStatus.DRAFT || (project.status as any) === "RETURNED")
+  const canSubmit = view?.allowActions && hasWorkPlan && hasLegalInstrument && hasTeam && hasSchedule && (project.status === ProjectStatus.DRAFT || (project.status as any) === "RETURNED")
 
   // Mensagem de feedback para botão desabilitado
   const getSubmitDisabledReason = () => {
     if (project.status !== ProjectStatus.DRAFT && (project.status as any) !== "RETURNED") return "Projeto já foi enviado"
     if (!hasWorkPlan) return "É necessário criar o Plano de Trabalho"
+    if (!hasTeam) return "É necessário adicionar membros à equipe"
+    if (!hasSchedule) return "É necessário definir o cronograma de execução"
     if (!hasLegalInstrument) return "É necessário realizar a Classificação do Projeto (Wizard)"
     return null
   }
@@ -123,6 +127,30 @@ export default function ProjectDetailsPage() {
       link: `/projetos/${project.slug}/work-plan`,
       action: "Criar Plano",
       icon: FileText,
+    })
+  } else {
+    // 1.1 Team Dependency (linked to work plan)
+    if (!hasTeam) {
+      missingDependencies.push({
+        id: "team",
+        label: "Equipe Executora",
+        description: "É necessário definir os membros da equipe que atuarão no projeto.",
+        link: `/projetos/${project.slug}/work-plan`,
+        action: "Gerenciar Equipe",
+        icon: UserAvatar as any,
+      })
+    }
+  }
+
+  // 1.2 Schedule Dependency
+  if (!hasSchedule) {
+    missingDependencies.push({
+      id: "technical-schedule",
+      label: "Cronograma de Execução",
+      description: "O cronograma técnico com marcos ou tarefas ainda não foi definido.",
+      link: `/projetos/${project.slug}/work-plan`,
+      action: "Definir Cronograma",
+      icon: Calendar,
     })
   }
 
@@ -285,14 +313,20 @@ export default function ProjectDetailsPage() {
             <TabsTrigger value="overview" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3">
               Visão Geral
             </TabsTrigger>
-            <TabsTrigger value="history" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3">
-              Histórico
-            </TabsTrigger>
             <TabsTrigger value="workplan" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3">
               Plano de Trabalho
             </TabsTrigger>
+            <TabsTrigger value="team" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3">
+              Equipe
+            </TabsTrigger>
+            <TabsTrigger value="schedule" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3">
+              Cronograma
+            </TabsTrigger>
             <TabsTrigger value="legal-instrument" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3">
               Instrumento Jurídico
+            </TabsTrigger>
+            <TabsTrigger value="history" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3">
+              Histórico
             </TabsTrigger>
           </TabsList>
 
@@ -530,28 +564,6 @@ export default function ProjectDetailsPage() {
                     </div>
                   </CardContent>
                 </Card>
-
-                <div className="grid gap-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base">Equipe Executora</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex flex-col items-center justify-center py-6 text-center space-y-2">
-                        <p className="text-sm text-muted-foreground">Em desenvolvimento</p>
-                        {view?.allowActions && (
-                          <Button variant="link" size="sm" asChild>
-                            <Link href={`/projetos/${project.slug}/work-plan`}>Ver Equipe</Link>
-                          </Button>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <div className="space-y-6">
-                    <ScheduleManager projectId={project.id} readOnly={!view?.allowActions || (project.status !== ProjectStatus.DRAFT && (project.status as any) !== "RETURNED")} />
-                  </div>
-                </div>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed rounded-lg bg-muted/10">
@@ -569,6 +581,61 @@ export default function ProjectDetailsPage() {
                 )}
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="team" className="animate-in fade-in-50 duration-300">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                <div className="space-y-1">
+                  <CardTitle>Equipe Executora</CardTitle>
+                  <CardDescription>Membros envolvidos na execução técnica do projeto.</CardDescription>
+                </div>
+                {view?.allowActions && (
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href={`/projetos/${project.slug}/work-plan`}>
+                      <Edit className="mr-2 h-4 w-4" /> Gerenciar Equipe
+                    </Link>
+                  </Button>
+                )}
+              </CardHeader>
+              <CardContent>
+                {workPlan?.team && workPlan.team.length > 0 ? (
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {workPlan.team.map((member: any) => (
+                      <div key={member.id} className="p-4 rounded-lg border bg-muted/5 flex items-start gap-4">
+                        <UserAvatar
+                          size="sm"
+                          preview={{
+                            name: member.name,
+                            color: (member as any).color || "blue",
+                          }}
+                        />
+                        <div className="space-y-1">
+                          <p className="text-sm font-bold leading-none">{member.name}</p>
+                          <p className="text-xs text-muted-foreground">{member.role}</p>
+                          {(member as any).institution && <p className="text-[10px] uppercase font-semibold text-primary/70">{(member as any).institution}</p>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12 text-center border-2 border-dashed rounded-xl bg-muted/5">
+                    <p className="text-sm text-muted-foreground">Nenhum membro da equipe definido.</p>
+                    {view?.allowActions && (
+                      <Button variant="link" size="sm" asChild>
+                        <Link href={`/projetos/${project.slug}/work-plan`}>Adicionar membros no Plano de Trabalho</Link>
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="schedule" className="animate-in fade-in-50 duration-300">
+            <div className="space-y-6">
+              <ScheduleManager projectId={project.id} readOnly={!view?.allowActions || (project.status !== ProjectStatus.DRAFT && (project.status as any) !== "RETURNED")} />
+            </div>
           </TabsContent>
 
           <TabsContent value="legal-instrument" className="animate-in fade-in-50 duration-500">

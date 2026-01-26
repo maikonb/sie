@@ -36,9 +36,25 @@ export const projectWithRelationsValidator = Prisma.validator<Prisma.ProjectDefa
     workPlan: {
       include: {
         schedule: true,
-        team: true,
+        team: { select: { id: true, name: true, role: true } },
         participants: true,
         responsibilities: true,
+      },
+    },
+    schedule: {
+      include: {
+        milestones: {
+          include: {
+            tasks: {
+              orderBy: { priority: "desc" },
+            },
+          },
+          orderBy: { order: "asc" },
+        },
+        tasks: {
+          where: { milestoneId: null },
+          orderBy: { priority: "desc" },
+        },
       },
     },
     audits: {

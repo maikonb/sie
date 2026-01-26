@@ -13,6 +13,11 @@ export const milestoneWithTasksValidator = Prisma.validator<Prisma.MilestoneDefa
             dependsOnTask: true,
           },
         },
+        dependedBy: {
+          include: {
+            task: true,
+          },
+        },
       },
     },
   },

@@ -7,7 +7,6 @@ import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { ProjectStatus, LegalInstrumentType } from "@prisma/client"
 import { notify } from "@/lib/notifications"
 
 interface ExportPdfButtonProps {
@@ -24,21 +23,22 @@ export function ExportPdfButton({ project, variant = "outline", size = "sm", cla
     try {
       setIsGenerating(true)
 
-      // Initialize PDF
       const doc = new jsPDF()
-      const pageWidth = doc.internal.pageSize.width
 
       // Title
-      doc.setFontSize(16)
-      doc.text("Resumo do Projeto", 14, 20)
+      doc.setFontSize(18)
+      doc.setTextColor(41, 128, 185)
+      doc.text("Relatório Detalhado do Projeto", 14, 20)
 
       doc.setFontSize(10)
+      doc.setTextColor(100)
       doc.text(`Gerado em: ${format(new Date(), "dd/MM/yyyy HH:mm", { locale: ptBR })}`, 14, 26)
+      doc.setTextColor(0)
 
-      // Project Info
+      // 1. PROJECT INFO
       autoTable(doc, {
         startY: 35,
-        head: [["Informações do Projeto", ""]],
+        head: [["Informações Gerais", ""]],
         body: [
           ["Título", project.title],
           ["Status", project.status],
@@ -47,94 +47,127 @@ export function ExportPdfButton({ project, variant = "outline", size = "sm", cla
           ["Criado em", format(new Date(project.createdAt), "dd/MM/yyyy", { locale: ptBR })],
         ],
         theme: "grid",
-        headStyles: { fillColor: [41, 128, 185] },
+        headStyles: { fillColor: [41, 128, 185], textColor: 255 },
+        columnStyles: { 0: { cellWidth: 40, fontStyle: "bold" } },
       })
 
-      // Objectives & Justification
+      // 2. OBJECTIVES & SCOPE
       autoTable(doc, {
         startY: (doc as any).lastAutoTable.finalY + 10,
-        head: [["Detalhes", ""]],
+        head: [["Escopo e Justificativa", ""]],
         body: [
           ["Objetivos", project.objectives || "Não informado"],
           ["Justificativa", project.justification || "Não informado"],
           ["Abrangência", project.scope || "Não informado"],
         ],
         theme: "grid",
-        headStyles: { fillColor: [41, 128, 185] },
-        columnStyles: {
-          0: { cellWidth: 40, fontStyle: "bold" },
-        },
+        headStyles: { fillColor: [41, 128, 185], textColor: 255 },
+        columnStyles: { 0: { cellWidth: 40, fontStyle: "bold" } },
       })
 
-      // Work Plan
-      if (project.workPlan) {
-        doc.setFontSize(14)
-        doc.text("Plano de Trabalho", 14, (doc as any).lastAutoTable.finalY + 15)
-
-        const wp = project.workPlan
-        const specificObjectives = Array.isArray(wp.specificObjectives) ? wp.specificObjectives.map((o: any) => (typeof o === "string" ? o : o.value)).join("\n• ") : "-"
-
-        autoTable(doc, {
-          startY: (doc as any).lastAutoTable.finalY + 20,
-          body: [
-            ["Objetivo Geral", wp.generalObjective || "-"],
-            ["Objetivos Específicos", specificObjectives ? "• " + specificObjectives : "-"],
-            ["Metodologia", wp.methodology || "-"],
-            ["Resultados Esperados", wp.expectedResults || "-"],
-            ["Diagnóstico", wp.diagnosis || "-"],
-            ["Monitoramento", wp.monitoring || "-"],
-          ],
-          theme: "grid",
-          columnStyles: {
-            0: { cellWidth: 50, fontStyle: "bold" },
-          },
-        })
-
-        // Schedule & Team placeholders
+      // 3. TEAM MEMBERS
+      if (project.workPlan?.team && project.workPlan.team.length > 0) {
         autoTable(doc, {
           startY: (doc as any).lastAutoTable.finalY + 10,
-          head: [["Informações Adicionais", ""]],
-          body: [
-            ["Vigência", `${wp.validityStart ? format(new Date(wp.validityStart), "dd/MM/yyyy") : "?"} até ${wp.validityEnd ? format(new Date(wp.validityEnd), "dd/MM/yyyy") : "?"}`],
-            ["Unidade Responsável", wp.responsibleUnit || "-"],
-            ["Gestor da ICT", wp.ictManager || "-"],
-            ["Gestor do Parceiro", wp.partnerManager || "-"],
-          ],
-          theme: "grid",
+          head: [["Equipe Executora", "Papel/Função"]],
+          body: project.workPlan.team.map((m: any) => [m.name, m.role || "-"]),
+          theme: "striped",
+          headStyles: { fillColor: [41, 128, 185], textColor: 255 },
         })
-      } else {
-        doc.setFontSize(12)
-        doc.setTextColor(150)
-        doc.text("Plano de Trabalho não iniciado.", 14, (doc as any).lastAutoTable.finalY + 15)
-        doc.setTextColor(0)
       }
 
-      // Legal Instrument
-      if (project.legalInstrumentInstance) {
+      // 4. WORK PLAN DETAILS
+      if (project.workPlan) {
         doc.addPage()
         doc.setFontSize(14)
-        doc.text("Instrumento Jurídico", 14, 20)
+        doc.text("Plano de Trabalho Técnico", 14, 20)
 
-        const li = project.legalInstrumentInstance
-        const type = li.legalInstrumentVersion?.legalInstrument?.name || li.legalInstrumentVersion?.type || "-"
+        const wp = project.workPlan
+        const objectives = Array.isArray(wp.specificObjectives) ? wp.specificObjectives.map((o: any) => `- ${typeof o === "string" ? o : o.value}`).join("\n") : "-"
+
+        autoTable(doc, {
+          startY: 25,
+          body: [
+            ["Objetivo Geral", wp.generalObjective || "-"],
+            ["Metas Específicas", objectives],
+            ["Metodologia", wp.methodology || "-"],
+            ["Resultados Esperados", wp.expectedResults || "-"],
+            ["Vigência", `${wp.validityStart ? format(new Date(wp.validityStart), "dd/MM/yyyy") : "?"} até ${wp.validityEnd ? format(new Date(wp.validityEnd), "dd/MM/yyyy") : "?"}`],
+          ],
+          theme: "grid",
+          columnStyles: { 0: { cellWidth: 45, fontStyle: "bold" } },
+        })
+      }
+
+      // 5. TECHNICAL SCHEDULE (The "New" for them)
+      if (project.schedule) {
+        doc.addPage()
+        doc.setFontSize(14)
+        doc.text("Cronograma de Execução", 14, 20)
+
+        let currentY = 30
+
+        // Milestones
+        if (project.schedule.milestones?.length > 0) {
+          project.schedule.milestones.forEach((m: any) => {
+            autoTable(doc, {
+              startY: currentY,
+              head: [[`Marco: ${m.title}`, "Status"]],
+              body: [[m.description || "Sem descrição", m.status]],
+              theme: "grid",
+              headStyles: { fillColor: [52, 73, 94] },
+            })
+
+            currentY = (doc as any).lastAutoTable.finalY + 2
+
+            if (m.tasks?.length > 0) {
+              autoTable(doc, {
+                startY: currentY,
+                head: [["Tarefa", "Prazo", "Status"]],
+                body: m.tasks.map((t: any) => [t.title, t.dueDate ? format(new Date(t.dueDate), "dd/MM/yyyy") : "-", t.status]),
+                theme: "striped",
+                margin: { left: 20 },
+              })
+              currentY = (doc as any).lastAutoTable.finalY + 8
+            } else {
+              currentY += 10
+            }
+          })
+        }
+
+        // Independent Tasks
+        if (project.schedule.tasks?.length > 0) {
+          autoTable(doc, {
+            startY: currentY,
+            head: [["Tarefas Avulsas (Fora de Marcos)", "Prazo", "Status"]],
+            body: project.schedule.tasks.map((t: any) => [t.title, t.dueDate ? format(new Date(t.dueDate), "dd/MM/yyyy") : "-", t.status]),
+            theme: "grid",
+            headStyles: { fillColor: [127, 140, 141] },
+          })
+        }
+      }
+
+      // 6. FORMAL SCHEDULE (ScheduleItem)
+      if (project.workPlan?.schedule && project.workPlan.schedule.length > 0) {
+        doc.addPage()
+        doc.setFontSize(14)
+        doc.text("Metas e Ações Formais", 14, 20)
 
         autoTable(doc, {
           startY: 30,
-          body: [
-            ["Tipo de Instrumento", type],
-            ["Status", li.status],
-            ["Última Atualização", format(new Date(li.updatedAt), "dd/MM/yyyy HH:mm", { locale: ptBR })],
-          ],
-          theme: "plain",
+          head: [["Eixo/Meta", "Ação/Etapa", "Responsável", "Período"]],
+          body: project.workPlan.schedule.map((s: any) => [s.axisGoal, s.actionStep, s.responsible, `${format(new Date(s.startDate), "dd/MM/yy")} - ${format(new Date(s.endDate), "dd/MM/yy")}`]),
+          theme: "grid",
+          headStyles: { fillColor: [41, 128, 185] },
         })
       }
 
       // Save
       doc.save(`projeto-${project.slug}.pdf`)
-      notify.success("PDF gerado com sucesso!")
+      notify.success("Relatório PDF completo gerado!")
     } catch (error) {
       console.error("Error generating PDF:", error)
-      notify.error("Erro ao gerar PDF")
+      notify.error("Erro ao gerar PDF detalhado")
     } finally {
       setIsGenerating(false)
     }

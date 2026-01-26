@@ -23,6 +23,7 @@ import { PageHeader, PageShell, PageBack, PageHeaderHeading } from "@/components
 import { ProjectStatusBadge } from "@/components/projects/status-badge"
 import { Separator } from "@/components/ui/separator"
 import { ScheduleManager } from "@/components/projects/schedule/schedule-manager"
+import { ExportPdfButton } from "@/components/projects/export-pdf-button"
 
 import { ReturnProjectDialog } from "@/components/admin/projects/review/return-project-dialog"
 import { ApproveProjectDialog } from "@/components/admin/projects/review/approve-project-dialog"
@@ -157,6 +158,7 @@ export default function ProjectReviewPage() {
                   <ApproveProjectDialog slug={slug} />
                 </>
               )}
+              <ExportPdfButton project={project} />
             </div>
           </div>
         </div>
@@ -195,6 +197,12 @@ export default function ProjectReviewPage() {
           </TabsTrigger>
           <TabsTrigger value="workplan" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3">
             Plano de Trabalho
+          </TabsTrigger>
+          <TabsTrigger value="team" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3">
+            Equipe
+          </TabsTrigger>
+          <TabsTrigger value="schedule" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3">
+            Cronograma
           </TabsTrigger>
           <TabsTrigger value="legal-instrument" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3">
             Instrumento Jurídico
@@ -256,6 +264,22 @@ export default function ProjectReviewPage() {
                       <p className="text-xs text-muted-foreground">{legalInstruments.length > 0 ? "Preenchido" : "Não encontrado"}</p>
                     </div>
                   </div>
+
+                  <div className={cn("flex items-start gap-3", workPlan?.team && workPlan.team.length > 0 ? "opacity-100" : "opacity-50")}>
+                    {workPlan?.team && workPlan.team.length > 0 ? <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0 mt-0.5" /> : <AlertCircle className="h-5 w-5 text-yellow-500 shrink-0 mt-0.5" />}
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium">Equipe Executora</p>
+                      <p className="text-xs text-muted-foreground">{workPlan?.team && workPlan.team.length > 0 ? "Definida" : "Não encontrada"}</p>
+                    </div>
+                  </div>
+
+                  <div className={cn("flex items-start gap-3", project.schedule && (project.schedule.milestones.length > 0 || project.schedule.tasks.length > 0) ? "opacity-100" : "opacity-50")}>
+                    {project.schedule && (project.schedule.milestones.length > 0 || project.schedule.tasks.length > 0) ? <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0 mt-0.5" /> : <AlertCircle className="h-5 w-5 text-yellow-500 shrink-0 mt-0.5" />}
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium">Cronograma Técnico</p>
+                      <p className="text-xs text-muted-foreground">{project.schedule && (project.schedule.milestones.length > 0 || project.schedule.tasks.length > 0) ? "Definido" : "Não encontrado"}</p>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -280,43 +304,47 @@ export default function ProjectReviewPage() {
                     <div className="space-y-1">
                       <div className="text-xs font-semibold uppercase text-muted-foreground">Vigência</div>
                       <div className="text-sm">
-                        <span className="text-muted-foreground">
-                          {workPlan.validityStart ? format(new Date(workPlan.validityStart), "dd/MM/yyyy") : "Início não definido"}
-                          {" - "}
-                          {workPlan.validityEnd ? format(new Date(workPlan.validityEnd), "dd/MM/yyyy") : "Fim não definido"}
-                        </span>
+                        {workPlan.validityStart ? format(new Date(workPlan.validityStart), "dd/MM/yyyy") : "N/A"} - {workPlan.validityEnd ? format(new Date(workPlan.validityEnd), "dd/MM/yyyy") : "N/A"}
                       </div>
                     </div>
 
                     <div className="space-y-1">
-                      <div className="text-xs font-semibold uppercase text-muted-foreground">Objeto</div>
-                      <p className="text-sm text-muted-foreground">{workPlan.object || "Não informado."}</p>
-                    </div>
-
-                    <div className="grid gap-3 sm:grid-cols-2 pt-2 border-t">
-                      <div className="space-y-1">
-                        <div className="text-xs font-semibold uppercase text-muted-foreground">Unidade Responsável</div>
-                        <div className="text-sm text-muted-foreground">{workPlan.responsibleUnit || "Não informado."}</div>
-                      </div>
-                      <div className="space-y-1">
-                        <div className="text-xs font-semibold uppercase text-muted-foreground">Gestor da ICT</div>
-                        <div className="text-sm text-muted-foreground">{workPlan.ictManager || "Não informado."}</div>
-                      </div>
-                      <div className="space-y-1 sm:col-span-2">
-                        <div className="text-xs font-semibold uppercase text-muted-foreground">Gestor do Parceiro</div>
-                        <div className="text-sm text-muted-foreground">{workPlan.partnerManager || "Não informado."}</div>
-                      </div>
+                      <div className="text-xs font-semibold uppercase text-muted-foreground">Objeto do Plano</div>
+                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">{workPlan.object || "Não informado."}</p>
                     </div>
                   </CardContent>
                 </Card>
 
                 <Card>
                   <CardHeader>
+                    <CardTitle className="text-base">Gestão e Responsáveis</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-1">
+                      <div className="text-xs font-semibold uppercase text-muted-foreground">Unidade Responsável</div>
+                      <p className="text-sm">{workPlan.responsibleUnit || "N/A"}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-xs font-semibold uppercase text-muted-foreground">Gestor da ICT</div>
+                      <p className="text-sm">{workPlan.ictManager || "N/A"}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-xs font-semibold uppercase text-muted-foreground">Gestor do Parceiro</div>
+                      <p className="text-sm">{workPlan.partnerManager || "N/A"}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Technical Details */}
+              <div className="grid gap-6 md:grid-cols-2">
+                <Card>
+                  <CardHeader>
                     <CardTitle className="text-base">Diagnóstico e Escopo</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-1">
-                      <div className="text-xs font-semibold uppercase text-muted-foreground">Diagnóstico</div>
+                      <div className="text-xs font-semibold uppercase text-muted-foreground">Diagnóstico Técnico</div>
                       <p className="text-sm text-muted-foreground whitespace-pre-wrap">{workPlan.diagnosis || "Não informado."}</p>
                     </div>
                     <div className="space-y-1">
@@ -349,7 +377,10 @@ export default function ProjectReviewPage() {
                     </div>
                   </CardContent>
                 </Card>
+              </div>
 
+              {/* Partners and Participants */}
+              <div className="grid gap-6 md:grid-cols-2">
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-base">Metas Específicas</CardTitle>
@@ -357,99 +388,14 @@ export default function ProjectReviewPage() {
                   <CardContent>
                     {Array.isArray(workPlan.specificObjectives) && workPlan.specificObjectives.length > 0 ? (
                       <ul className="list-disc list-inside space-y-2 text-sm">
-                        {(workPlan.specificObjectives as string[]).map((obj, i) => (
+                        {(workPlan.specificObjectives as (string | { value: string })[]).map((obj, i) => (
                           <li key={i} className="text-muted-foreground">
-                            {typeof obj === "string" ? obj : JSON.stringify(obj)}
+                            {typeof obj === "string" ? obj : obj.value}
                           </li>
                         ))}
                       </ul>
                     ) : (
                       <p className="text-sm text-muted-foreground">Nenhuma meta específica definida.</p>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Schedule */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Cronograma de Execução</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {/* @ts-ignore - Assuming schedule exists due to validator update */}
-                  {workPlan.schedule && workPlan.schedule.length > 0 ? (
-                    <div className="relative overflow-x-auto">
-                      <table className="w-full text-sm text-left">
-                        <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b">
-                          <tr>
-                            <th className="px-4 py-3 font-medium">Eixo/Meta</th>
-                            <th className="px-4 py-3 font-medium">Ação/Etapa</th>
-                            <th className="px-4 py-3 font-medium">Indicador</th>
-                            <th className="px-4 py-3 font-medium">Período</th>
-                            <th className="px-4 py-3 font-medium">Responsável</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y">
-                          {/* @ts-ignore */}
-                          {workPlan.schedule.map((item: any) => (
-                            <tr key={item.id} className="bg-background">
-                              <td className="px-4 py-3 font-medium">{item.axisGoal}</td>
-                              <td className="px-4 py-3 text-muted-foreground">{item.actionStep}</td>
-                              <td className="px-4 py-3 text-muted-foreground">{item.indicator}</td>
-                              <td className="px-4 py-3 text-muted-foreground">
-                                {format(new Date(item.startDate), "dd/MM/yy")} - {format(new Date(item.endDate), "dd/MM/yy")}
-                              </td>
-                              <td className="px-4 py-3 text-muted-foreground">{item.responsible}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">Nenhum cronograma definido.</p>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Technical Schedule (Milestones & Tasks) */}
-              <div className="pt-6 border-t">
-                <ScheduleManager projectId={project.id} readOnly />
-              </div>
-
-              {/* Team & Participants */}
-              <div className="grid gap-6 md:grid-cols-2">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Equipe Executora</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {/* @ts-ignore */}
-                    {workPlan.team && workPlan.team.length > 0 ? (
-                      <div className="space-y-4">
-                        {/* @ts-ignore */}
-                        {workPlan.team.map((member: any) => (
-                          <div key={member.id} className="flex flex-col space-y-1 pb-3 border-b last:border-0 last:pb-0">
-                            <p className="font-medium text-sm">{member.name}</p>
-                            <div className="flex gap-2 text-xs text-muted-foreground">
-                              <span>{member.role}</span>
-                              {member.institution && (
-                                <>
-                                  <span>•</span>
-                                  <span>{member.institution}</span>
-                                </>
-                              )}
-                              {member.weeklyHours && (
-                                <>
-                                  <span>•</span>
-                                  <span>{member.weeklyHours}h/sem</span>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">Nenhuma equipe definida.</p>
                     )}
                   </CardContent>
                 </Card>
@@ -489,6 +435,46 @@ export default function ProjectReviewPage() {
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        <TabsContent value="team" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Equipe Executora</CardTitle>
+              <CardDescription>Membros envolvidos na execução técnica do projeto.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {workPlan?.team && workPlan.team.length > 0 ? (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {workPlan.team.map((member: any) => (
+                    <div key={member.id} className="p-4 rounded-lg border bg-muted/5 flex items-start gap-4">
+                      <UserAvatar
+                        size="sm"
+                        preview={{
+                          name: member.name,
+                          color: (member as any).color || "blue",
+                        }}
+                      />
+                      <div className="space-y-1">
+                        <p className="text-sm font-bold leading-none">{member.name}</p>
+                        <p className="text-xs text-muted-foreground">{member.role}</p>
+                        {(member as any).institution && <p className="text-[10px] uppercase font-semibold text-primary/70">{(member as any).institution}</p>}
+                        {(member as any).weeklyHours && <p className="text-[10px] text-muted-foreground">{(member as any).weeklyHours}h/semana</p>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="py-12 text-center border-2 border-dashed rounded-xl bg-muted/5">
+                  <p className="text-sm text-muted-foreground">Nenhum membro da equipe definido.</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="schedule" className="space-y-6">
+          <ScheduleManager projectId={project.id} readOnly={true} />
         </TabsContent>
 
         {/* Legal Instrument Tab */}
