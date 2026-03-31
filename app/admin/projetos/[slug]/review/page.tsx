@@ -43,7 +43,7 @@ export default function ProjectReviewPage() {
   const params = useParams()
   const router = useRouter()
   const slug = params.slug as string
-  const { project, loading } = useProject()
+  const { project, loading, refetch } = useProject()
   const { data: session } = useSession()
 
   const [isStartingReview, setIsStartingReview] = useState(false)
@@ -67,7 +67,7 @@ export default function ProjectReviewPage() {
       setIsStartingReview(true)
       await startProjectReview(slug)
       notify.success("Análise iniciada com sucesso!")
-      router.refresh()
+      refetch()
     } catch (error: unknown) {
       console.error(error)
       notify.error(getErrorMessage(error) ?? "Erro ao iniciar análise")

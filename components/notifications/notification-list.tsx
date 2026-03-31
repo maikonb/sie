@@ -3,12 +3,14 @@
 import { useState, useEffect } from "react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { Bell, Check, Trash2, ExternalLink, Archive, CheckCircle2, AlertCircle, Info } from "lucide-react"
+import { Bell, Check, Trash2, ExternalLink, CheckCircle2, Info, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
 import { markAsRead, markAllAsRead, deleteNotification, getNotifications } from "@/actions/notifications"
+import NotificationCard from "./notification-card"
 import Link from "next/link"
 import { toast } from "sonner"
 
@@ -25,6 +27,8 @@ interface Notification {
 export function NotificationList() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
+  const [selected, setSelected] = useState<Notification | null>(null)
+  const [sheetOpen, setSheetOpen] = useState(false)
 
   const fetchNotifications = async () => {
     try {
@@ -37,14 +41,11 @@ export function NotificationList() {
     }
   }
 
-  useEffect(() => {
-    fetchNotifications()
-  }, [])
-
   const handleMarkAsRead = async (id: string) => {
     try {
       await markAsRead(id)
       setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)))
+      if (selected?.id === id) setSelected((s) => s ? { ...s, read: true } : s)
     } catch (error) {
       toast.error("Erro ao marcar como lida")
     }
@@ -64,11 +65,42 @@ export function NotificationList() {
     try {
       await deleteNotification(id)
       setNotifications((prev) => prev.filter((n) => n.id !== id))
+      if (selected?.id === id) setSelected(null)
       toast.success("Notificação removida")
     } catch (error) {
       toast.error("Erro ao remover notificação")
     }
   }
+
+  const openNotification = async (n: Notification) => {
+    // If the clicked notification is already selected, close the panel (toggle)
+    if (selected?.id === n.id) {
+      closePanel()
+      return
+    }
+
+    setSelected(n)
+    // open sheet only on small screens (sheet content is hidden on md+)
+    const isSmall = typeof window !== "undefined" ? window.innerWidth < 768 : false
+    setSheetOpen(isSmall)
+    if (!n.read) {
+      try {
+        await markAsRead(n.id)
+        setNotifications((prev) => prev.map((p) => (p.id === n.id ? { ...p, read: true } : p)))
+        setSelected((s) => s ? { ...s, read: true } : s)
+      } catch {
+      }
+    } 
+  }
+
+  const closePanel = () => {
+    setSelected(null)
+    setSheetOpen(false)
+  }
+
+  useEffect(() => {
+    fetchNotifications()
+  }, [])
 
   if (loading) {
     return (
@@ -114,49 +146,99 @@ export function NotificationList() {
         )}
       </div>
 
-      <div className="grid gap-3">
-        {notifications.map((n) => (
-          <Card key={n.id} className={cn("group transition-all duration-200 border-none shadow-sm relative overflow-hidden", !n.read ? "bg-primary/5 ring-1 ring-primary/10" : "bg-card hover:bg-muted/30")}>
-            {!n.read && <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary" />}
-            <CardContent className="p-4 sm:p-5">
-              <div className="flex items-start gap-4">
-                <div className={cn("mt-1 p-2 rounded-lg bg-background border shadow-xs transition-colors", n.type === "PROJECT_STATUS" && !n.read ? "text-primary border-primary/20" : "text-muted-foreground")}>{n.type === "PROJECT_STATUS" ? <CheckCircle2 className="h-5 w-5" /> : <Info className="h-5 w-5" />}</div>
+      <div className="flex">
+        <div className="flex flex-col gap-y-3 w-full flex-1 md:w-1/2">
+          {notifications.map((n, i) => (
+            <NotificationCard
+              key={`${n.id}-${i}`}
+              notification={n}
+              onClick={() => openNotification(n)}
+              onMarkAsRead={handleMarkAsRead}
+              onDelete={handleDelete}
+            />
+          ))}
+        </div>
 
-                <div className="flex-1 space-y-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <h4 className={cn("text-sm font-bold truncate", !n.read ? "text-foreground" : "text-muted-foreground")}>{n.title}</h4>
-                    <span className="text-[10px] text-muted-foreground font-medium shrink-0">{format(new Date(n.createdAt), "dd MMM, HH:mm", { locale: ptBR })}</span>
-                  </div>
-
-                  <p className={cn("text-sm leading-relaxed line-clamp-2", !n.read ? "text-muted-foreground" : "text-muted-foreground/60")}>{n.message}</p>
-
-                  <div className="flex items-center justify-between pt-2">
-                    <div className="flex items-center gap-2">
-                      {n.url && (
-                        <Button variant="ghost" size="sm" asChild className="h-7 px-2 text-[11px] font-bold uppercase tracking-wider hover:bg-primary/10 hover:text-primary">
-                          <Link href={n.url}>
-                            Ver Detalhes <ExternalLink className="h-3 w-3 ml-2" />
-                          </Link>
-                        </Button>
-                      )}
+        {selected && (
+          <div className="hidden md:block p-5 md:w-1/2">
+            <div className="sticky top-24">
+              <Card className="h-full">
+                <CardContent className="flex flex-col">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h3 className="text-sm font-bold">{selected.title}</h3>
+                      <p className="text-xs text-muted-foreground">{format(new Date(selected.createdAt), "dd MMM yyyy, HH:mm", { locale: ptBR })}</p>
                     </div>
-
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {!n.read && (
-                        <Button variant="ghost" size="icon" onClick={() => handleMarkAsRead(n.id)} className="h-7 w-7 text-muted-foreground hover:text-primary">
+                    <div className="flex items-center gap-2">
+                      {!selected.read && (
+                        <Button variant="ghost" size="icon" onClick={() => handleMarkAsRead(selected.id)}>
                           <Check className="h-4 w-4" />
                         </Button>
                       )}
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(n.id)} className="h-7 w-7 text-muted-foreground hover:text-destructive">
+                      <Button variant="ghost" size="icon" onClick={() => handleDelete(selected.id)}>
                         <Trash2 className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={closePanel}>
+                        <X className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
+
+                  <div className="mt-4 text-sm leading-relaxed flex-1">
+                    <p>{selected.message}</p>
+                  </div>
+
+                  {selected.url && (
+                    <div className="mt-4">
+                      <Link href={selected.url} className="inline-flex items-center gap-2 text-sm font-medium text-primary">
+                        Ir para o item <ExternalLink className="h-3 w-3" />
+                      </Link>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        )}
+        
+        <Sheet open={sheetOpen} onOpenChange={(v) => { setSheetOpen(v); if (!v) setSelected(null) }}>
+          <SheetContent side="right" className="md:hidden">
+            <SheetHeader className="p-4 border-b">
+              <SheetTitle>{selected?.title}</SheetTitle>
+            </SheetHeader>
+            <div className="p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs text-muted-foreground">{selected ? format(new Date(selected.createdAt), "dd MMM yyyy, HH:mm", { locale: ptBR }) : ""}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {!selected?.read && (
+                    <Button variant="ghost" size="icon" onClick={() => selected && handleMarkAsRead(selected.id)}>
+                      <Check className="h-4 w-4" />
+                    </Button>
+                  )}
+                  {selected && (
+                    <Button variant="ghost" size="icon" onClick={() => handleDelete(selected.id)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        ))}
+
+              <div className="mt-4 text-sm leading-relaxed">
+                <p>{selected?.message}</p>
+              </div>
+
+              {selected?.url && (
+                <div className="mt-4">
+                  <Link href={selected.url} className="inline-flex items-center gap-2 text-sm font-medium text-primary">
+                    Ir para o item <ExternalLink className="h-3 w-3" />
+                  </Link>
+                </div>
+              )}
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
     </div>
   )

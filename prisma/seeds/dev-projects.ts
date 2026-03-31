@@ -12,10 +12,28 @@ export async function seedDevProjects(prisma: PrismaClient) {
     return
   }
 
-  const instrumentVersion = await prisma.legalInstrumentVersion.findFirst()
+  let instrumentVersion = await prisma.legalInstrumentVersion.findFirst()
   if (!instrumentVersion) {
-    console.error("No LegalInstrumentVersion found. Skipping dev projects.")
-    return
+    // Try to create an initial version from an existing LegalInstrument (seedLegalInstruments should
+    // have created the base instruments and template files). If none exist, skip.
+    const legalInstrument = await prisma.legalInstrument.findFirst()
+    if (!legalInstrument) {
+      console.error("No LegalInstrument found. Skipping dev projects.")
+      return
+    }
+
+    instrumentVersion = await prisma.legalInstrumentVersion.create({
+      data: {
+        legalInstrumentId: legalInstrument.id,
+        version: 1,
+        revisionKey: legalInstrument.revisionKey,
+        type: legalInstrument.type,
+        fieldsJson: legalInstrument.fieldsJson as any,
+        templateFileId: legalInstrument.templateFileId,
+      },
+    })
+
+    console.log(`Created initial LegalInstrumentVersion ${instrumentVersion.id} for instrument ${legalInstrument.type}`)
   }
 
   const projectStatuses = Object.values(ProjectStatus)

@@ -35,7 +35,7 @@ export async function seedDevTestUsers(prisma: PrismaClient) {
       email: "teste@ufr.edu.br",
       roleSlug: "project_admin",
       query: async (p) => {
-        const r = await p.role.findFirst({ where: { slug: "project_admin" }, select: { id: true } })
+        const r = await p.role.findFirst({ where: { slug: "user" }, select: { id: true } })
         return { roleId: r?.id }
       },
     },

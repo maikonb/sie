@@ -13,7 +13,7 @@ export type ProjectsApprovalLocalFilters = {
 
 export const DEFAULT_PROJECTS_APPROVAL_LOCAL_FILTERS: ProjectsApprovalLocalFilters = {
   status: [],
-  assignedToMe: true,
+  assignedToMe: false,
   hasWorkPlan: false,
   missingWorkPlan: false,
   hasLegalInstrument: false,
