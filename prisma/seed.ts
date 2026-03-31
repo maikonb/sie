@@ -2,24 +2,26 @@ import { PrismaClient } from "@prisma/client"
 import { seedLegalInstruments } from "./seeds/legal-instruments"
 import { seedPermissions } from "./seeds/permissions"
 import { seedSystemDefaults } from "./seeds/system-defaults"
-import { seedAdminUser } from "./seeds/admin-user"
+import { seedDevTestUsers } from "./seeds/dev-test-users"
+import { seedDevProjects } from "./seeds/dev-projects"
 
 const prisma = new PrismaClient({})
 
 const devSeeds = [
-  seedLegalInstruments, 
-  seedPermissions, 
-  seedAdminUser,
-  seedSystemDefaults
+  seedLegalInstruments,
+  seedPermissions,
+  seedDevTestUsers,
+  seedDevProjects,
+  seedSystemDefaults, // alweys last
 ]
 
 const prodSeeds = [
-  seedLegalInstruments, 
-  seedPermissions, 
-  seedSystemDefaults
+  seedLegalInstruments,
+  seedPermissions,
+  seedSystemDefaults, // alweys last
 ]
 
-function chooseSeeds(arg: string): Array<(prisma: PrismaClient) => Promise<any>> {
+function chooseSeeds(arg: string): Array<(prisma: PrismaClient) => Promise<unknown>> {
   if (arg === "prod" || arg === "production") return prodSeeds
   return devSeeds
 }

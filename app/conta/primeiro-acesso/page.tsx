@@ -117,7 +117,7 @@ export default function FormRhfInput() {
                 <div className="relative group cursor-pointer">
                   <div className="relative">
                     <UserAvatar size="xl" preview={preview} className="h-24 w-24 border-2 border-border" />
-                    <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                    <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
                       <Camera className="h-6 w-6 text-white" />
                     </div>
                   </div>
@@ -135,7 +135,7 @@ export default function FormRhfInput() {
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
                       <FieldLabel htmlFor="form-rhf-input-username">Nome Completo</FieldLabel>
-                      <Input {...field} id="form-rhf-input-username" aria-invalid={fieldState.invalid} placeholder="Ex: João Silva" autoComplete="name" />
+                      <Input {...field} id="form-rhf-input-username" aria-invalid={fieldState.invalid} placeholder="Ex: Nome" autoComplete="name" />
                       <FieldDescription>Nome utilizado em documentos.</FieldDescription>
                       {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                     </Field>

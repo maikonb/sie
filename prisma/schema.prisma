@@ -51,23 +51,17 @@ enum SystemDefaultType {
   Role
 }
 
-model Proponent {
-  id          String    @id @default(uuid())
-  institution String?
-  projects    Project[]
-
-  userId String? @unique
-  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+enum ResourceMembersType {
+  Project
 }
 
 enum ProjectStatus {
   DRAFT
-  IN_ANALYSIS
+  PENDING_REVIEW
+  UNDER_REVIEW
   APPROVED
   REJECTED
+  RETURNED
 }
 
 model Project {
@@ -80,34 +74,52 @@ model Project {
 
   status ProjectStatus @default(DRAFT)
 
-  proponentId String
-  proponent   Proponent @relation(fields: [proponentId], references: [id], onDelete: Restrict)
+  // Timestamp of last status transition
+  statusUpdatedAt DateTime @default(now())
+
+  // Approval tracking
+  submittedAt     DateTime?
+  reviewStartedAt DateTime?
+  reviewStartedBy String?
+  reviewer        User?     @relation("ProjectReviewer", fields: [reviewStartedBy], references: [id])
+  approvedAt      DateTime?
+  approvedBy      String?
+  approver        User?     @relation("ProjectApprover", fields: [approvedBy], references: [id])
+  rejectionReason String?   @db.Text
+  returnReason    String?   @db.Text
+  approvalOpinion String?   @db.Text
+
+  userId String
+  user   User   @relation("ProjectCreator", fields: [userId], references: [id])
 
   workPlan WorkPlan?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  legalInstruments ProjectLegalInstrument[]
+  legalInstrumentInstance LegalInstrumentInstance?
+  audits                  ProjectAudit[]
 
-  @@index([proponentId])
+  @@index([userId])
+  @@index([approvedBy])
+  @@index([reviewStartedBy])
+  @@index([status])
+  @@index([submittedAt])
 }
 
 model WorkPlan {
   id String @id @default(uuid())
 
-  // 1–1 with Project
   projectId String  @unique
   project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
-  // Typical plan fields
-  object            String? @db.Text // title/short description of the object
+  object            String? @db.Text
   diagnosis         String? @db.Text
   planScope         String? @db.Text
   planJustification String? @db.Text
 
   generalObjective   String @db.Text
-  specificObjectives Json?
+  specificObjectives Json?  @db.JsonB
 
   methodology     String? @db.Text
   responsibleUnit String?
@@ -171,8 +183,8 @@ model Participant {
 
   authorityName String?
   authorityRole String?
-  authorityDoc  String? // CPF/RG
-  contact       String? // e-mail/phone
+  authorityDoc  String?
+  contact       String?
 
   responsibilities Responsibility[]
 
@@ -184,7 +196,6 @@ model Responsibility {
   workPlanId String
   workPlan   WorkPlan @relation(fields: [workPlanId], references: [id], onDelete: Cascade)
 
-  // Responsibility can be associated with a specific participant (or be general to the plan)
   participantId String?
   participant   Participant? @relation(fields: [participantId], references: [id])
 
@@ -202,9 +213,13 @@ model User {
   imageId       String?   @unique
   imageFile     File?     @relation(fields: [imageId], references: [id])
   color         String?
+  institution   String?
   firstAccess   Boolean   @default(true)
 
-  proponent Proponent?
+  createdProjects  Project[]      @relation("ProjectCreator")
+  reviewedProjects Project[]      @relation("ProjectReviewer")
+  approvedProjects Project[]      @relation("ProjectApprover")
+  auditLogs        ProjectAudit[] @relation("AuditChangedBy")
 
   accounts  Account[]
   userRoles UserRole[]
@@ -212,6 +227,7 @@ model User {
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
   resourceMembers ResourceMembers[]
+  notifications   Notification[]
 }
 
 model File {
@@ -225,10 +241,10 @@ model File {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  user                     User?
-  legalInstruments         LegalInstrument[]
-  legalInstrumentInstances LegalInstrumentInstance[]
-  legalInstrumentAnswers   LegalInstrumentInstance[] @relation("InstanceAnswerFile")
+  user                            User?
+  legalInstrumentTemplates        LegalInstrument[]        @relation("LegalInstrumentTemplateFile")
+  legalInstrumentTemplateVersions LegalInstrumentVersion[] @relation("LegalInstrumentVersionTemplateFile")
+  legalInstrumentInstanceFilled   LegalInstrumentInstance[] @relation("InstanceFilledFile")
 }
 
 model Account {
@@ -269,60 +285,74 @@ model OtpCode {
 }
 
 model LegalInstrument {
-  id          String              @id @default(uuid())
+  id          String @id @default(uuid())
   name        String
   description String
-  fieldsJson  Json
-  type        LegalInstrumentType
 
-  fileId String
-  file   File   @relation(fields: [fileId], references: [id])
+  type         LegalInstrumentType @unique
+  revisionKey  String              @default(uuid())
+  fieldsJson   Json                @db.JsonB
 
-  projectLegalInstruments ProjectLegalInstrument[]
+  templateFileId String
+  templateFile   File @relation("LegalInstrumentTemplateFile", fields: [templateFileId], references: [id])
+
+  versions LegalInstrumentVersion[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model LegalInstrumentVersion {
+  id String @id @default(uuid())
+
+  legalInstrumentId String
+  legalInstrument   LegalInstrument @relation(fields: [legalInstrumentId], references: [id], onDelete: Cascade)
+
+  version      Int
+  revisionKey  String
+  type         LegalInstrumentType
+  fieldsJson   Json                @db.JsonB
+
+  templateFileId String
+  templateFile   File   @relation("LegalInstrumentVersionTemplateFile", fields: [templateFileId], references: [id])
+
+  instances LegalInstrumentInstance[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([legalInstrumentId, version])
+  @@unique([legalInstrumentId, revisionKey])
+  @@index([legalInstrumentId])
+  @@index([type])
 }
 
 enum LegalInstrumentStatus {
-  DRAFT
-  SENT_FOR_ANALYSIS
-  APPROVED
-  REJECTED
+  PENDING
+  PARTIAL
+  FILLED
 }
 
 model LegalInstrumentInstance {
-  id                             String              @id @default(uuid())
-  fieldsJson                     Json
-  type                           LegalInstrumentType
-  answers                        Json?
-  project_classification_answers Json?               @db.JsonB
-  status                         LegalInstrumentStatus @default(DRAFT)
+  id                           String                @id @default(uuid())
+  answers                      Json?                 @db.JsonB
+  projectClassificationAnswers Json?                 @db.JsonB
+  status                       LegalInstrumentStatus @default(PENDING)
 
-  fileId String
-  file   File   @relation(fields: [fileId], references: [id])
+  projectId String  @unique
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
-  answerFileId String?
-  answerFile   File?   @relation("InstanceAnswerFile", fields: [answerFileId], references: [id])
+  legalInstrumentVersionId String
+  legalInstrumentVersion   LegalInstrumentVersion @relation(fields: [legalInstrumentVersionId], references: [id])
 
-  projectRelation ProjectLegalInstrument[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model ProjectLegalInstrument {
-  id String @id @default(uuid())
-
-  projectId                 String                  @unique
-  project                   Project                 @relation(fields: [projectId], references: [id])
-  legalInstrumentId         String
-  legalInstrument           LegalInstrument         @relation(fields: [legalInstrumentId], references: [id])
-  legalInstrumentInstanceId String                  @unique
-  legalInstrumentInstance   LegalInstrumentInstance @relation(fields: [legalInstrumentInstanceId], references: [id])
+  filledFileId String?
+  filledFile   File?   @relation("InstanceFilledFile", fields: [filledFileId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([legalInstrumentVersionId])
+  @@index([status])
 }
 
 // Authenticaitons
@@ -392,7 +422,7 @@ model ResourceMembers {
   permissionId String
   permission   Permission @relation(fields: [permissionId], references: [id])
 
-  referenceTable String
+  referenceTable ResourceMembersType
   referenceId    String
 
   createdAt DateTime @default(now())
@@ -414,4 +444,34 @@ model SystemDefaults {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model ProjectAudit {
+  id            String   @id @default(uuid())
+  projectId     String
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  action        String
+  changedBy     String
+  user          User     @relation("AuditChangedBy", fields: [changedBy], references: [id])
+  changeDetails Json?    @db.JsonB
+  createdAt     DateTime @default(now())
+
+  @@index([projectId])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title     String
+  message   String   @db.Text
+  type      String   // E.g., 'PROJECT_STATUS', 'SYSTEM', 'REMINDER'
+  url       String?  // Link opcional para ação
+  
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([read])
 }

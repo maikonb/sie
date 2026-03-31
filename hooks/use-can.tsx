@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react"
 import { checkPermission } from "@/actions/permissions"
+import { ResourceMembersType } from "@/prisma/client";
 
-type CheckInput = { slug: string; referenceTable?: string; referenceId?: string } | string
+type CheckInput = { slug: string; referenceTable?: ResourceMembersType; referenceId?: string } | string
 
 export function useCan(input: CheckInput) {
   const [can, setCan] = useState<boolean | null>(null)
@@ -23,9 +24,9 @@ export function useCan(input: CheckInput) {
         const result = await checkPermission(payload.slug, payload.referenceTable, payload.referenceId)
         if (!isMounted) return
         setCan(result.can)
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (!isMounted) return
-        setError(err?.message || String(err))
+        setError(err instanceof Error ? err.message : String(err))
         setCan(false)
       } finally {
         if (isMounted) setLoading(false)

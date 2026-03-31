@@ -54,8 +54,9 @@ export function EmailForm({ currentEmail }: { currentEmail: string }) {
       setNewEmail(fullEmail)
       setStep("verify")
       notify.success("Código enviado para o novo e-mail!")
-    } catch (error: any) {
-      notify.error(error.response?.data?.error || error.message)
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error)
+      notify.error(message)
     } finally {
       setIsLoading(false)
     }
@@ -69,8 +70,9 @@ export function EmailForm({ currentEmail }: { currentEmail: string }) {
 
       notify.success("E-mail atualizado com sucesso! Faça login novamente.")
       setTimeout(() => signOut({ callbackUrl: "/auth/login" }), 2000)
-    } catch (error: any) {
-      notify.error(error.response?.data?.error || error.message)
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error)
+      notify.error(message)
     } finally {
       setIsLoading(false)
     }

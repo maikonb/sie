@@ -40,16 +40,10 @@ export default async function Page() {
                     <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
                       <FileText className="h-5 w-5 text-primary" />
                     </div>
-                    {li.fileId ? (
-                      <Badge variant="secondary" className="bg-green-500/10 text-green-600 border-green-200">
-                        <FileCheck className="mr-1 h-3 w-3" />
-                        Ativo
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-muted-foreground">
-                        Rascunho
-                      </Badge>
-                    )}
+                    <Badge variant="secondary" className="bg-green-500/10 text-green-600 border-green-200">
+                      <FileCheck className="mr-1 h-3 w-3" />
+                      Ativo
+                    </Badge>
                   </div>
                   <CardTitle className="mt-4 text-lg font-semibold leading-tight group-hover:text-primary transition-colors">{li.name}</CardTitle>
                   <CardDescription className="line-clamp-2 text-sm mt-1.5 h-10">{li.description || "Sem descrição definida."}</CardDescription>

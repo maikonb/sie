@@ -9,6 +9,8 @@ import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/c
 
 import { Skeleton } from "@/components/ui/skeleton"
 import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
+import { getUnreadCount } from "@/actions/notifications"
 
 export function NavUser({
   user,
@@ -24,13 +26,18 @@ export function NavUser({
 }) {
   const { isMobile } = useSidebar()
   const router = useRouter()
+  const [unreadCount, setUnreadCount] = useState(0)
 
-  const userImageDefault = user.name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .substring(0, 2)
-    .toUpperCase()
+  useEffect(() => {
+    getUnreadCount().then(setUnreadCount).catch(console.error)
+
+    // Refresh count periodically or on focus (simple implementation)
+    const interval = setInterval(() => {
+      getUnreadCount().then(setUnreadCount).catch(console.error)
+    }, 120000) // 2 minutes
+
+    return () => clearInterval(interval)
+  }, [])
 
   return (
     <SidebarMenu>
@@ -86,9 +93,12 @@ export function NavUser({
                 <CreditCard />
                 Billing
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Bell />
-                Notifications
+              <DropdownMenuItem onClick={() => router.push("/conta/notificacoes")}>
+                <div className="relative">
+                  <Bell className="size-4" />
+                  {unreadCount > 0 && <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5 items-center justify-center rounded-full bg-primary text-[7px] font-bold text-primary-foreground ring-1 ring-background">{unreadCount > 9 ? "+" : unreadCount}</span>}
+                </div>
+                Notificações
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />

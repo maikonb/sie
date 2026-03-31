@@ -6,7 +6,11 @@ export const workPlanSchema = z.object({
   planScope: z.string().optional(),
   planJustification: z.string().optional(),
   generalObjective: z.string().min(1, "Objetivo geral é obrigatório"),
-  specificObjectives: z.array(z.string()).optional(),
+  specificObjectives: z.array(
+    z.object({
+      value: z.string(),
+    })
+  ),
   methodology: z.string().optional(),
   responsibleUnit: z.string().optional(),
   ictManager: z.string().optional(),
@@ -18,3 +22,4 @@ export const workPlanSchema = z.object({
 })
 
 export type WorkPlanFormData = z.infer<typeof workPlanSchema>
+export type WorkPlanFormValues = z.output<typeof workPlanSchema>

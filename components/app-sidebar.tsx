@@ -1,74 +1,63 @@
 "use client"
 
 import * as React from "react"
-import { BookOpen, Bot, Frame, LifeBuoy, Map, PieChart, Send, Settings2, SquareTerminal } from "lucide-react"
+import { Frame, LifeBuoy, Send, Settings2, SquareTerminal, CheckCircle2 } from "lucide-react"
 
 import { NavMain } from "@/components/navs/main"
 import { NavProjects } from "@/components/navs/projects"
 import { NavSecondary } from "@/components/navs/secondary"
 import { NavUser } from "@/components/navs/user"
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/providers/sidebar"
+import { type NavItem } from "@/lib/services/nav-items"
 
 import { Logo } from "./logo"
 import Link from "next/link"
 import { useSession } from "next-auth/react"
 
-
-const data = {
+const data: Record<string, NavItem[]> = {
   navMain: [
+    // {
+    //   title: "Dashboard",
+    //   url: "/dashboard",
+    //   icon: SquareTerminal,
+    // },
     {
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: SquareTerminal,
-      isActive: true,
-    },
-    {
-      title: "Configurações",
-      url: "#",
+      title: "Gerenciamento",
       icon: Settings2,
       items: [
         {
           title: "Instrumentos Jurídicos",
           url: "/admin/legal-instruments",
-          icon: BookOpen,
           permissionSlug: "legal_instruments.manage",
+        },
+      ],
+    },
+    {
+      title: "Meus Projetos",
+      url: "/projetos",
+      icon: Frame,
+      transforms: [
+        {
+          permission: "projects.view.all",
+          changes: { title: "Projetos", url: "/projetos", icon: CheckCircle2 },
+        },
+        {
+          permission: "projects.approve",
+          changes: { url: "/admin/projetos", icon: CheckCircle2 },
         },
       ],
     },
   ],
   navSecondary: [
     {
-      title: "Support",
-      url: "#",
+      title: "Suporte",
+      url: "/conta/suporte",
       icon: LifeBuoy,
     },
     {
       title: "Feedback",
-      url: "#",
+      url: "/conta/feedback",
       icon: Send,
-    },
-  ],
-  projects: [
-    {
-      name: "Meus Projetos",
-      url: "/projetos",
-      icon: Frame,
-      transforms: [
-        {
-          permission: "projects.view.all",
-          changes: { name: "Projetos" },
-        },
-      ],
-    },
-    {
-      name: "Sales & Marketing",
-      url: "#",
-      icon: PieChart,
-    },
-    {
-      name: "Travel",
-      url: "#",
-      icon: Map,
     },
   ],
 }
@@ -82,8 +71,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     avatar: session?.user?.image || "",
     color: session?.user?.color || "bg-sidebar-primary",
   }
-
-
 
   return (
     <Sidebar className="top-(--header-height) h-[calc(100svh-var(--header-height))]!" {...props}>
@@ -100,7 +87,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+        {/* <NavProjects items={data.navProjects} /> */}
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>

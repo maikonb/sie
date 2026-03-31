@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useProject } from "@/components/providers/project-context"
+import { useProject } from "@/components/providers/project"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useForm, useFieldArray } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -11,15 +11,16 @@ import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { toast } from "sonner"
+import { notify } from "@/lib/notifications"
 import { Loader2, Plus, Trash2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import LoadingOverlay from "@/components/ui/loading-overlay"
 import { useRouter, useSearchParams } from "next/navigation"
 
 export default function Page() {
   const searchParams = useSearchParams()
   const route = useRouter()
-  const { project, loading: projectLoading } = useProject()
+  const { project, loading: projectLoading, refetch, updateWorkPlan } = useProject()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
@@ -41,9 +42,9 @@ export default function Page() {
     },
   })
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove } = useFieldArray<WorkPlanFormData, "specificObjectives">({
     control: form.control,
-    name: "specificObjectives",
+    name: "specificObjectives" as const,
   })
 
   async function onSubmit(data: WorkPlanFormData) {
@@ -53,8 +54,13 @@ export default function Page() {
     try {
       const result = await upsertWorkPlan(project.id, data)
       if (result.success) {
-        toast.success("Plano de trabalho salvo com sucesso!")
-
+        notify.success("Plano de trabalho salvo com sucesso!")
+        // Update locally to avoid a heavy refetch and improve responsiveness
+        if (updateWorkPlan) {
+          updateWorkPlan(result.data || null)
+        } else {
+          await refetch()
+        }
         const next = searchParams.get("next")
         if (next) {
           route.push(`/projetos/${project.slug}/${next}`)
@@ -63,10 +69,10 @@ export default function Page() {
 
         route.push(`/projetos/${project.slug}/`)
       } else {
-        toast.error(result.error || "Erro ao salvar")
+        notify.error(result.error || "Erro ao salvar")
       }
     } catch (error) {
-      toast.error("Erro inesperado ao salvar")
+      notify.error("Erro inesperado ao salvar")
     } finally {
       setSaving(false)
     }
@@ -84,7 +90,7 @@ export default function Page() {
               planScope: data.planScope || "",
               planJustification: data.planJustification || "",
               generalObjective: data.generalObjective || "",
-              specificObjectives: data.specificObjectives || [],
+              specificObjectives: data.specificObjectives.map(so => ({value: so})) || [],
               methodology: data.methodology || "",
               responsibleUnit: data.responsibleUnit || "",
               ictManager: data.ictManager || "",
@@ -96,7 +102,7 @@ export default function Page() {
             })
           }
         } catch (error) {
-          toast.error("Erro ao carregar plano de trabalho")
+          notify.error("Erro ao carregar plano de trabalho")
         } finally {
           setLoading(false)
         }
@@ -188,6 +194,7 @@ export default function Page() {
 
   return (
     <div className="max-w-5xl w-full mx-auto py-8 space-y-8">
+      <LoadingOverlay open={saving} message="Salvando plano de trabalho..." />
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Plano de Trabalho</h1>
         <p className="text-muted-foreground mt-2">Defina os detalhes, objetivos e metodologia do projeto.</p>
@@ -314,7 +321,7 @@ export default function Page() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <FormLabel>Objetivos Específicos</FormLabel>
-                  <Button type="button" variant="outline" size="sm" onClick={() => append("")}>
+                  <Button type="button" variant="outline" size="sm" onClick={() => append({value: ''})}>
                     <Plus className="h-4 w-4 mr-2" />
                     Adicionar
                   </Button>
@@ -323,7 +330,7 @@ export default function Page() {
                   <div key={field.id} className="flex gap-2">
                     <FormField
                       control={form.control}
-                      name={`specificObjectives.${index}`}
+                      name={`specificObjectives.${index}.value`}
                       render={({ field }) => (
                         <FormItem className="flex-1">
                           <FormControl>

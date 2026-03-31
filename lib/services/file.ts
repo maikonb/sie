@@ -2,6 +2,7 @@ import { S3Client, PutObjectCommand, DeleteObjectCommand, HeadObjectCommand, Get
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import prisma from "@/lib/config/db"
 import { v4 as uuidv4 } from "uuid"
+import type { File as PrismaFile } from "@prisma/client"
 
 class FileService {
   private client: S3Client
@@ -43,7 +44,7 @@ class FileService {
     return { url: signedUrl, key, fileId }
   }
 
-  async uploadFile(content: Buffer | string, filename: string, contentType: string, folder: string = "generated"): Promise<any> {
+  async uploadFile(content: Buffer | string, filename: string, contentType: string, folder: string = "generated"): Promise<PrismaFile> {
     const fileId = uuidv4()
     const extension = filename.split(".").pop()
     const key = `${folder}/${fileId}.${extension}`
@@ -63,7 +64,7 @@ class FileService {
 
     const url = this.getPublicUrl(key)
 
-    return await prisma.file.create({
+    return prisma.file.create({
       data: {
         id: fileId,
         key,
@@ -76,7 +77,7 @@ class FileService {
     })
   }
 
-  async createFileFromS3(key: string): Promise<any> {
+  async createFileFromS3(key: string): Promise<PrismaFile> {
     const existingFile = await prisma.file.findFirst({
       where: { key },
     })
@@ -100,7 +101,7 @@ class FileService {
 
       const url = this.getPublicUrl(key)
 
-      return await prisma.file.create({
+      return prisma.file.create({
         data: {
           id: fileId,
           key,

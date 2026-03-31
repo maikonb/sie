@@ -27,9 +27,10 @@ type ProjectFormValues = z.infer<typeof projectFormSchema>
 
 interface ProjectFormProps {
   initialProject?: Project | null
+  embedded?: boolean
 }
 
-export function ProjectForm({ initialProject }: ProjectFormProps) {
+export function ProjectForm({ initialProject, embedded = false }: ProjectFormProps) {
   const router = useRouter()
   const [step, setStep] = useState<"create" | "choisen" | "loading">(initialProject ? "choisen" : "create")
   const [project, setProject] = useState<Project | null>(initialProject || null)
@@ -66,6 +67,66 @@ export function ProjectForm({ initialProject }: ProjectFormProps) {
   }
 
   if (step === "choisen") {
+    if (embedded) {
+      return (
+        <div className="w-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="text-center pb-6">
+            <div className="mx-auto bg-green-100 dark:bg-green-900/30 p-3 rounded-full w-fit mb-3 ring-4 ring-green-50 dark:ring-green-900/8">
+              <Check className="w-6 h-6 text-green-600 dark:text-green-400" />
+            </div>
+            <h3 className="text-2xl font-semibold">Projeto criado com sucesso!</h3>
+            <p className="text-sm text-muted-foreground mt-2">
+              O projeto <span className="font-medium text-foreground">"{project?.title}"</span> foi iniciado. Como você deseja prosseguir?
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3 mt-6">
+            <Link href={`/projetos/${project?.slug}/work-plan?next=legal-instrument`} className="group">
+              <div className="h-full border rounded-lg p-6 hover:border-primary/50 hover:shadow transition-all duration-200 cursor-pointer bg-card">
+                <div className="flex flex-col items-center gap-4 text-center">
+                  <div className="p-3 rounded-xl bg-primary/5 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors duration-200">
+                    <FileText className="w-6 h-6" />
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="font-semibold text-base group-hover:text-primary">Inserir Plano de Negócio</h4>
+                    <p className="text-xs text-muted-foreground leading-relaxed px-1">Defina a estrutura, mercado e viabilidade do seu projeto.</p>
+                  </div>
+                </div>
+              </div>
+            </Link>
+
+            <Link href={`/projetos/${project?.slug}/legal-instrument?next=work-plan`} className="group">
+              <div className="h-full border rounded-lg p-6 hover:border-primary/50 hover:shadow transition-all duration-200 cursor-pointer bg-card">
+                <div className="flex flex-col items-center gap-4 text-center">
+                  <div className="p-3 rounded-xl bg-primary/5 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors duration-200">
+                    <Scale className="w-6 h-6" />
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="font-semibold text-base group-hover:text-primary">Inserir Instrumento Jurídico</h4>
+                    <p className="text-xs text-muted-foreground leading-relaxed px-1">Anexe contratos, termos e documentos legais necessários.</p>
+                  </div>
+                </div>
+              </div>
+            </Link>
+
+            <Link href={`/projetos/${project?.slug}`} className="group">
+              <div className="h-full border rounded-lg p-6 hover:border-muted-foreground/50 hover:shadow transition-all duration-200 cursor-pointer bg-muted/10">
+                <div className="flex flex-col items-center gap-4 text-center">
+                  <div className="p-3 rounded-xl bg-muted text-muted-foreground transition-colors duration-200">
+                    <Clock className="w-6 h-6" />
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="font-semibold text-base">Inserir dependências mais tarde</h4>
+                    <p className="text-xs text-muted-foreground leading-relaxed px-1">Finalizar por agora e retornar à listagem de projetos.</p>
+                  </div>
+                </div>
+              </div>
+            </Link>
+          </div>
+        </div>
+      )
+    }
+
     return (
       <div className="w-full max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
         <Card className="border-none shadow-none bg-transparent">
@@ -128,6 +189,79 @@ export function ProjectForm({ initialProject }: ProjectFormProps) {
     )
   }
 
+  const formInner = (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <FormField
+          control={form.control}
+          name="titulo"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Título</FormLabel>
+              <FormControl>
+                <Input placeholder="Ex.: Plataforma de Inovação SIE/UFR" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="objetivos"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Objetivos</FormLabel>
+              <FormControl>
+                <Textarea placeholder="Descreva os objetivos do projeto..." rows={6} {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="justificativa"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Justificativa</FormLabel>
+              <FormControl>
+                <Textarea placeholder="Explique a relevância pública/acadêmica, demanda atendida, etc." rows={6} {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="abrangencia"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Abrangência</FormLabel>
+              <FormControl>
+                <Textarea placeholder="Defina localidades, público-alvo e alcance..." rows={5} {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="flex items-center justify-end gap-3">
+          <Button variant="outline" asChild type="button">
+            <Link href="/projetos/">Cancelar</Link>
+          </Button>
+          <Button type="submit" disabled={step === "loading"}>
+            {step === "loading" ? "Salvando..." : "Salvar projeto"}
+          </Button>
+        </div>
+      </form>
+    </Form>
+  )
+
+  if (embedded) return formInner
+
   return (
     <div className="w-full max-w-3xl mx-auto">
       <Card>
@@ -135,76 +269,7 @@ export function ProjectForm({ initialProject }: ProjectFormProps) {
           <CardTitle>Novo Projeto</CardTitle>
           <CardDescription>Preencha os dados do seu projeto (Plano de Trabalho ficará para depois).</CardDescription>
         </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="titulo"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Título</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ex.: Plataforma de Inovação SIE/UFR" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="objetivos"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Objetivos</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="Descreva os objetivos do projeto..." rows={6} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="justificativa"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Justificativa</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="Explique a relevância pública/acadêmica, demanda atendida, etc." rows={6} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="abrangencia"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Abrangência</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="Defina localidades, público-alvo e alcance..." rows={5} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex items-center justify-end gap-3">
-                <Button variant="outline" asChild type="button">
-                  <Link href="/projetos/">Cancelar</Link>
-                </Button>
-                <Button type="submit" disabled={step === "loading"}>
-                  {step === "loading" ? "Salvando..." : "Salvar projeto"}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
+        <CardContent>{formInner}</CardContent>
       </Card>
     </div>
   )

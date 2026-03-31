@@ -1,51 +1,28 @@
 "use client"
 
-import { Folder, MoreHorizontal, Share, Trash2, type LucideIcon } from "lucide-react"
+import { ChevronRight, MoreHorizontal, Share, Trash2 } from "lucide-react"
 
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuAction, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/providers/sidebar"
-import PermissionGuard from "@/components/permissions/permission-guard"
+import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuAction, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem, useSidebar } from "@/components/providers/sidebar"
+import PermissionGuard from "@/components/permissions/guard"
 import useManyCan from "@/hooks/use-many-can"
 import { Skeleton } from "@/components/ui/skeleton"
+import { extractPermissionSlugs, extractTransformPermissions, processNavItems, type NavItem } from "@/lib/services/nav-items"
 
 export function NavProjects({
-  projects,
+  items,
 }: {
-  projects: (
-    | {
-        name: string
-        url: string
-        icon: LucideIcon
-        permissionSlug?: string
-        transforms?: {
-          permission: string
-          negate?: boolean
-          changes: Partial<{ name: string; url: string; icon: LucideIcon; permissionSlug?: string }>
-        }[]
-      }
-    | any
-  )[]
+  items: NavItem[]
 }) {
   const { isMobile } = useSidebar()
-  const transformPermissions = projects.flatMap((p) => p.transforms?.map((t: any) => t.permission) || [])
-  const permissionSlugs = projects.flatMap((p) => (p.permissionSlug ? [p.permissionSlug] : []))
+  const transformPermissions = extractTransformPermissions(items)
+  const permissionSlugs = extractPermissionSlugs(items)
   const allPermissions = Array.from(new Set([...transformPermissions, ...permissionSlugs]))
 
   const { canMap, loading } = useManyCan(allPermissions)
 
-  const transformed = projects.map((p) => {
-    let out = { ...p }
-    if (p.transforms) {
-      for (const t of p.transforms) {
-        const has = !!canMap[t.permission]
-        const apply = t.negate ? !has : has
-        if (apply) {
-          out = { ...out, ...t.changes }
-        }
-      }
-    }
-    return out
-  })
+  const visibleItems = processNavItems(items, canMap)
   if (loading) {
     return (
       <SidebarGroup className="group-data-[collapsible=icon]:hidden">
@@ -72,40 +49,77 @@ export function NavProjects({
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
       <SidebarGroupLabel>Projects</SidebarGroupLabel>
       <SidebarMenu>
-        {transformed.map((item) => (
-          <SidebarMenuItem key={item.name}>
-            <PermissionGuard permission={item.permissionSlug}>
-              <SidebarMenuButton asChild>
-                <a href={item.url}>
-                  <item.icon />
-                  <span>{item.name}</span>
-                </a>
-              </SidebarMenuButton>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <SidebarMenuAction showOnHover>
-                    <MoreHorizontal />
-                    <span className="sr-only">More</span>
-                  </SidebarMenuAction>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-48" side={isMobile ? "bottom" : "right"} align={isMobile ? "end" : "start"}>
-                  <DropdownMenuItem>
-                    <Folder className="text-muted-foreground" />
-                    <span>View Project</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Share className="text-muted-foreground" />
-                    <span>Share Project</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <Trash2 className="text-muted-foreground" />
-                    <span>Delete Project</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </PermissionGuard>
-          </SidebarMenuItem>
+        {visibleItems.map(({ item }) => (
+          <Collapsible key={item.title} asChild defaultOpen={item.isActive}>
+            <SidebarMenuItem>
+              <PermissionGuard permission={item.permissionSlug} canMap={canMap}>
+                {item.url ? (
+                  <>
+                    <SidebarMenuButton asChild tooltip={item.title}>
+                      <a href={item.url}>
+                        {item.icon && <item.icon />}
+                        <span>{item.title}</span>
+                      </a>
+                    </SidebarMenuButton>
+                    {!item.items?.length ? (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <SidebarMenuAction showOnHover>
+                            <MoreHorizontal />
+                            <span className="sr-only">More</span>
+                          </SidebarMenuAction>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-48" side={isMobile ? "bottom" : "right"} align={isMobile ? "end" : "start"}>
+                          <DropdownMenuItem>
+                            <Share className="text-muted-foreground" />
+                            <span>Share Project</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem>
+                            <Trash2 className="text-muted-foreground" />
+                            <span>Delete Project</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    ) : null}
+                  </>
+                ) : (
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton tooltip={item.title}>
+                      {item.icon && <item.icon />}
+                      <span>{item.title}</span>
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                )}
+
+                {item.items?.length ? (
+                  <>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuAction className="data-[state=open]:rotate-90">
+                        <ChevronRight />
+                        <span className="sr-only">Toggle</span>
+                      </SidebarMenuAction>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        {item.items.map((subItem) => (
+                          <SidebarMenuSubItem key={subItem.title}>
+                            <PermissionGuard permission={subItem.permissionSlug} canMap={canMap}>
+                              <SidebarMenuSubButton asChild>
+                                <a href={subItem.url}>
+                                  <span>{subItem.title}</span>
+                                </a>
+                              </SidebarMenuSubButton>
+                            </PermissionGuard>
+                          </SidebarMenuSubItem>
+                        ))}
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </>
+                ) : null}
+              </PermissionGuard>
+            </SidebarMenuItem>
+          </Collapsible>
         ))}
       </SidebarMenu>
     </SidebarGroup>

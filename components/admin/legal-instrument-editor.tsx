@@ -1,9 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { LegalInstrument } from "@prisma/client"
 import { Loader2, Plus, Trash2, Save, FileText, Upload, AlertCircle, HelpCircle, GripVertical } from "lucide-react"
-import { toast } from "sonner"
+import { notify } from "@/lib/notifications"
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core"
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
@@ -18,18 +17,14 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 import { updateLegalInstrument } from "@/actions/legal-instruments"
 import { generatePresignedUrl } from "@/actions/storage"
+import type { GetLegalInstrumentByIdResponse } from "@/actions/legal-instruments/types"
 
-type FieldSpec = {
-  id: string
-  name: string
-  label: string
-  type: string
-  required?: boolean
-  options?: string[]
-}
+import type { LegalInstrumentFieldSpec } from "@/types/legal-instrument"
+
+type FieldSpec = LegalInstrumentFieldSpec
 
 interface EditLegalInstrumentClientProps {
-  instrument: LegalInstrument
+  instrument: NonNullable<GetLegalInstrumentByIdResponse>
 }
 
 const FIELD_TYPES = [
@@ -68,7 +63,7 @@ function SortableRow({ field, index, updateField, removeField }: { field: FieldS
       </div>
 
       <div>
-        <select className="flex h-9 w-full items-center justify-between rounded-md border border-transparent bg-transparent px-3 py-1 text-sm shadow-none ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring focus:bg-background focus:border-input hover:border-input disabled:cursor-not-allowed disabled:opacity-50 transition-all cursor-pointer" value={field.type} onChange={(e) => updateField(index, { type: e.target.value })}>
+        <select className="flex h-9 w-full items-center justify-between rounded-md border border-transparent bg-transparent px-3 py-1 text-sm shadow-none ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring focus:bg-background focus:border-input hover:border-input disabled:cursor-not-allowed disabled:opacity-50 transition-all cursor-pointer" value={field.type} onChange={(e) => updateField(index, { type: e.target.value as FieldSpec["type"] })}>
           {FIELD_TYPES.map((t) => (
             <option key={t.value} value={t.value}>
               {t.label}
@@ -113,7 +108,7 @@ export default function EditLegalInstrumentClient({ instrument }: EditLegalInstr
 
   useEffect(() => {
     // Initialize fields with IDs if they don't have them
-    const initialFields = (instrument.fieldsJson as unknown as FieldSpec[]) || []
+    const initialFields = ((instrument.fieldsJson as unknown) as FieldSpec[]) || []
     const fieldsWithIds = initialFields.map((f) => ({
       ...f,
       id: f.id || `field_${Math.random().toString(36).substr(2, 9)}`,
@@ -165,12 +160,10 @@ export default function EditLegalInstrumentClient({ instrument }: EditLegalInstr
       const pres = await generatePresignedUrl(file.name, file.type, "legal-instruments")
       await fetch(pres.url, { method: "PUT", body: file, headers: { "Content-Type": file.type } })
       setFileKey(pres.key)
-      toast.success("Arquivo enviado com sucesso", {
-        description: "Salve as alterações para vincular o novo arquivo ao instrumento.",
-      })
+      notify.success("Arquivo enviado com sucesso", "Salve as alterações para vincular o novo arquivo ao instrumento.")
     } catch (err) {
       console.error(err)
-      toast.error("Falha ao enviar arquivo")
+      notify.error("Falha ao enviar arquivo")
     } finally {
       setUploading(false)
     }
@@ -178,13 +171,13 @@ export default function EditLegalInstrumentClient({ instrument }: EditLegalInstr
 
   async function onSave() {
     try {
-      const payload: any = { fieldsJson: fields }
+      const payload: { fieldsJson: FieldSpec[]; fileKey?: string } = { fieldsJson: fields }
       if (fileKey) payload.fileKey = fileKey
       await updateLegalInstrument(instrument.id, payload)
-      toast.success("Alterações salvas com sucesso")
+      notify.success("Alterações salvas com sucesso")
     } catch (err) {
       console.error(err)
-      toast.error("Erro ao salvar alterações")
+      notify.error("Erro ao salvar alterações")
     }
   }
 
@@ -235,10 +228,10 @@ export default function EditLegalInstrumentClient({ instrument }: EditLegalInstr
                       <FileText className="h-5 w-5 text-muted-foreground" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{instrument.fileId ? `Arquivo ID: ${instrument.fileId}` : "Nenhum arquivo vinculado"}</p>
+                      <p className="text-sm font-medium truncate">{instrument.templateFileId ? `Arquivo ID: ${instrument.templateFileId}` : "Nenhum arquivo vinculado"}</p>
                       <p className="text-xs text-muted-foreground">{instrument.updatedAt ? `Atualizado em ${new Date(instrument.updatedAt).toLocaleDateString()}` : "Sem data"}</p>
                     </div>
-                    {instrument.fileId && (
+                    {instrument.templateFileId && (
                       <Badge variant="secondary" className="bg-green-500/10 text-green-600 hover:bg-green-500/20 border-green-200">
                         Ativo
                       </Badge>

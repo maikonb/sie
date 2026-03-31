@@ -15,13 +15,19 @@ export default async function NovaPaginaProjeto(props: PageProps) {
       initialProject = await getProjectBySlug(slug)
     } catch (error) {
       console.error("Failed to fetch project:", error)
-      // Handle error appropriately, maybe redirect or show error
     }
   }
 
   return (
-    <div className="p-4 bg-muted/50 min-h-full flex items-center justify-center">
-      <ProjectForm initialProject={initialProject} />
+    <div className="max-w-5xl w-full mx-auto py-8 space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Novo Projeto</h1>
+        <p className="text-muted-foreground mt-2">Preencha os dados para criar um novo projeto.</p>
+      </div>
+
+      <div className="rounded-xl border bg-card text-card-foreground shadow-sm p-6">
+        <ProjectForm initialProject={initialProject} embedded />
+      </div>
     </div>
   )
 }

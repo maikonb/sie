@@ -17,7 +17,7 @@ export const notify = {
     const descriptionNode = (
       <div className="flex flex-col gap-1">
         {description && <span>{description}</span>}
-        <span className="text-[11px] text-gray-400 font-mono tracking-tighter">{code}</span>
+        {isCode && <span className="text-[11px] text-gray-400 font-mono tracking-tighter">{code}</span>}
       </div>
     )
 

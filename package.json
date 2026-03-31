@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "npm run prisma:migrate:deploy && npm run prisma:seed && next build",
+    "dev:setup": "npm run docker:dev:up && sleep 5 && npm run prisma:dev:migrate && npm run prisma:dev:seed && next dev",
+    "build": "npm run prisma:prod:migrate && npm run prisma:prod:seed && next build",
     "postinstall": "npm run prisma:generate",
     "start": "next start",
     "lint": "eslint",
@@ -49,6 +50,7 @@
     "dotenv": "^17.2.3",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.553.0",
+    "nanoid": "^5.1.6",
     "next": "16.0.1",
     "next-auth": "^4.24.13",
     "nodemailer": "^7.0.10",

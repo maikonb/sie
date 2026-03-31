@@ -1,6 +1,6 @@
 "use client"
 
-import { useSingleTab } from "./providers/single-tab-provider"
+import { useSingleTab } from "./providers/single-tab"
 import { Button } from "./ui/button"
 import { Logo } from "./logo"
 

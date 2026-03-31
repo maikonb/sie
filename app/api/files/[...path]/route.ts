@@ -44,9 +44,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ path
       headers,
       status: 200,
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error serving file:", error)
-    if (error?.name === "NoSuchKey") {
+    if (typeof error === "object" && error !== null && "name" in error && (error as { name?: unknown }).name === "NoSuchKey") {
       return new NextResponse(null, { status: 404 })
     }
     return handleApiError(error)

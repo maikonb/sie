@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { LegalInstrumentInstance } from "@prisma/client"
-import { Save, Loader2, ArrowLeft, Send } from "lucide-react"
-import { toast } from "sonner"
+import { LegalInstrumentInstance, ProjectStatus } from "@prisma/client"
+import { ArrowLeft, Loader2 } from "lucide-react"
+import { notify } from "@/lib/notifications"
+import { useProject } from "@/components/providers/project"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,115 +15,198 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 
-import { saveLegalInstrumentAnswers, sendForAnalysis } from "@/actions/legal-instruments"
+import { saveLegalInstrumentAnswers } from "@/actions/legal-instruments"
 
-type FieldSpec = {
-  id: string
-  name: string
-  label: string
-  type: string
-  required?: boolean
-  options?: string[]
-}
+import type { LegalInstrumentAnswers, LegalInstrumentFieldSpec, LegalInstrumentAnswerValue } from "@/types/legal-instrument"
+
+type FieldSpec = LegalInstrumentFieldSpec
 
 interface LegalInstrumentFillClientProps {
   instance: LegalInstrumentInstance & {
-    file?: {
-      url: string
-      key: string
-    } | null
-    status: string // Add status explicitly if not in LegalInstrumentInstance yet
+    project: {
+      status: ProjectStatus
+    }
+    legalInstrumentVersion: {
+      fieldsJson: unknown
+      templateFile: { url: string; key: string } | null
+      legalInstrument: { name: string; description: string }
+      type: string
+    }
+    filledFile?: { url: string; key: string } | null
   }
   projectSlug: string
 }
 
 export default function LegalInstrumentFillClient({ instance, projectSlug }: LegalInstrumentFillClientProps) {
   const router = useRouter()
-  const [answers, setAnswers] = useState<any>(instance.answers || {})
+  const { updateLegalInstrument } = useProject()
+  const [answers, setAnswers] = useState<LegalInstrumentAnswers>((instance.answers as unknown as LegalInstrumentAnswers) || {})
   const [saving, setSaving] = useState(false)
-  const [sending, setSending] = useState(false)
+  const [saveIndicator, setSaveIndicator] = useState<"saved" | "pending" | "saving" | "error">("saved")
+  const [localStatus, setLocalStatus] = useState(instance.status)
 
-  const fields = (instance.fieldsJson as unknown as FieldSpec[]) || []
-  const isDraft = instance.status === "DRAFT"
+  const fields = (instance.legalInstrumentVersion.fieldsJson as unknown as FieldSpec[]) || []
+  const isLocked = instance.project?.status === ProjectStatus.UNDER_REVIEW || instance.project?.status === ProjectStatus.APPROVED
+  const isEditable = !isLocked
 
-  const handleChange = (id: string, value: any) => {
-    if (!isDraft) return
-    setAnswers((prev: any) => ({ ...prev, [id]: value }))
+  const debounceMs = 900
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isSavingRef = useRef(false)
+  const dirtyRef = useRef(false)
+  const latestAnswersRef = useRef<LegalInstrumentAnswers>(answers)
+  const lastSavedHashRef = useRef<string>(JSON.stringify((instance.answers as unknown as LegalInstrumentAnswers) || {}))
+
+  useEffect(() => {
+    latestAnswersRef.current = answers
+  }, [answers])
+
+  const autosaveUrl = useMemo(() => `/api/legal-instruments/instances/${instance.id}/autosave`, [instance.id])
+
+  const flushSave = async (opts?: { silent?: boolean }) => {
+    if (!isEditable) return
+    if (!dirtyRef.current) return
+    if (isSavingRef.current) return
+
+    isSavingRef.current = true
+    setSaveIndicator("saving")
+
+    try {
+      const updated = await saveLegalInstrumentAnswers(instance.id, latestAnswersRef.current)
+      lastSavedHashRef.current = JSON.stringify((updated.answers as unknown as LegalInstrumentAnswers) || {})
+      dirtyRef.current = false
+      setLocalStatus(updated.status)
+      setSaveIndicator("saved")
+
+      // Update global project context
+      if (updateLegalInstrument) {
+        updateLegalInstrument(updated as any)
+      }
+
+      if (!opts?.silent) {
+        // keep the UI quiet; no toast needed on autosave
+      }
+    } catch (error) {
+      console.error(error)
+      setSaveIndicator("error")
+      if (!opts?.silent) {
+        notify.error("Falha ao salvar automaticamente")
+      }
+    } finally {
+      isSavingRef.current = false
+    }
   }
 
-  const handleSave = async () => {
-    // Basic validation
-    for (const field of fields) {
-      if (field.required && !answers[field.id]) {
-        toast.error(`O campo "${field.label}" é obrigatório.`)
-        return
+  // Debounced autosave on change
+  useEffect(() => {
+    if (!isEditable) return
+
+    const currentHash = JSON.stringify(answers)
+    if (currentHash === lastSavedHashRef.current) {
+      dirtyRef.current = false
+      if (saveIndicator !== "saving") setSaveIndicator("saved")
+      return
+    }
+
+    dirtyRef.current = true
+    if (saveIndicator !== "saving") setSaveIndicator("pending")
+
+    if (timerRef.current) clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(() => {
+      void flushSave({ silent: true })
+    }, debounceMs)
+
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [answers, isEditable])
+
+  // Best-effort flush when leaving the page
+  useEffect(() => {
+    if (!isEditable) return
+
+    const keepalive = () => {
+      if (!dirtyRef.current) return
+      try {
+        const payload = JSON.stringify({ answers: latestAnswersRef.current })
+        void fetch(autosaveUrl, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: payload,
+          keepalive: true,
+          credentials: "include",
+        })
+      } catch {
+        // ignore
       }
     }
 
+    const onPageHide = () => keepalive()
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "hidden") keepalive()
+    }
+
+    window.addEventListener("pagehide", onPageHide)
+    window.addEventListener("beforeunload", onPageHide)
+    document.addEventListener("visibilitychange", onVisibilityChange)
+
+    return () => {
+      window.removeEventListener("pagehide", onPageHide)
+      window.removeEventListener("beforeunload", onPageHide)
+      document.removeEventListener("visibilitychange", onVisibilityChange)
+
+      // For in-app navigation/unmount, server action often still completes.
+      void flushSave({ silent: true })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autosaveUrl, isEditable])
+
+  const handleChange = (id: string, value: LegalInstrumentAnswerValue) => {
+    if (!isEditable) return
+    setAnswers((prev) => ({ ...prev, [id]: value }))
+  }
+
+  const handleGoToProject = async () => {
     setSaving(true)
     try {
-      await saveLegalInstrumentAnswers(instance.id, answers)
-      toast.success("Dados salvos com sucesso!")
+      await flushSave({ silent: true })
+      router.push(`/projetos/${projectSlug}`)
       router.refresh()
     } catch (error) {
       console.error(error)
-      toast.error("Erro ao salvar dados.")
+      notify.error("Não foi possível salvar antes de sair.")
+      router.push(`/projetos/${projectSlug}`)
     } finally {
       setSaving(false)
     }
   }
 
-  const handleSendForAnalysis = async () => {
-    // Basic validation
-    for (const field of fields) {
-      if (field.required && !answers[field.id]) {
-        toast.error(`O campo "${field.label}" é obrigatório.`)
-        return
-      }
-    }
-
-    setSending(true)
-    try {
-      // Ensure saved first
-      await saveLegalInstrumentAnswers(instance.id, answers)
-
-      await sendForAnalysis(instance.id)
-      toast.success("Enviado para análise com sucesso!")
-      router.push(`/projetos/${projectSlug}`)
-      router.refresh()
-    } catch (error) {
-      console.error(error)
-      toast.error("Erro ao enviar para análise.")
-    } finally {
-      setSending(false)
-    }
-  }
-
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "DRAFT":
-        return <Badge variant="secondary">Rascunho</Badge>
-      case "SENT_FOR_ANALYSIS":
-        return <Badge className="bg-blue-500 hover:bg-blue-600">Em Análise</Badge>
-      case "APPROVED":
-        return <Badge className="bg-green-500 hover:bg-green-600">Aprovado</Badge>
-      case "REJECTED":
-        return <Badge variant="destructive">Rejeitado</Badge>
+      case "PENDING":
+        return <Badge variant="secondary">Pendente</Badge>
+      case "PARTIAL":
+        return <Badge className="bg-yellow-500 hover:bg-yellow-600">Parcial</Badge>
+      case "FILLED":
+        return <Badge className="bg-green-500 hover:bg-green-600">Preenchido</Badge>
       default:
         return <Badge variant="outline">{status}</Badge>
     }
   }
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-4xl space-y-6">
+    <div className="container mx-auto py-8 px-4 max-w-6xl space-y-6">
       <div className="flex items-center gap-4 mb-6">
-        <Button variant="ghost" size="icon" onClick={() => router.back()}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
         <div className="flex-1">
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold">Preenchimento do Instrumento Jurídico</h1>
-            {getStatusBadge(instance.status)}
+            {getStatusBadge(localStatus)}
+            <span className="text-xs text-muted-foreground">
+              {saveIndicator === "saving" && "Salvando..."}
+              {saveIndicator === "pending" && "Alterações pendentes"}
+              {saveIndicator === "saved" && "Salvo"}
+              {saveIndicator === "error" && "Falha ao salvar"}
+            </span>
           </div>
           <p className="text-muted-foreground">Preencha os campos abaixo para gerar o documento.</p>
         </div>
@@ -144,13 +228,13 @@ export default function LegalInstrumentFillClient({ instance, projectSlug }: Leg
               </Label>
 
               {field.type === "textarea" ? (
-                <Textarea id={field.id} value={answers[field.id] || ""} onChange={(e) => handleChange(field.id, e.target.value)} placeholder={`Digite ${field.label.toLowerCase()}...`} className="min-h-[100px]" disabled={!isDraft} />
+                <Textarea id={field.id} value={answers[field.id] || ""} onChange={(e) => handleChange(field.id, e.target.value)} placeholder={`Digite ${field.label.toLowerCase()}...`} className="min-h-[100px]" disabled={!isEditable} />
               ) : field.type === "date" ? (
-                <Input id={field.id} type="date" value={answers[field.id] || ""} onChange={(e) => handleChange(field.id, e.target.value)} disabled={!isDraft} />
+                <Input id={field.id} type="date" value={answers[field.id] || ""} onChange={(e) => handleChange(field.id, e.target.value)} disabled={!isEditable} />
               ) : field.type === "number" || field.type === "currency" ? (
-                <Input id={field.id} type="number" step={field.type === "currency" ? "0.01" : "1"} value={answers[field.id] || ""} onChange={(e) => handleChange(field.id, e.target.value)} placeholder={field.type === "currency" ? "0,00" : ""} disabled={!isDraft} />
+                <Input id={field.id} type="number" step={field.type === "currency" ? "0.01" : "1"} value={answers[field.id] || ""} onChange={(e) => handleChange(field.id, e.target.value)} placeholder={field.type === "currency" ? "0,00" : ""} disabled={!isEditable} />
               ) : (
-                <Input id={field.id} type={field.type === "email" ? "email" : "text"} value={answers[field.id] || ""} onChange={(e) => handleChange(field.id, e.target.value)} placeholder={`Digite ${field.label.toLowerCase()}...`} disabled={!isDraft} />
+                <Input id={field.id} type={field.type === "email" ? "email" : "text"} value={answers[field.id] || ""} onChange={(e) => handleChange(field.id, e.target.value)} placeholder={`Digite ${field.label.toLowerCase()}...`} disabled={!isEditable} />
               )}
             </div>
           ))}
@@ -161,35 +245,20 @@ export default function LegalInstrumentFillClient({ instance, projectSlug }: Leg
             <Button variant="outline" onClick={() => router.back()}>
               Voltar
             </Button>
-            {isDraft && (
-              <>
-                <Button onClick={handleSave} disabled={saving || sending} variant="secondary">
-                  {saving ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Salvando...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="mr-2 h-4 w-4" />
-                      Salvar Rascunho
-                    </>
-                  )}
-                </Button>
-                <Button onClick={handleSendForAnalysis} disabled={saving || sending}>
-                  {sending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Enviando...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="mr-2 h-4 w-4" />
-                      Enviar para Análise
-                    </>
-                  )}
-                </Button>
-              </>
+            {isEditable && (
+              <Button onClick={handleGoToProject} disabled={saving} variant="default">
+                {saving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Indo para o projeto...
+                  </>
+                ) : (
+                  <>
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Voltar para o projeto
+                  </>
+                )}
+              </Button>
             )}
           </div>
         </CardContent>
