@@ -100,15 +100,22 @@ export async function createLegalInstrument(slug: string, result: ProjectClassif
       },
     })
 
-    if (!legalInstrument) return { success: false, error: APP_ERRORS.PROJECT_CREATE_LEGAL_INSTRUMENTS.code }
+    if (!legalInstrument) {
+      console.error("Legal instrument not found")
+      return { success: false, error: APP_ERRORS.PROJECT_CREATE_LEGAL_INSTRUMENTS.code }
+    }
 
     const project = await prisma.project.findUnique({
       where: { slug: slug },
       select: { id: true, legalInstrumentInstance: { select: { id: true } } },
     })
-    if (!project) return { success: false, error: APP_ERRORS.PROJECT_CREATE_LEGAL_INSTRUMENTS.code }
+    if (!project) {
+      console.error("Project not found")
+      return { success: false, error: APP_ERRORS.PROJECT_CREATE_LEGAL_INSTRUMENTS.code }
+    }
 
     if (project.legalInstrumentInstance) {
+      console.error("Project already has a legal instrument")
       return { success: false, error: APP_ERRORS.PROJECT_CREATE_LEGAL_INSTRUMENTS.code }
     }
 

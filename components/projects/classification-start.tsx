@@ -37,7 +37,8 @@ export function ProjectClassificationStart({ projectSlug, onStart, onResume }: P
 
   useEffect(() => {
     const urlState = searchParams.get("state")
-    const saved = localStorage.getItem("legalInstrumentWizard")
+    const storageKey = `legalInstrumentWizard:${projectSlug}`
+    const saved = localStorage.getItem(storageKey)
     if (saved && !urlState) {
       try {
         const parsed: unknown = JSON.parse(saved)
@@ -52,15 +53,21 @@ export function ProjectClassificationStart({ projectSlug, onStart, onResume }: P
 
   const handleStart = () => {
     // ensure we start from scratch
-    localStorage.removeItem("legalInstrumentWizard")
+    const storageKey = `legalInstrumentWizard:${projectSlug}`
+    localStorage.removeItem(storageKey)
     const url = new URL(window.location.href)
     url.searchParams.delete("state")
+    url.searchParams.set("wizard", projectSlug)
     router.replace(url.pathname + url.search)
     onStart()
   }
 
   const handleResume = () => {
     if (!savedState) return
+    // ensure wizard is namespaced to this project
+    const url = new URL(window.location.href)
+    url.searchParams.set("wizard", projectSlug)
+    router.replace(url.pathname + url.search)
     onResume(savedState)
   }
 

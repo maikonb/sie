@@ -31,6 +31,9 @@ export function ProjectClassificationWizard({ onComplete, initialState, onReset 
   const router = useRouter()
   const searchParams = useSearchParams()
   const [resetKey, setResetKey] = useState(0)
+  const [wizardId, setWizardId] = useState(() =>
+    searchParams.get("wizard") ?? (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function" ? crypto.randomUUID() : String(Date.now()))
+  )
 
   const machine = useMemo(() => createProjectFlowMachine(), [])
   const [state, send] = useMachine(machine)
@@ -53,14 +56,15 @@ export function ProjectClassificationWizard({ onComplete, initialState, onReset 
       onReset()
       return
     }
-
-    localStorage.removeItem("legalInstrumentWizard")
+    const storageKey = `legalInstrumentWizard:${wizardId}`
+    localStorage.removeItem(storageKey)
     setHistory([])
     send({ type: "RESET" })
     setResetKey((k) => k + 1)
 
     const url = new URL(window.location.href)
     url.searchParams.delete("state")
+    url.searchParams.delete("wizard")
     router.replace(url.pathname + url.search)
   }
 
@@ -68,7 +72,12 @@ export function ProjectClassificationWizard({ onComplete, initialState, onReset 
     const partnershipType = STATE_TO_PARTNERSHIP_TYPE[currentStateValue]
     if (partnershipType) {
       onComplete({ type: partnershipType, history })
-      localStorage.removeItem("legalInstrumentWizard")
+      const storageKey = `legalInstrumentWizard:${wizardId}`
+      localStorage.removeItem(storageKey)
+      const url = new URL(window.location.href)
+      url.searchParams.delete("wizard")
+      url.searchParams.delete("state")
+      router.replace(url.pathname + url.search)
     }
   }
 
@@ -83,10 +92,12 @@ export function ProjectClassificationWizard({ onComplete, initialState, onReset 
   }, [])
 
   useEffect(() => {
+    // ensure each wizard flow uses its own storage key
     if (currentStateValue === "check_funding" || history.length === 0) return
 
+    const storageKey = `legalInstrumentWizard:${wizardId}`
     localStorage.setItem(
-      "legalInstrumentWizard",
+      storageKey,
       JSON.stringify({
         state: currentStateValue,
         history,
@@ -101,6 +112,15 @@ export function ProjectClassificationWizard({ onComplete, initialState, onReset 
       router.replace(`?${params.toString()}`, { scroll: false })
     }
   }, [currentStateValue, history, router, searchParams])
+
+  useEffect(() => {
+    // ensure wizard id present in URL so multiple sequential flows don't conflict
+    if (!searchParams.get("wizard")) {
+      const params = new URLSearchParams(searchParams.toString())
+      params.set("wizard", wizardId)
+      router.replace(`?${params.toString()}`, { scroll: false })
+    }
+  }, [router, searchParams, wizardId])
 
   return (
     <div key={resetKey} className="flex flex-col flex-1 w-full h-full bg-background rounded-xl overflow-hidden border shadow-sm">

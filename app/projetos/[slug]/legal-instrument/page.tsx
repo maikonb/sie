@@ -61,12 +61,16 @@ export default function Page() {
   }
 
   const handleWizardReset = () => {
-    localStorage.removeItem("legalInstrumentWizard")
+    if (project && project.slug) {
+      const storageKey = `legalInstrumentWizard:${project.slug}`
+      localStorage.removeItem(storageKey)
+    }
     setInitialState(null)
     setMode("start")
 
     const url = new URL(window.location.href)
     url.searchParams.delete("state")
+    url.searchParams.delete("wizard")
     router.replace(url.pathname + url.search)
   }
 
