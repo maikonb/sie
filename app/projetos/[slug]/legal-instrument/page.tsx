@@ -15,6 +15,7 @@ import LoadingOverlay from "@/components/ui/loading-overlay"
 export default function Page() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const nextParam = searchParams.get("next")
   const { project, loading, updateLegalInstrument } = useProject()
   const [saving, setSaving] = useState(false)
   const [mode, setMode] = useState<"start" | "wizard">("start")
@@ -34,7 +35,7 @@ export default function Page() {
           updateLegalInstrument(result.created)
         }
 
-        const next = searchParams.get("next")
+        const next = nextParam
         if (next) {
           router.push(`/projetos/${project.slug}/${next}`)
           return
@@ -80,11 +81,11 @@ export default function Page() {
         <div className="flex items-center gap-4">
           <Skeleton className="h-12 w-12 rounded-full" />
           <div className="space-y-2">
-            <Skeleton className="h-8 w-[300px]" />
-            <Skeleton className="h-4 w-[200px]" />
+            <Skeleton className="h-8 w-75" />
+            <Skeleton className="h-4 w-50" />
           </div>
         </div>
-        <Skeleton className="h-[500px] w-full rounded-xl" />
+        <Skeleton className="h-125 w-full rounded-xl" />
       </div>
     )
   }
@@ -96,7 +97,15 @@ export default function Page() {
       <LoadingOverlay open={saving} message="Criando instrumento jurídico..." />
       <div className="h-full bg-linear-to-b from-background to-muted/20">
         <div className="container min-h-full mx-auto py-6 px-4 md:py-8 flex flex-col">
-          <div className="flex-1 flex flex-col h-full justify-center">{mode === "start" ? <ProjectClassificationStart projectSlug={project.slug!} onStart={handleStart} onResume={handleResume} /> : <ProjectClassificationWizard initialState={initialState ?? undefined} onReset={handleWizardReset} onComplete={handleComplete} />}</div>
+          <div className="flex-1 flex flex-col h-full justify-center">
+            {
+              mode === "start" ? (
+                <ProjectClassificationStart projectSlug={project.slug!} onStart={handleStart} onResume={handleResume} />
+              ) : (
+                <ProjectClassificationWizard initialState={initialState ?? undefined} onReset={handleWizardReset} onComplete={handleComplete} />
+              )
+            }
+          </div>
         </div>
       </div>
     </>
